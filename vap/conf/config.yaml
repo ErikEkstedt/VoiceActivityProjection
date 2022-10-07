@@ -1,0 +1,64 @@
+defaults:
+  - model: vap_50hz
+  - events: events
+
+seed: 1
+verbose: false
+
+wandb:
+  project: 'VoiceActivityProjection'
+  dont_log_model: true
+
+optimizer:
+  alpha: 0.6
+  learning_rate: 3.63e-4
+  find_learning_rate: true
+  betas: [0.9, 0.999]
+  weight_decay: 0.001
+  lr_scheduler_interval: "step"
+  lr_scheduler_freq: 100
+  lr_scheduler_tmax: 2500
+  swa_enable: false
+  swa_lrs: 0.05
+  swa_epoch_start: 5
+  swa_annealing_epochs: 10
+  train_encoder_epoch: -1
+
+early_stopping:
+  patience: 10
+  monitor: 'val_loss'
+  mode: 'min'
+
+checkpoint:
+  monitor: 'val_loss'
+  mode: 'min'
+
+trainer:
+  accelerator: "gpu"
+  devices: -1
+  fast_dev_run: 0
+  deterministic: true
+  max_epochs: 60
+
+data:
+  datasets: ["switchboard", "fisher"]
+  type: "sliding"
+  sample_rate: ${model.sample_rate}
+  audio_duration: ${model.audio_duration}
+  audio_normalize: true
+  audio_overlap: 1
+  # VAD
+  vad_hz: ${model.frame_hz}
+  vad_horizon: 2
+  vad_history: ${model.va_cond.history}
+  vad_history_times: [60, 30, 10, 5]
+  # Data
+  train_files: null
+  val_files: null
+  test_files: null
+  batch_size: 16
+  num_workers: 24
+
+hydra:
+  run:
+    dir: runs

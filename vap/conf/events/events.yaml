@@ -1,0 +1,30 @@
+metric:
+  pad: 0.05
+  dur: 0.1
+  pre_label_dur: 0.5
+  onset_dur: 0.2
+  min_context: 3.0
+
+SH:
+  post_onset_shift: 1
+  pre_offset_shift: 1
+  post_onset_hold: 1
+  pre_offset_hold: 1
+  non_shift_horizon: 2
+  metric_pad: ${events.metric.pad}
+  metric_dur: ${events.metric.dur}
+  metric_pre_label_dur: ${events.metric.pre_label_dur}
+  metric_onset_dur: ${events.metric.onset_dur}
+
+BC:
+  max_duration_frames: 1.0
+  pre_silence_frames: 1.0
+  post_silence_frames: 2.0
+  min_duration_frames: ${events.metric.onset_dur}
+  metric_dur_frames: ${events.metric.onset_dur}
+  metric_pre_label_dur: ${events.metric.pre_label_dur}
+
+threshold:
+  SL: 0.5
+  S_pred: 0.3
+  BC_pred: 0.1
