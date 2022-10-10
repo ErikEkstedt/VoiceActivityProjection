@@ -7,6 +7,7 @@ from datasets_turntaking import DialogAudioDM
 
 
 @pytest.mark.train
+@pytest.mark.data
 @pytest.mark.parametrize(
     "config_name",
     [

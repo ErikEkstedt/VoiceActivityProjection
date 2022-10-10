@@ -1,8 +1,10 @@
 import torch
-from torchaudio.backend.sox_io_backend import info as info_sox
-
 import json
-from os.path import basename, dirname
+from os.path import dirname
+
+from typing import List, Optional, Tuple
+
+from vap.audio import time_to_frames
 
 
 def repo_root():
@@ -79,36 +81,65 @@ def read_json(path, encoding="utf8"):
     return data
 
 
+def vad_list_to_onehot(
+    vad_list: List[Tuple[float, float]],
+    hop_time: float,
+    duration: float,
+    channel_last: bool = False,
+) -> torch.Tensor:
+    n_frames = time_to_frames(duration, hop_time) + 1
+
+    if isinstance(vad_list[0][0], list):
+        vad_tensor = torch.zeros((len(vad_list), n_frames))
+        for ch, ch_vad in enumerate(vad_list):
+            for v in ch_vad:
+                s = time_to_frames(v[0], hop_time)
+                e = time_to_frames(v[1], hop_time)
+                vad_tensor[ch, s:e] = 1.0
+    else:
+        vad_tensor = torch.zeros((1, n_frames))
+        for v in vad_list:
+            s = time_to_frames(v[0], hop_time)
+            e = time_to_frames(v[1], hop_time)
+            vad_tensor[:, s:e] = 1.0
+
+    if channel_last:
+        vad_tensor = vad_tensor.permute(1, 0)
+
+    return vad_tensor
+
+
+def load_vad_list(
+    path: str, frame_hz: int = 50, duration: Optional[float] = None
+) -> torch.Tensor:
+    vad_hop_time = 1.0 / frame_hz
+    vad_list = read_json(path)
+
+    last_vad = -1
+    for vad_channel in vad_list:
+        if len(vad_channel) > 0:
+            if vad_channel[-1][-1] > last_vad:
+                last_vad = vad_channel[-1][-1]
+
+    ##############################################
+    # VAD-frame of relevant part
+    ##############################################
+    all_vad_frames = vad_list_to_onehot(
+        vad_list,
+        hop_time=vad_hop_time,
+        duration=duration if duration is not None else last_vad,
+        channel_last=True,
+    )
+
+    return all_vad_frames
+
+
 def read_txt(path, encoding="utf-8"):
     data = []
     with open(path, "r", encoding=encoding) as f:
         for line in f.readlines():
             data.append(line.strip())
     return data
-
-
-def time_to_samples(t, sample_rate):
-    return int(t * sample_rate)
-
-
-def time_to_frames(t, hop_time):
-    return int(t / hop_time)
-
-
-def sample_to_time(n_samples, sample_rate):
-    return n_samples / sample_rate
-
-
-def get_audio_info(audio_path):
-    info = info_sox(audio_path)
-    return {
-        "name": basename(audio_path),
-        "duration": sample_to_time(info.num_frames, info.sample_rate),
-        "sample_rate": info.sample_rate,
-        "num_frames": info.num_frames,
-        "bits_per_sample": info.bits_per_sample,
-        "num_channels": info.bits_per_sample,
-    }
 
 
 def batch_to_device(batch, device="cuda"):

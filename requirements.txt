@@ -4,11 +4,13 @@ numpy
 omegaconf
 pytorch-lightning
 wandb
+pytest
+praat-parselmouth
 
 # Our Dependencies
 # must download and install via
 # 'pip install -r requirements.txt'
 # 'pip install -e .'
 # in the respective repos
-git+https://github.com/ErikEkstedt/vap_turn_taking.git
-git+https://github.com/ErikEkstedt/datasets_turntaking.git
+# git+https://github.com/ErikEkstedt/vap_turn_taking.git
+# git+https://github.com/ErikEkstedt/datasets_turntaking.git
