@@ -1,10 +1,8 @@
 import torch
 import torch.nn as nn
-import einops
 from typing import Optional
 
 import vap.functional as VF
-from vap.encoder import CConv1d
 
 
 def _check_waveform_and_vad_shape(
@@ -122,5 +120,44 @@ class ShiftPitch(nn.Module):
                     sample_rate=self.sample_rate,
                     f0_min=self.f0_min,
                     f0_max=self.f0_max,
+                )
+        return x
+
+
+class FlatIntensity(nn.Module):
+    def __init__(
+        self,
+        target_intensity: float = 50,
+        output_intensity: float = 70,
+        min_intensity: float = 10,
+        sample_rate: int = VF.SAMPLE_RATE,
+        hop_time: float = VF.HOP_TIME,
+        f0_min: int = VF.F0_MIN,
+    ):
+        super().__init__()
+        self.target_intensity = target_intensity
+        self.output_intensity = output_intensity
+        self.min_intensity = min_intensity
+        self.sample_rate = sample_rate
+        self.hop_time = hop_time
+        self.f0_min = f0_min
+
+    def forward(
+        self, waveform: torch.Tensor, vad: Optional[torch.Tensor] = None
+    ) -> torch.Tensor:
+        _check_waveform_and_vad_shape(waveform, vad)
+
+        B, NC, _ = waveform.shape
+        x = torch.zeros_like(waveform)
+        for b in range(B):
+            for c in range(NC):
+                x[b, c] = VF.intensity_praat_flatten(
+                    waveform[b, c],
+                    target_intensity=self.target_intensity,
+                    output_intensity=self.output_intensity,
+                    min_intensity=self.min_intensity,
+                    sample_rate=self.sample_rate,
+                    hop_time=self.hop_time,
+                    f0_min=self.f0_min,
                 )
         return x

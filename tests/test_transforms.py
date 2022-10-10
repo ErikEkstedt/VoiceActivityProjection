@@ -20,7 +20,7 @@ def waveform():
 
 @pytest.mark.transforms
 @pytest.mark.pitch
-def test_pitch_praat_flat(waveform):
+def test_Flat_Pitch(waveform):
     orig_f0 = VF.pitch_praat(waveform, sample_rate=SAMPLE_RATE)
     orig_means, _, _ = VF.f0_statistics(orig_f0)
 
@@ -48,7 +48,7 @@ def test_pitch_praat_flat(waveform):
 
 @pytest.mark.transforms
 @pytest.mark.pitch
-def test_pitch_praat_shift(waveform):
+def test_Shift_Pitch(waveform):
     hz_max_deviation = 2
     hz_max_std_deviation = 5
     factor = 0.9
@@ -73,6 +73,19 @@ def test_pitch_praat_shift(waveform):
     assert (
         x_std - orig_std
     ).abs().max() < hz_max_std_deviation, f"The shifted std {x_std.item():.2f} differs more than {hz_max_std_deviation}Hz from original std {orig_std.item():.2f}"
+
+
+@pytest.mark.transforms
+def test_Flat_Intensity(waveform):
+    B, N, N_SAMPLES = waveform.shape
+    transform = VT.FlatIntensity(sample_rate=SAMPLE_RATE)
+    x = transform(waveform)
+    assert x.shape[0] == B, f"Wrong batch size {tuple(x.shape)} != {(B, N)}"
+    assert x.shape[1] == N, f"Wrong batch size {tuple(x.shape)} != {(B, N)}"
+    assert x.shape[2] == N_SAMPLES, f"Wrong sample size {tuple(x.shape)} != {(B, N)}"
+    assert (
+        x.std().max() < waveform.std().max()
+    ), f"Standard deviation not lower after intensity flattening!"
 
 
 @pytest.mark.transforms

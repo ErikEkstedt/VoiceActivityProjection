@@ -65,4 +65,11 @@ def test_pitch_shift(waveform):
 @pytest.mark.functional
 @pytest.mark.intensity
 def test_intensity_praat(waveform):
-    _ = VF.intensity_praat(waveform, sample_rate=SAMPLE_RATE)
+    x = VF.intensity_praat_flatten(
+        waveform, target_intensity=70, sample_rate=SAMPLE_RATE
+    )
+
+    std = waveform.std()
+    x_std = x.std()
+
+    assert x_std < std, f"Standard deviation not lower after intensity flattening!"

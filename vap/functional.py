@@ -224,6 +224,45 @@ def low_pass_filter_resample(
     return x
 
 
+def intensity_praat_flatten(
+    waveform: torch.Tensor,
+    target_intensity: float,
+    output_intensity: float = 70.0,
+    min_intensity: float = 10.0,
+    sample_rate: int = SAMPLE_RATE,
+    hop_time: float = HOP_TIME,
+    f0_min: int = F0_MIN,
+):
+    sound = torch_to_praat_sound(waveform, sample_rate=sample_rate)
+    snd_intensity = sound.to_intensity(
+        minimum_pitch=f0_min, time_step=hop_time, subtract_mean=False
+    )
+    intensities = praat_to_torch(
+        sound.to_intensity(
+            minimum_pitch=f0_min, time_step=hop_time, subtract_mean=False
+        )
+    ).squeeze()
+    times = [
+        snd_intensity.get_time_from_frame_number(f + 1)
+        for f in range(snd_intensity.get_number_of_frames())
+    ]
+
+    int_tier = call(
+        snd_intensity, "Create IntensityTier", "intensity_tier", 0, sound.total_duration
+    )
+
+    t = 0
+    for t, i in zip(times, intensities):
+        if i < min_intensity:
+            continue
+        scale = target_intensity - i.item()
+        call(int_tier, "Add point", t, scale)
+    call(int_tier, "Add point", t + 0.001, 0)
+    new_sound = call([int_tier, sound], "Multiply", 1)
+    call(new_sound, "Scale intensity", output_intensity)
+    return praat_to_torch(new_sound)
+
+
 if __name__ == "__main__":
     import sounddevice as sd
     import matplotlib.pyplot as plt
@@ -241,10 +280,17 @@ if __name__ == "__main__":
     )
     print("waveform: ", tuple(waveform.shape))
 
+    x = intensity_praat_flatten(waveform, target_intensity=50)
+
+    sd.play(x[0], samplerate=SAMPLE_RATE)
+
+    sd.play(waveform[0], samplerate=SAMPLE_RATE)
+
     # x = intensity_praat_flatten(waveform)
     # x = pitch_praat_flatten(waveform)
     # x = pitch_praat_shift(waveform)
-    x = FlatIntensity(vad_hz=50)(waveform, vad=vad.unsqueeze(0))
+    # x = FlatIntensity(vad_hz=50)(waveform, vad=vad.unsqueeze(0))
+    x = IntensityNeutralizer(vad_hz=50)(waveform)
     print("x: ", tuple(x.shape))
 
     wi = intensity_praat(waveform, sample_rate, subtract_mean=True)
@@ -260,7 +306,9 @@ if __name__ == "__main__":
 
     fig, ax = plt.subplots(4, 1)
     ax[0].plot(waveform[0])
+    ax[0].set_ylim([-1, 1])
     ax[1].plot(wi[0].log())
     ax[2].plot(wx[0].log())
     ax[3].plot(x[0])
+    ax[3].set_ylim([-1, 1])
     plt.pause(0.1)
