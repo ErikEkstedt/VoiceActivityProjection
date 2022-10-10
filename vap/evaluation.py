@@ -1,12 +1,9 @@
 from omegaconf import DictConfig, OmegaConf
-from os import makedirs
 from os.path import basename, join
 from pathlib import Path
 from pytorch_lightning import Trainer
-from pytorch_lightning.loggers import WandbLogger
 import hydra
 import torch
-
 
 from vap.model import VAPModel
 from vap.callbacks import SymmetricSpeakersCallback
@@ -22,47 +19,6 @@ everything_deterministic()
 
 MIN_THRESH = 0.01  # Minimum `threshold` limit for S/L, S-pred, BC-pred
 ROOT = "runs_evaluation"
-
-
-def test(model, dloader, max_batches=None, project="VAPModelTest", online=False):
-    """
-    Iterate over the dataloader to extract metrics.
-
-    * Adds SymmetricSpeakersCallback
-        - each sample is duplicated with channels reversed
-    * online = True
-        - upload to wandb
-    """
-    logger = None
-    if online:
-        savedir = "runs/" + project
-        makedirs(savedir, exist_ok=True)
-        logger = WandbLogger(
-            save_dir=savedir,
-            project=project,
-            name=model.run_name,
-            log_model=False,
-        )
-
-    # Limit batches
-    if max_batches is not None:
-        trainer = Trainer(
-            gpus=-1,
-            limit_test_batches=max_batches,
-            deterministic=True,
-            logger=logger,
-            callbacks=[SymmetricSpeakersCallback()],
-        )
-    else:
-        trainer = Trainer(
-            gpus=-1,
-            deterministic=True,
-            logger=logger,
-            callbacks=[SymmetricSpeakersCallback()],
-        )
-
-    result = trainer.test(model, dataloaders=dloader, verbose=False)
-    return result
 
 
 def get_curves(preds, target, pos_label=1, thresholds=None, EPS=1e-6):
@@ -139,7 +95,12 @@ def get_curves(preds, target, pos_label=1, thresholds=None, EPS=1e-6):
     }
 
 
-def find_threshold(model, dloader, savepath, min_thresh=0.01):
+def find_threshold(
+    model: VAPModel,
+    dloader: torch.utils.data.DataLoader,
+    savepath: str,
+    min_thresh: float = 0.01,
+):
     """Find the best threshold using PR-curves"""
 
     def get_best_thresh(curves, metric, measure, min_thresh):
@@ -164,10 +125,14 @@ def find_threshold(model, dloader, savepath, min_thresh=0.01):
     )
 
     # Find Thresholds
-    _ = test(model, dloader, online=False)
+    _trainer = Trainer(
+        gpus=-1,
+        deterministic=True,
+        callbacks=[SymmetricSpeakersCallback()],
+    )
+    _ = _trainer.test(model, dataloaders=dloader)
 
     ############################################
-    # Save predictions
     predictions = {}
     if hasattr(model.test_metric, "long_short_pr"):
         predictions["long_short"] = {
@@ -217,7 +182,7 @@ def find_threshold(model, dloader, savepath, min_thresh=0.01):
     torch.save(curves, join(savepath, "curves.pt"))
     print("Saved Thresholds -> ", join(savepath, "thresholds.json"))
     print("Saved Curves -> ", join(savepath, "curves.pt"))
-    return thresholds, predictions, curves
+    return thresholds
 
 
 @hydra.main(config_path="conf", config_name="config")
@@ -233,15 +198,19 @@ def evaluate(cfg: DictConfig) -> None:
     print("SAVEPATH: ", savepath)
     Path(savepath).mkdir(exist_ok=True, parents=True)
     write_json(cfg_dict, join(savepath, "config.json"))
-    input()
 
+    #########################################################
     # Load model
+    #########################################################
     model = VAPModel.load_from_checkpoint(cfg.checkpoint_path)
     model = model.eval()
     if torch.cuda.is_available():
         model = model.to("cuda")
 
+    #########################################################
     # Load data
+    #########################################################
+    print("Datasets: ", cfg.data.datasets)
     print("Model stereo: ", model.stereo)
     print("Model frame_hz: ", model.frame_hz)
     print("Duration: ", cfg.data.audio_duration)
@@ -271,18 +240,22 @@ def evaluate(cfg: DictConfig) -> None:
     dm.prepare_data()
     dm.setup(None)
 
+    #########################################################
     # Threshold
+    #########################################################
     # Find the best thresholds (S-pred, BC-pred, S/L) on the validation set
     threshold_path = cfg.get("thresholds", None)
     if threshold_path is None:
-        thresholds, _, _ = find_threshold(
+        thresholds = find_threshold(
             model, dm.val_dataloader(), savepath=savepath, min_thresh=MIN_THRESH
         )
     else:
         print("Loading thresholds: ", threshold_path)
         thresholds = read_json(threshold_path)
 
+    #########################################################
     # Score
+    #########################################################
     print("#" * 60)
     print("Final Score (test-set)...")
     print("#" * 60)
@@ -291,13 +264,22 @@ def evaluate(cfg: DictConfig) -> None:
         threshold_short_long=thresholds.get("short_long", 0.5),
         threshold_bc_pred=thresholds.get("pred_bc", 0.5),
     )
-    result = test(model, dm.test_dataloader(), online=False)[0]
+    _trainer = Trainer(
+        gpus=-1,
+        deterministic=True,
+        callbacks=[SymmetricSpeakersCallback()],
+    )
+    result = _trainer.test(model, dataloaders=dm.test_dataloader())[0]
+    # result = test(model, dm.test_dataloader(), online=False)[0]
     metrics = model.test_metric.compute()
     metrics["loss"] = result["test_loss"]
     metrics["threshold_pred_shift"] = thresholds["pred_shift"]
     metrics["threshold_pred_bc"] = thresholds["pred_bc"]
     metrics["threshold_short_long"] = thresholds["short_long"]
 
+    #########################################################
+    # Save
+    #########################################################
     metric_json = tensor_dict_to_json(metrics)
     write_json(metric_json, join(savepath, "metric.json"))
     print("Saved metrics -> ", join(savepath, "metric.json"))

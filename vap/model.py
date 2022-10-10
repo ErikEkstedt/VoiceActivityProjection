@@ -4,7 +4,7 @@ import torch.nn.functional as F
 import pytorch_lightning as pl
 import einops
 from einops.layers.torch import Rearrange
-from typing import Optional, Dict
+from typing import Any, Optional, Dict, Union, Tuple, List
 
 from vap.encoder import Encoder
 from vap.transformer import GPT, GPTStereo
@@ -64,7 +64,7 @@ class VAPHead(nn.Module):
         s += f"  output: {self.output_dim}"
         return super().__repr__()
 
-    def forward(self, x) -> torch.Tensor:
+    def forward(self, x: torch.Tensor) -> torch.Tensor:
         return self.projection_head(x)
 
 
@@ -81,9 +81,6 @@ class VACondition(nn.Module):
         if va_history:
             # vah: (N, vah_bins) -> dim
             self.va_hist_cond = nn.Linear(va_history_bins, dim)
-
-    def init(self) -> None:
-        nn.init.orthogonal_(self.va_condition.weight.data)
 
     def forward(
         self, vad: torch.Tensor, va_history: Optional[torch.Tensor] = None
@@ -208,18 +205,18 @@ class VAPModel(pl.LightningModule):
         self.horizon_time = self.VAP.horizon
 
         # Metrics
-        self.val_metric = None  # self.init_metric()
-        self.test_metric = None  # set in test if necessary
+        self.val_metric: TurnTakingMetrics = None  # self.init_metric()
+        self.test_metric: TurnTakingMetrics = None  # set in test if necessary
 
         # Training params
         self.learning_rate = conf["optimizer"]["learning_rate"]
         self.save_hyperparameters()
 
     @property
-    def run_name(self):
+    def run_name(self) -> str:
         """
-        -> 50hz_stereo_134_20s
         -> 50hz_44_20s
+        -> 50hz_stereo_134_20s
         -> 50hz_44_20s_ind_40
         -> 50hz_44_20s_cmp
         """
@@ -238,7 +235,7 @@ class VAPModel(pl.LightningModule):
             name += f"_ind_{n_bins}"
         return name
 
-    def summary(self):
+    def summary(self) -> str:
         s = "VAPModel\n"
         s += f"{self.net}"
         s += f"{self.VAP}"
@@ -246,14 +243,14 @@ class VAPModel(pl.LightningModule):
 
     def init_metric(
         self,
-        conf=None,
-        threshold_pred_shift=None,
-        threshold_short_long=None,
-        threshold_bc_pred=None,
-        bc_pred_pr_curve=False,
-        shift_pred_pr_curve=False,
-        long_short_pr_curve=False,
-    ):
+        conf: Optional[Dict] = None,
+        threshold_pred_shift: Optional[float] = None,
+        threshold_short_long: Optional[float] = None,
+        threshold_bc_pred: Optional[float] = None,
+        bc_pred_pr_curve: bool = False,
+        shift_pred_pr_curve: bool = False,
+        long_short_pr_curve: bool = False,
+    ) -> TurnTakingMetrics:
         if conf is None:
             conf = self.conf
 
@@ -307,7 +304,7 @@ class VAPModel(pl.LightningModule):
         r = self.test_metric.compute()
         self._log(r, split="test")
 
-    def _log(self, result, split="val"):
+    def _log(self, result: Dict, split: str = "val") -> None:
         for metric_name, values in result.items():
             if metric_name.startswith("pr_curve"):
                 continue
@@ -346,11 +343,13 @@ class VAPModel(pl.LightningModule):
             },
         }
 
-    def forward(self, *args, **kwargs):
+    def forward(self, *args, **kwargs) -> Dict[str, torch.Tensor]:
         logits = self.net(*args, **kwargs)
         return {"logits": logits}
 
-    def calc_losses(self, logits, va_labels, reduction="mean"):
+    def calc_losses(
+        self, logits: torch.Tensor, va_labels: torch.Tensor, reduction: str = "mean"
+    ) -> torch.Tensor:
         if self.net.vap_head.representation == "comparative":
             loss = F.binary_cross_entropy_with_logits(logits, va_labels.unsqueeze(-1))
         elif self.net.vap_head.representation == "independent":
@@ -363,7 +362,9 @@ class VAPModel(pl.LightningModule):
             )
         return loss
 
-    def shared_step(self, batch, reduction="mean"):
+    def shared_step(
+        self, batch: Dict, reduction: str = "mean"
+    ) -> Tuple[Dict[str, torch.Tensor], Any, Dict[str, torch.Tensor]]:
         """
         Arguments:
             batch:      dict, containing 'waveform', va, va_history
@@ -403,7 +404,11 @@ class VAPModel(pl.LightningModule):
                 loss["loss_frames"] = logit_loss
         return loss, out, batch
 
-    def load_sample(self, audio_path_or_waveform, vad_list=None):
+    def load_sample(
+        self,
+        audio_path_or_waveform: Union[str, torch.Tensor],
+        vad_list: Optional[List[Tuple[float, float]]] = None,
+    ) -> Dict[str, torch.Tensor]:
         """
         Get the sample from the dialog
 
@@ -468,7 +473,7 @@ class VAPModel(pl.LightningModule):
         return ret
 
     @torch.no_grad()
-    def output(self, batch, reduction="none", out_device="cpu"):
+    def output(self, batch, reduction: str = "none", out_device: str = "cpu"):
         loss, out, batch = self.shared_step(
             batch_to_device(batch, str(self.device)), reduction=reduction
         )
@@ -479,8 +484,8 @@ class VAPModel(pl.LightningModule):
         probs = batch_to_device(probs, out_device)
         return loss, out, probs, batch
 
-    def get_event_max_frames(self, batch):
-        total_frames = batch["vad"].shape[1]
+    def get_event_max_frames(self, vad: torch.Tensor) -> int:
+        total_frames = vad.shape[1]
         return total_frames - self.VAP.horizon_frames
 
     def training_step(self, batch, batch_idx, **kwargs):
@@ -493,7 +498,7 @@ class VAPModel(pl.LightningModule):
         """validation step"""
 
         # extract events for metrics (use full vad including horizon)
-        max_event_frame = self.get_event_max_frames(batch)
+        max_event_frame = self.get_event_max_frames(batch["vad"])
         events = self.val_metric.extract_events(
             va=batch["vad"], max_frame=max_event_frame
         )
@@ -514,7 +519,7 @@ class VAPModel(pl.LightningModule):
         )
 
     def test_step(self, batch, batch_idx, **kwargs):
-        max_event_frame = self.get_event_max_frames(batch)
+        max_event_frame = self.get_event_max_frames(batch["vad"])
         events = self.test_metric.extract_events(
             va=batch["vad"], max_frame=max_event_frame
         )
