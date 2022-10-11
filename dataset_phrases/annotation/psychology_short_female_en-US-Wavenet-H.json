@@ -1,0 +1,1 @@
+{"text": "Do you study psychology?", "audio_path": "dataset_phrases/audio/psychology_short_female_en-US-Wavenet-H.wav", "gender": "female", "words": ["Do", "you", "study", "psychology?"], "starts": [0.009999999776482582, 0.08816666156053543, 0.24199999868869781, 0.5532083511352539], "size": "short", "tts": "en-US-Wavenet-H", "name": "psychology_short_female_en-US-Wavenet-H"}

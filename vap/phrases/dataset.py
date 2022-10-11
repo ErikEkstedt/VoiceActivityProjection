@@ -91,6 +91,66 @@ class PhraseDataset(Dataset):
     def __len__(self) -> int:
         return len(self.indices)
 
+    def sample_to_duration_sample(self, sample):
+        """
+        Load duration average waveform and duration average textgrids (word timings)
+        """
+        # change audio_path
+        tg_path = self.audio_path_text_grid_path(sample["audio_path"])
+
+        sample["audio_path"] = sample["audio_path"].replace(
+            "/audio/", "/duration_audio/"
+        )
+        sample["waveform"], _ = load_waveform(
+            sample["audio_path"],
+            sample_rate=self.sample_rate,
+            mono=self.audio_mono,
+        )
+
+        # change tg_path
+        tg_path = tg_path.replace("/alignment/", "/duration_alignment/")
+        tg = self.read_text_grid(tg_path)
+        sample["phones"] = tg["phones"]
+        sample["starts"], sample["ends"], sample["words"] = [], [], []
+        vad_list = [[], []]
+        for start, end, word in tg["words"]:
+            sample["starts"].append(start)
+            sample["ends"].append(end)
+            sample["words"].append(word)
+            vad_list[0].append([start, end])
+
+        sample["vad_list"] = vad_list
+        sample = self.get_vad(sample)
+        return sample
+
+    def get_vad(self, sample):
+        duration = get_audio_info(sample["audio_path"])["duration"]
+        end_frame = time_to_frames(duration, self.vad_hop_time)
+        all_vad_frames = vad_list_to_onehot(
+            sample["vad_list"],
+            hop_time=self.vad_hop_time,
+            duration=duration,
+            channel_last=True,
+        )
+
+        if self.vad_history:
+            # history up until the current features arrive
+            vad_history, _ = get_activity_history(
+                all_vad_frames,
+                bin_end_frames=self.vad_history_frames,
+                channel_last=True,
+            )
+            # vad history is always defined as speaker 0 activity
+            sample["vad_history"] = vad_history[:end_frame][..., 0].unsqueeze(0)
+
+        if end_frame + self.vad_horizon > all_vad_frames.shape[0]:
+            lookahead = torch.zeros(
+                (self.vad_horizon + 1, 2)
+            )  # add horizon after end (silence)
+            all_vad_frames = torch.cat((all_vad_frames, lookahead))
+        sample["vad"] = all_vad_frames[: end_frame + self.vad_horizon].unsqueeze(0)
+        return sample
+
     def get_sample(
         self, example: str, long_short: str, gender: str, id: int
     ) -> Dict[str, Any]:
@@ -121,31 +181,8 @@ class PhraseDataset(Dataset):
 
         # VAD-frame of relevant part
         if self.vad:
-            duration = get_audio_info(sample["audio_path"])["duration"]
-            end_frame = time_to_frames(duration, self.vad_hop_time)
-            all_vad_frames = vad_list_to_onehot(
-                sample["vad_list"],
-                hop_time=self.vad_hop_time,
-                duration=duration,
-                channel_last=True,
-            )
+            sample = self.get_vad(sample)
 
-            if self.vad_history:
-                # history up until the current features arrive
-                vad_history, _ = get_activity_history(
-                    all_vad_frames,
-                    bin_end_frames=self.vad_history_frames,
-                    channel_last=True,
-                )
-                # vad history is always defined as speaker 0 activity
-                sample["vad_history"] = vad_history[:end_frame][..., 0].unsqueeze(0)
-
-            if end_frame + self.vad_horizon > all_vad_frames.shape[0]:
-                lookahead = torch.zeros(
-                    (self.vad_horizon + 1, 2)
-                )  # add horizon after end (silence)
-                all_vad_frames = torch.cat((all_vad_frames, lookahead))
-            sample["vad"] = all_vad_frames[: end_frame + self.vad_horizon].unsqueeze(0)
         return sample
 
     def __getitem__(self, idx: int) -> Dict[str, Any]:
@@ -168,15 +205,11 @@ if __name__ == "__main__":
     print("len(dset): ", len(dset))
     sample = dset[0]
     sample = dset.get_sample("student", "long", "female", 0)
-
     loss, out, probs, batch = model.output(sample)
 
-    waveform = sample["waveform"]
-    vad = sample["vad"]
-    p = probs["p"][0]
-    p_bc = probs["bc_prediction"][0]
-    words = sample["words"]
-    word_starts = sample["starts"]
+    dur_sample = dset.sample_to_duration_sample(sample)
+
+    loss, out, probs, batch = model.output(dur_sample)
 
     fig, ax = plot_phrases_sample(
         sample, probs, frame_hz=dset.vad_hz, sample_rate=dset.sample_rate

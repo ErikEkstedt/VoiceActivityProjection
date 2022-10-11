@@ -195,6 +195,7 @@ def evaluation_phrases(args):
         "only_f0": VT.LowPass(sample_rate=model.sample_rate),
         "shift_f0": VT.ShiftPitch(sample_rate=model.sample_rate),
         "flat_intensity": VT.FlatIntensity(sample_rate=model.sample_rate),
+        "duration_avg": None,
     }
 
     stats = {}
@@ -269,10 +270,15 @@ def evaluation_phrases(args):
 
         # Average duration
         for permutation, transform in transforms.items():
-            batch = deepcopy(sample)
-            if is_mono:
-                batch["waveform"] = batch["waveform"].unsqueeze(1)
-            batch["waveform"] = transform(batch["waveform"])  # , batch['vad'])
+            if permutation == "duration_avg":
+                batch = dset.sample_to_duration_sample(sample)
+                if is_mono:
+                    batch["waveform"] = batch["waveform"].unsqueeze(1)
+            else:
+                batch = deepcopy(sample)
+                if is_mono:
+                    batch["waveform"] = batch["waveform"].unsqueeze(1)
+                batch["waveform"] = transform(batch["waveform"])  # , batch['vad'])
 
             # Forward Pass, Figure and waveform save
             _, _, probs, batch = model.output(batch)
@@ -284,7 +290,7 @@ def evaluation_phrases(args):
             # save waveform
             torchaudio.save(
                 join(wav_dir, name + f"_{permutation}.wav"),
-                sample["waveform"],
+                batch["waveform"][0],
                 sample_rate=model.sample_rate,
             )
 
@@ -296,7 +302,7 @@ def evaluation_phrases(args):
                 }
             p_hold, p_predictive, p_reactive = get_region_shift_probs(
                 probs,
-                sample,
+                batch,
                 completion_point="scp",
                 predictive_region=args.predictive_region,
             )
@@ -316,7 +322,7 @@ def evaluation_phrases(args):
                     }
                 p_hold, p_predictive, p_reactive = get_region_shift_probs(
                     probs,
-                    sample,
+                    batch,
                     completion_point="eot",
                     predictive_region=args.predictive_region,
                 )

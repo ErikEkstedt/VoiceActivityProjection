@@ -1,0 +1,1 @@
+{"text": "So did you drive here?", "audio_path": "dataset_phrases/audio/drive_short_male_en-US-Wavenet-J.wav", "gender": "male", "words": ["So", "did", "you", "drive", "here?"], "starts": [0.009999999776482582, 0.1991249918937683, 0.35858333110809326, 0.47620829939842224, 0.825749933719635], "size": "short", "tts": "en-US-Wavenet-J", "name": "drive_short_male_en-US-Wavenet-J"}

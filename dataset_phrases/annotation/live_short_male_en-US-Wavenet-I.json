@@ -1,0 +1,1 @@
+{"text": "Do you live by yourself?", "audio_path": "dataset_phrases/audio/live_short_male_en-US-Wavenet-I.wav", "gender": "male", "words": ["Do", "you", "live", "by", "yourself?"], "starts": [0.009999999776482582, 0.08354166895151138, 0.23854166269302368, 0.4567083418369293, 0.6505833864212036], "size": "short", "tts": "en-US-Wavenet-I", "name": "live_short_male_en-US-Wavenet-I"}

@@ -1,0 +1,1 @@
+{"text": "Are you a student?", "audio_path": "dataset_phrases/audio/student_short_male_en-US-Wavenet-J.wav", "gender": "male", "words": ["Are", "you", "a", "student?"], "starts": [0.009999999776482582, 0.08924999833106995, 0.26112496852874756, 0.3061249554157257], "size": "short", "tts": "en-US-Wavenet-J", "name": "student_short_male_en-US-Wavenet-J"}

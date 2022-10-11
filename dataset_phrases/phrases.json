@@ -1,0 +1,5705 @@
+{
+  "student": {
+    "short": {
+      "female": [
+        {
+          "text": "Are you a student?",
+          "audio_path": "dataset_phrases/audio/student_short_female_en-US-Wavenet-G.wav",
+          "gender": "female",
+          "words": ["Are", "you", "a", "student?"],
+          "starts": [
+            0.009999999776482582, 0.09566666185855865, 0.28595831990242004,
+            0.3215416371822357
+          ],
+          "size": "short",
+          "tts": "en-US-Wavenet-G",
+          "name": "student_short_female_en-US-Wavenet-G",
+          "vad": [
+            [
+              [0.0, 0.08],
+              [0.08, 0.28],
+              [0.28, 0.33],
+              [0.33, 0.78]
+            ],
+            []
+          ]
+        },
+        {
+          "text": "Are you a student?",
+          "audio_path": "dataset_phrases/audio/student_short_female_en-US-Wavenet-H.wav",
+          "gender": "female",
+          "words": ["Are", "you", "a", "student?"],
+          "starts": [
+            0.009999999776482582, 0.09154166281223297, 0.2760833203792572,
+            0.31733331084251404
+          ],
+          "size": "short",
+          "tts": "en-US-Wavenet-H",
+          "name": "student_short_female_en-US-Wavenet-H",
+          "vad": [
+            [
+              [0.0, 0.06],
+              [0.06, 0.27],
+              [0.27, 0.33],
+              [0.33, 0.76]
+            ],
+            []
+          ]
+        },
+        {
+          "text": "Are you a student?",
+          "audio_path": "dataset_phrases/audio/student_short_female_en-US-Wavenet-C.wav",
+          "gender": "female",
+          "words": ["Are", "you", "a", "student?"],
+          "starts": [
+            0.009999999776482582, 0.08999999612569809, 0.29499998688697815,
+            0.32999998331069946
+          ],
+          "size": "short",
+          "tts": "en-US-Wavenet-C",
+          "name": "student_short_female_en-US-Wavenet-C",
+          "vad": [
+            [
+              [0.0, 0.07],
+              [0.07, 0.28],
+              [0.28, 0.34],
+              [0.34, 0.84]
+            ],
+            []
+          ]
+        },
+        {
+          "text": "Are you a student?",
+          "audio_path": "dataset_phrases/audio/student_short_female_en-US-Wavenet-E.wav",
+          "gender": "female",
+          "words": ["Are", "you", "a", "student?"],
+          "starts": [
+            0.009999999776482582, 0.08500000089406967, 0.2849999964237213,
+            0.33500000834465027
+          ],
+          "size": "short",
+          "tts": "en-US-Wavenet-E",
+          "name": "student_short_female_en-US-Wavenet-E",
+          "vad": [
+            [
+              [0.0, 0.06],
+              [0.06, 0.28],
+              [0.28, 0.34],
+              [0.34, 0.84]
+            ],
+            []
+          ]
+        },
+        {
+          "text": "Are you a student?",
+          "audio_path": "dataset_phrases/audio/student_short_female_en-US-Wavenet-F.wav",
+          "gender": "female",
+          "words": ["Are", "you", "a", "student?"],
+          "starts": [
+            0.009999999776482582, 0.10999999940395355, 0.32499998807907104,
+            0.3799999952316284
+          ],
+          "size": "short",
+          "tts": "en-US-Wavenet-F",
+          "name": "student_short_female_en-US-Wavenet-F",
+          "vad": [
+            [
+              [0.0, 0.08],
+              [0.08, 0.31],
+              [0.31, 0.37],
+              [0.37, 0.93]
+            ],
+            []
+          ]
+        }
+      ],
+      "male": [
+        {
+          "text": "Are you a student?",
+          "audio_path": "dataset_phrases/audio/student_short_male_en-US-Wavenet-I.wav",
+          "gender": "male",
+          "words": ["Are", "you", "a", "student?"],
+          "starts": [
+            0.009999999776482582, 0.06499999761581421, 0.21774998307228088,
+            0.2550416588783264
+          ],
+          "size": "short",
+          "tts": "en-US-Wavenet-I",
+          "name": "student_short_male_en-US-Wavenet-I",
+          "vad": [
+            [
+              [0.0, 0.05],
+              [0.05, 0.22],
+              [0.22, 0.27],
+              [0.27, 0.7]
+            ],
+            []
+          ]
+        },
+        {
+          "text": "Are you a student?",
+          "audio_path": "dataset_phrases/audio/student_short_male_en-US-Wavenet-J.wav",
+          "gender": "male",
+          "words": ["Are", "you", "a", "student?"],
+          "starts": [
+            0.009999999776482582, 0.08924999833106995, 0.26112496852874756,
+            0.3061249554157257
+          ],
+          "size": "short",
+          "tts": "en-US-Wavenet-J",
+          "name": "student_short_male_en-US-Wavenet-J",
+          "vad": [
+            [
+              [0.0, 0.08],
+              [0.08, 0.27],
+              [0.27, 0.32],
+              [0.32, 0.78]
+            ],
+            []
+          ]
+        },
+        {
+          "text": "Are you a student?",
+          "audio_path": "dataset_phrases/audio/student_short_male_en-US-Wavenet-A.wav",
+          "gender": "male",
+          "words": ["Are", "you", "a", "student?"],
+          "starts": [
+            0.009999999776482582, 0.125, 0.3799999952316284, 0.4350000023841858
+          ],
+          "size": "short",
+          "tts": "en-US-Wavenet-A",
+          "name": "student_short_male_en-US-Wavenet-A",
+          "vad": [
+            [
+              [0.0, 0.1],
+              [0.1, 0.38],
+              [0.38, 0.44],
+              [0.44, 0.99]
+            ],
+            []
+          ]
+        },
+        {
+          "text": "Are you a student?",
+          "audio_path": "dataset_phrases/audio/student_short_male_en-US-Wavenet-B.wav",
+          "gender": "male",
+          "words": ["Are", "you", "a", "student?"],
+          "starts": [
+            0.009999999776482582, 0.11499999463558197, 0.3149999976158142,
+            0.38499999046325684
+          ],
+          "size": "short",
+          "tts": "en-US-Wavenet-B",
+          "name": "student_short_male_en-US-Wavenet-B",
+          "vad": [
+            [
+              [0.0, 0.09],
+              [0.09, 0.31],
+              [0.31, 0.39],
+              [0.39, 0.95]
+            ],
+            []
+          ]
+        },
+        {
+          "text": "Are you a student?",
+          "audio_path": "dataset_phrases/audio/student_short_male_en-US-Wavenet-D.wav",
+          "gender": "male",
+          "words": ["Are", "you", "a", "student?"],
+          "starts": [
+            0.009999999776482582, 0.07000000029802322, 0.22999998927116394,
+            0.26499998569488525
+          ],
+          "size": "short",
+          "tts": "en-US-Wavenet-D",
+          "name": "student_short_male_en-US-Wavenet-D",
+          "vad": [
+            [
+              [0.0, 0.05],
+              [0.05, 0.23],
+              [0.23, 0.28],
+              [0.28, 0.73]
+            ],
+            []
+          ]
+        }
+      ]
+    },
+    "long": {
+      "female": [
+        {
+          "text": "Are you a student here at this university?",
+          "audio_path": "dataset_phrases/audio/student_long_female_en-US-Wavenet-G.wav",
+          "gender": "female",
+          "words": [
+            "Are",
+            "you",
+            "a",
+            "student",
+            "here",
+            "at",
+            "this",
+            "university?"
+          ],
+          "starts": [
+            0.009999999776482582, 0.08537499606609344, 0.26220834255218506,
+            0.3022083342075348, 0.7422499656677246, 1.016708254814148,
+            1.1381666660308838, 1.331708312034607
+          ],
+          "size": "long",
+          "tts": "en-US-Wavenet-G",
+          "name": "student_long_female_en-US-Wavenet-G",
+          "vad": [
+            [
+              [0.0, 0.07],
+              [0.07, 0.26],
+              [0.26, 0.31],
+              [0.31, 0.8],
+              [0.8, 1.0],
+              [1.0, 1.13],
+              [1.13, 1.32],
+              [1.32, 1.98]
+            ],
+            []
+          ]
+        },
+        {
+          "text": "Are you a student here at this university?",
+          "audio_path": "dataset_phrases/audio/student_long_female_en-US-Wavenet-H.wav",
+          "gender": "female",
+          "words": [
+            "Are",
+            "you",
+            "a",
+            "student",
+            "here",
+            "at",
+            "this",
+            "university?"
+          ],
+          "starts": [
+            0.009999999776482582, 0.08100000023841858, 0.26366665959358215,
+            0.3086666464805603, 0.7095000147819519, 0.93833327293396,
+            1.0537915229797363, 1.2464998960494995
+          ],
+          "size": "long",
+          "tts": "en-US-Wavenet-H",
+          "name": "student_long_female_en-US-Wavenet-H",
+          "vad": [
+            [
+              [0.0, 0.04],
+              [0.04, 0.26],
+              [0.26, 0.32],
+              [0.32, 0.75],
+              [0.75, 0.92],
+              [0.92, 1.05],
+              [1.05, 1.24],
+              [1.24, 1.89]
+            ],
+            []
+          ]
+        },
+        {
+          "text": "Are you a student here at this university?",
+          "audio_path": "dataset_phrases/audio/student_long_female_en-US-Wavenet-C.wav",
+          "gender": "female",
+          "words": [
+            "Are",
+            "you",
+            "a",
+            "student",
+            "here",
+            "at",
+            "this",
+            "university?"
+          ],
+          "starts": [
+            0.009999999776482582, 0.07999999821186066, 0.28999999165534973,
+            0.3199999928474426, 0.7621666789054871, 1.062166690826416,
+            1.19308340549469, 1.3880833387374878
+          ],
+          "size": "long",
+          "tts": "en-US-Wavenet-C",
+          "name": "student_long_female_en-US-Wavenet-C",
+          "vad": [
+            [
+              [0.0, 0.06],
+              [0.06, 0.28],
+              [0.28, 0.33],
+              [0.33, 0.81],
+              [0.81, 1.02],
+              [1.02, 1.19],
+              [1.19, 1.38],
+              [1.38, 2.07]
+            ],
+            []
+          ]
+        },
+        {
+          "text": "Are you a student here at this university?",
+          "audio_path": "dataset_phrases/audio/student_long_female_en-US-Wavenet-E.wav",
+          "gender": "female",
+          "words": [
+            "Are",
+            "you",
+            "a",
+            "student",
+            "here",
+            "at",
+            "this",
+            "university?"
+          ],
+          "starts": [
+            0.009999999776482582, 0.07999999821186066, 0.26499998569488525,
+            0.3099999725818634, 0.7637916803359985, 1.0587916374206543,
+            1.2030832767486572, 1.4030832052230835
+          ],
+          "size": "long",
+          "tts": "en-US-Wavenet-E",
+          "name": "student_long_female_en-US-Wavenet-E",
+          "vad": [
+            [
+              [0.0, 0.06],
+              [0.06, 0.26],
+              [0.26, 0.32],
+              [0.32, 0.85],
+              [0.85, 1.03],
+              [1.03, 1.2],
+              [1.2, 1.39],
+              [1.39, 2.13]
+            ],
+            []
+          ]
+        },
+        {
+          "text": "Are you a student here at this university?",
+          "audio_path": "dataset_phrases/audio/student_long_female_en-US-Wavenet-F.wav",
+          "gender": "female",
+          "words": [
+            "Are",
+            "you",
+            "a",
+            "student",
+            "here",
+            "at",
+            "this",
+            "university?"
+          ],
+          "starts": [
+            0.009999999776482582, 0.10999999940395355, 0.3199999928474426,
+            0.3700000047683716, 0.8111666440963745, 1.066166639328003,
+            1.214583396911621, 1.4045833349227905
+          ],
+          "size": "long",
+          "tts": "en-US-Wavenet-F",
+          "name": "student_long_female_en-US-Wavenet-F",
+          "vad": [
+            [
+              [0.0, 0.08],
+              [0.08, 0.33],
+              [0.33, 0.36],
+              [0.36, 0.87],
+              [0.87, 1.03],
+              [1.03, 1.21],
+              [1.21, 1.4],
+              [1.4, 2.11]
+            ],
+            []
+          ]
+        }
+      ],
+      "male": [
+        {
+          "text": "Are you a student here at this university?",
+          "audio_path": "dataset_phrases/audio/student_long_male_en-US-Wavenet-I.wav",
+          "gender": "male",
+          "words": [
+            "Are",
+            "you",
+            "a",
+            "student",
+            "here",
+            "at",
+            "this",
+            "university?"
+          ],
+          "starts": [
+            0.009999999776482582, 0.06499999761581421, 0.21591666340827942,
+            0.25091665983200073, 0.65625, 0.9232500195503235,
+            1.0531667470932007, 1.233875036239624
+          ],
+          "size": "long",
+          "tts": "en-US-Wavenet-I",
+          "name": "student_long_male_en-US-Wavenet-I",
+          "vad": [
+            [
+              [0.0, 0.05],
+              [0.05, 0.21],
+              [0.21, 0.26],
+              [0.26, 0.72],
+              [0.72, 0.91],
+              [0.91, 1.04],
+              [1.04, 1.23],
+              [1.23, 1.83]
+            ],
+            []
+          ]
+        },
+        {
+          "text": "Are you a student here at this university?",
+          "audio_path": "dataset_phrases/audio/student_long_male_en-US-Wavenet-J.wav",
+          "gender": "male",
+          "words": [
+            "Are",
+            "you",
+            "a",
+            "student",
+            "here",
+            "at",
+            "this",
+            "university?"
+          ],
+          "starts": [
+            0.009999999776482582, 0.09354165941476822, 0.25949999690055847,
+            0.2944999933242798, 0.7334166765213013, 1.0151666402816772,
+            1.1330416202545166, 1.3275415897369385
+          ],
+          "size": "long",
+          "tts": "en-US-Wavenet-J",
+          "name": "student_long_male_en-US-Wavenet-J",
+          "vad": [
+            [
+              [0.0, 0.08],
+              [0.08, 0.26],
+              [0.26, 0.3],
+              [0.3, 0.8],
+              [0.8, 1.0],
+              [1.0, 1.13],
+              [1.13, 1.32],
+              [1.32, 1.95]
+            ],
+            []
+          ]
+        },
+        {
+          "text": "Are you a student here at this university?",
+          "audio_path": "dataset_phrases/audio/student_long_male_en-US-Wavenet-A.wav",
+          "gender": "male",
+          "words": [
+            "Are",
+            "you",
+            "a",
+            "student",
+            "here",
+            "at",
+            "this",
+            "university?"
+          ],
+          "starts": [
+            0.009999999776482582, 0.10999999940395355, 0.3499999940395355,
+            0.4000000059604645, 0.8763333559036255, 1.1763333082199097,
+            1.32979154586792, 1.539791464805603
+          ],
+          "size": "long",
+          "tts": "en-US-Wavenet-A",
+          "name": "student_long_male_en-US-Wavenet-A",
+          "vad": [
+            [
+              [0.0, 0.09],
+              [0.09, 0.34],
+              [0.34, 0.41],
+              [0.41, 0.93],
+              [0.93, 1.15],
+              [1.15, 1.32],
+              [1.32, 1.53],
+              [1.53, 2.24]
+            ],
+            []
+          ]
+        },
+        {
+          "text": "Are you a student here at this university?",
+          "audio_path": "dataset_phrases/audio/student_long_male_en-US-Wavenet-B.wav",
+          "gender": "male",
+          "words": [
+            "Are",
+            "you",
+            "a",
+            "student",
+            "here",
+            "at",
+            "this",
+            "university?"
+          ],
+          "starts": [
+            0.009999999776482582, 0.10499999672174454, 0.28999999165534973,
+            0.3449999988079071, 0.8175416588783264, 1.1225416660308838,
+            1.2875417470932007, 1.5225416421890259
+          ],
+          "size": "long",
+          "tts": "en-US-Wavenet-B",
+          "name": "student_long_male_en-US-Wavenet-B",
+          "vad": [
+            [
+              [0.0, 0.08],
+              [0.08, 0.29],
+              [0.29, 0.35],
+              [0.35, 0.88],
+              [0.88, 1.11],
+              [1.11, 1.23],
+              [1.3, 1.5],
+              [1.5, 2.27]
+            ],
+            []
+          ]
+        },
+        {
+          "text": "Are you a student here at this university?",
+          "audio_path": "dataset_phrases/audio/student_long_male_en-US-Wavenet-D.wav",
+          "gender": "male",
+          "words": [
+            "Are",
+            "you",
+            "a",
+            "student",
+            "here",
+            "at",
+            "this",
+            "university?"
+          ],
+          "starts": [
+            0.009999999776482582, 0.06499999761581421, 0.22499999403953552,
+            0.25999999046325684, 0.6944166421890259, 0.9494166374206543,
+            1.0844166278839111, 1.2529165744781494
+          ],
+          "size": "long",
+          "tts": "en-US-Wavenet-D",
+          "name": "student_long_male_en-US-Wavenet-D",
+          "vad": [
+            [
+              [0.0, 0.05],
+              [0.05, 0.22],
+              [0.22, 0.27],
+              [0.27, 0.73],
+              [0.73, 0.92],
+              [0.92, 1.08],
+              [1.08, 1.24],
+              [1.24, 1.92]
+            ],
+            []
+          ]
+        }
+      ]
+    }
+  },
+  "psychology": {
+    "short": {
+      "female": [
+        {
+          "text": "Do you study psychology?",
+          "audio_path": "dataset_phrases/audio/psychology_short_female_en-US-Wavenet-G.wav",
+          "gender": "female",
+          "words": ["Do", "you", "study", "psychology?"],
+          "starts": [
+            0.009999999776482582, 0.09941665828227997, 0.2434583306312561,
+            0.5955417156219482
+          ],
+          "size": "short",
+          "tts": "en-US-Wavenet-G",
+          "name": "psychology_short_female_en-US-Wavenet-G",
+          "vad": [
+            [
+              [0.0, 0.11],
+              [0.11, 0.24],
+              [0.24, 0.6],
+              [0.6, 1.34]
+            ],
+            []
+          ]
+        },
+        {
+          "text": "Do you study psychology?",
+          "audio_path": "dataset_phrases/audio/psychology_short_female_en-US-Wavenet-H.wav",
+          "gender": "female",
+          "words": ["Do", "you", "study", "psychology?"],
+          "starts": [
+            0.009999999776482582, 0.08816666156053543, 0.24199999868869781,
+            0.5532083511352539
+          ],
+          "size": "short",
+          "tts": "en-US-Wavenet-H",
+          "name": "psychology_short_female_en-US-Wavenet-H",
+          "vad": [
+            [
+              [0.0, 0.09],
+              [0.09, 0.24],
+              [0.24, 0.56],
+              [0.56, 1.27]
+            ],
+            []
+          ]
+        },
+        {
+          "text": "Do you study psychology?",
+          "audio_path": "dataset_phrases/audio/psychology_short_female_en-US-Wavenet-C.wav",
+          "gender": "female",
+          "words": ["Do", "you", "study", "psychology?"],
+          "starts": [
+            0.009999999776482582, 0.08999999612569809, 0.23999999463558197,
+            0.5799999833106995
+          ],
+          "size": "short",
+          "tts": "en-US-Wavenet-C",
+          "name": "psychology_short_female_en-US-Wavenet-C",
+          "vad": [
+            [
+              [0.0, 0.11],
+              [0.11, 0.24],
+              [0.24, 0.57],
+              [0.57, 1.37]
+            ],
+            []
+          ]
+        },
+        {
+          "text": "Do you study psychology?",
+          "audio_path": "dataset_phrases/audio/psychology_short_female_en-US-Wavenet-E.wav",
+          "gender": "female",
+          "words": ["Do", "you", "study", "psychology?"],
+          "starts": [
+            0.009999999776482582, 0.06499999761581421, 0.22499999403953552,
+            0.574999988079071
+          ],
+          "size": "short",
+          "tts": "en-US-Wavenet-E",
+          "name": "psychology_short_female_en-US-Wavenet-E",
+          "vad": [
+            [
+              [0.0, 0.09],
+              [0.09, 0.21],
+              [0.21, 0.57],
+              [0.57, 1.4]
+            ],
+            []
+          ]
+        },
+        {
+          "text": "Do you study psychology?",
+          "audio_path": "dataset_phrases/audio/psychology_short_female_en-US-Wavenet-F.wav",
+          "gender": "female",
+          "words": ["Do", "you", "study", "psychology?"],
+          "starts": [
+            0.009999999776482582, 0.08500000089406967, 0.2549999952316284,
+            0.6050832867622375
+          ],
+          "size": "short",
+          "tts": "en-US-Wavenet-F",
+          "name": "psychology_short_female_en-US-Wavenet-F",
+          "vad": [
+            [
+              [0.0, 0.11],
+              [0.11, 0.24],
+              [0.24, 0.59],
+              [0.59, 1.41]
+            ],
+            []
+          ]
+        }
+      ],
+      "male": [
+        {
+          "text": "Do you study psychology?",
+          "audio_path": "dataset_phrases/audio/psychology_short_male_en-US-Wavenet-I.wav",
+          "gender": "male",
+          "words": ["Do", "you", "study", "psychology?"],
+          "starts": [
+            0.009999999776482582, 0.0833333358168602, 0.21558332443237305,
+            0.5228750109672546
+          ],
+          "size": "short",
+          "tts": "en-US-Wavenet-I",
+          "name": "psychology_short_male_en-US-Wavenet-I",
+          "vad": [
+            [
+              [0.0, 0.09],
+              [0.09, 0.22],
+              [0.22, 0.52],
+              [0.52, 1.22]
+            ],
+            []
+          ]
+        },
+        {
+          "text": "Do you study psychology?",
+          "audio_path": "dataset_phrases/audio/psychology_short_male_en-US-Wavenet-J.wav",
+          "gender": "male",
+          "words": ["Do", "you", "study", "psychology?"],
+          "starts": [
+            0.009999999776482582, 0.11237499117851257, 0.2603333294391632,
+            0.6056666374206543
+          ],
+          "size": "short",
+          "tts": "en-US-Wavenet-J",
+          "name": "psychology_short_male_en-US-Wavenet-J",
+          "vad": [
+            [
+              [0.04, 0.12],
+              [0.12, 0.26],
+              [0.26, 0.6],
+              [0.6, 1.33]
+            ],
+            []
+          ]
+        },
+        {
+          "text": "Do you study psychology?",
+          "audio_path": "dataset_phrases/audio/psychology_short_male_en-US-Wavenet-A.wav",
+          "gender": "male",
+          "words": ["Do", "you", "study", "psychology?"],
+          "starts": [
+            0.009999999776482582, 0.06999999284744263, 0.28999999165534973,
+            0.6734582781791687
+          ],
+          "size": "short",
+          "tts": "en-US-Wavenet-A",
+          "name": "psychology_short_male_en-US-Wavenet-A",
+          "vad": [
+            [
+              [0.0, 0.09],
+              [0.09, 0.29],
+              [0.29, 0.67],
+              [0.67, 1.5]
+            ],
+            []
+          ]
+        },
+        {
+          "text": "Do you study psychology?",
+          "audio_path": "dataset_phrases/audio/psychology_short_male_en-US-Wavenet-B.wav",
+          "gender": "male",
+          "words": ["Do", "you", "study", "psychology?"],
+          "starts": [
+            0.009999999776482582, 0.10999999940395355, 0.28999999165534973,
+            0.6695833206176758
+          ],
+          "size": "short",
+          "tts": "en-US-Wavenet-B",
+          "name": "psychology_short_male_en-US-Wavenet-B",
+          "vad": [
+            [
+              [0.04, 0.11],
+              [0.11, 0.29],
+              [0.29, 0.66],
+              [0.66, 1.47]
+            ],
+            []
+          ]
+        },
+        {
+          "text": "Do you study psychology?",
+          "audio_path": "dataset_phrases/audio/psychology_short_male_en-US-Wavenet-D.wav",
+          "gender": "male",
+          "words": ["Do", "you", "study", "psychology?"],
+          "starts": [
+            0.009999999776482582, 0.06499999761581421, 0.19499999284744263,
+            0.5049999952316284
+          ],
+          "size": "short",
+          "tts": "en-US-Wavenet-D",
+          "name": "psychology_short_male_en-US-Wavenet-D",
+          "vad": [
+            [
+              [0.0, 0.09],
+              [0.09, 0.19],
+              [0.19, 0.5],
+              [0.5, 1.29]
+            ],
+            []
+          ]
+        }
+      ]
+    },
+    "long": {
+      "female": [
+        {
+          "text": "Do you study psychology here at this university?",
+          "audio_path": "dataset_phrases/audio/psychology_long_female_en-US-Wavenet-G.wav",
+          "gender": "female",
+          "words": [
+            "Do",
+            "you",
+            "study",
+            "psychology",
+            "here",
+            "at",
+            "this",
+            "university?"
+          ],
+          "starts": [
+            0.009999999776482582, 0.09429166465997696, 0.23283332586288452,
+            0.5612083077430725, 1.2455832958221436, 1.4924583435058594,
+            1.6202083826065063, 1.8013333082199097
+          ],
+          "size": "long",
+          "tts": "en-US-Wavenet-G",
+          "name": "psychology_long_female_en-US-Wavenet-G",
+          "vad": [
+            [
+              [0.03, 0.11],
+              [0.11, 0.23],
+              [0.23, 0.56],
+              [0.56, 1.24],
+              [1.24, 1.47],
+              [1.47, 1.62],
+              [1.62, 1.8],
+              [1.8, 2.42]
+            ],
+            []
+          ]
+        },
+        {
+          "text": "Do you study psychology here at this university?",
+          "audio_path": "dataset_phrases/audio/psychology_long_female_en-US-Wavenet-H.wav",
+          "gender": "female",
+          "words": [
+            "Do",
+            "you",
+            "study",
+            "psychology",
+            "here",
+            "at",
+            "this",
+            "university?"
+          ],
+          "starts": [
+            0.009999999776482582, 0.07750000059604645, 0.242291659116745,
+            0.5515416860580444, 1.2357499599456787, 1.4312500953674316,
+            1.5609583854675293, 1.7496249675750732
+          ],
+          "size": "long",
+          "tts": "en-US-Wavenet-H",
+          "name": "psychology_long_female_en-US-Wavenet-H",
+          "vad": [
+            [
+              [0.0, 0.08],
+              [0.08, 0.24],
+              [0.24, 0.56],
+              [0.56, 1.24],
+              [1.24, 1.41],
+              [1.41, 1.55],
+              [1.55, 1.74],
+              [1.74, 2.39]
+            ],
+            []
+          ]
+        },
+        {
+          "text": "Do you study psychology here at this university?",
+          "audio_path": "dataset_phrases/audio/psychology_long_female_en-US-Wavenet-C.wav",
+          "gender": "female",
+          "words": [
+            "Do",
+            "you",
+            "study",
+            "psychology",
+            "here",
+            "at",
+            "this",
+            "university?"
+          ],
+          "starts": [
+            0.009999999776482582, 0.08500000089406967, 0.24000000953674316,
+            0.5600000023841858, 1.3108333349227905, 1.590833306312561,
+            1.7308332920074463, 1.9284582138061523
+          ],
+          "size": "long",
+          "tts": "en-US-Wavenet-C",
+          "name": "psychology_long_female_en-US-Wavenet-C",
+          "vad": [
+            [
+              [0.0, 0.11],
+              [0.11, 0.24],
+              [0.24, 0.55],
+              [0.55, 1.28],
+              [1.28, 1.55],
+              [1.55, 1.73],
+              [1.73, 1.92],
+              [1.92, 2.61]
+            ],
+            []
+          ]
+        },
+        {
+          "text": "Do you study psychology here at this university?",
+          "audio_path": "dataset_phrases/audio/psychology_long_female_en-US-Wavenet-E.wav",
+          "gender": "female",
+          "words": [
+            "Do",
+            "you",
+            "study",
+            "psychology",
+            "here",
+            "at",
+            "this",
+            "university?"
+          ],
+          "starts": [
+            0.009999999776482582, 0.06499999761581421, 0.2199999988079071,
+            0.5600000023841858, 1.3102917671203613, 1.5802918672561646,
+            1.7252918481826782, 1.9279167652130127
+          ],
+          "size": "long",
+          "tts": "en-US-Wavenet-E",
+          "name": "psychology_long_female_en-US-Wavenet-E",
+          "vad": [
+            [
+              [0.0, 0.09],
+              [0.09, 0.21],
+              [0.21, 0.55],
+              [0.55, 1.3],
+              [1.3, 1.55],
+              [1.55, 1.72],
+              [1.72, 1.92],
+              [1.92, 2.66]
+            ],
+            []
+          ]
+        },
+        {
+          "text": "Do you study psychology here at this university?",
+          "audio_path": "dataset_phrases/audio/psychology_long_female_en-US-Wavenet-F.wav",
+          "gender": "female",
+          "words": [
+            "Do",
+            "you",
+            "study",
+            "psychology",
+            "here",
+            "at",
+            "this",
+            "university?"
+          ],
+          "starts": [
+            0.009999999776482582, 0.07999999821186066, 0.2549999952316284,
+            0.5799999833106995, 1.3182499408721924, 1.5532499551773071,
+            1.7032500505447388, 1.890874981880188
+          ],
+          "size": "long",
+          "tts": "en-US-Wavenet-F",
+          "name": "psychology_long_female_en-US-Wavenet-F",
+          "vad": [
+            [
+              [0.0, 0.1],
+              [0.1, 0.24],
+              [0.24, 0.57],
+              [0.57, 1.3],
+              [1.3, 1.52],
+              [1.52, 1.69],
+              [1.69, 1.89],
+              [1.89, 2.61]
+            ],
+            []
+          ]
+        }
+      ],
+      "male": [
+        {
+          "text": "Do you study psychology here at this university?",
+          "audio_path": "dataset_phrases/audio/psychology_long_male_en-US-Wavenet-I.wav",
+          "gender": "male",
+          "words": [
+            "Do",
+            "you",
+            "study",
+            "psychology",
+            "here",
+            "at",
+            "this",
+            "university?"
+          ],
+          "starts": [
+            0.009999999776482582, 0.08495832979679108, 0.21016666293144226,
+            0.5018750429153442, 1.1761667728424072, 1.418291687965393,
+            1.5515000820159912, 1.7204583883285522
+          ],
+          "size": "long",
+          "tts": "en-US-Wavenet-I",
+          "name": "psychology_long_male_en-US-Wavenet-I",
+          "vad": [
+            [
+              [0.0, 0.1],
+              [0.1, 0.21],
+              [0.21, 0.5],
+              [0.5, 1.16],
+              [1.16, 1.41],
+              [1.41, 1.54],
+              [1.54, 1.71],
+              [1.71, 2.32]
+            ],
+            []
+          ]
+        },
+        {
+          "text": "Do you study psychology here at this university?",
+          "audio_path": "dataset_phrases/audio/psychology_long_male_en-US-Wavenet-J.wav",
+          "gender": "male",
+          "words": [
+            "Do",
+            "you",
+            "study",
+            "psychology",
+            "here",
+            "at",
+            "this",
+            "university?"
+          ],
+          "starts": [
+            0.009999999776482582, 0.11158332973718643, 0.2565416395664215,
+            0.5732499361038208, 1.2615833282470703, 1.5074583292007446,
+            1.6177083253860474, 1.8110415935516357
+          ],
+          "size": "long",
+          "tts": "en-US-Wavenet-J",
+          "name": "psychology_long_male_en-US-Wavenet-J",
+          "vad": [
+            [
+              [0.03, 0.12],
+              [0.12, 0.26],
+              [0.26, 0.57],
+              [0.57, 1.25],
+              [1.25, 1.49],
+              [1.49, 1.62],
+              [1.62, 1.81],
+              [1.81, 2.42]
+            ],
+            []
+          ]
+        },
+        {
+          "text": "Do you study psychology here at this university?",
+          "audio_path": "dataset_phrases/audio/psychology_long_male_en-US-Wavenet-A.wav",
+          "gender": "male",
+          "words": [
+            "Do",
+            "you",
+            "study",
+            "psychology",
+            "here",
+            "at",
+            "this",
+            "university?"
+          ],
+          "starts": [
+            0.009999999776482582, 0.06499999761581421, 0.28999999165534973,
+            0.6497500538825989, 1.4412500858306885, 1.7012500762939453,
+            1.8482500314712524, 2.0532498359680176
+          ],
+          "size": "long",
+          "tts": "en-US-Wavenet-A",
+          "name": "psychology_long_male_en-US-Wavenet-A",
+          "vad": [
+            [
+              [0.0, 0.08],
+              [0.08, 0.29],
+              [0.29, 0.65],
+              [0.65, 1.44],
+              [1.44, 1.67],
+              [1.67, 1.84],
+              [1.84, 2.04],
+              [2.04, 2.75]
+            ],
+            []
+          ]
+        },
+        {
+          "text": "Do you study psychology here at this university?",
+          "audio_path": "dataset_phrases/audio/psychology_long_male_en-US-Wavenet-B.wav",
+          "gender": "male",
+          "words": [
+            "Do",
+            "you",
+            "study",
+            "psychology",
+            "here",
+            "at",
+            "this",
+            "university?"
+          ],
+          "starts": [
+            0.009999999776482582, 0.10499999672174454, 0.2800000011920929,
+            0.6341249942779541, 1.4007083177566528, 1.6707082986831665,
+            1.840416669845581, 2.0754165649414062
+          ],
+          "size": "long",
+          "tts": "en-US-Wavenet-B",
+          "name": "psychology_long_male_en-US-Wavenet-B",
+          "vad": [
+            [
+              [0.03, 0.11],
+              [0.11, 0.27],
+              [0.27, 0.62],
+              [0.62, 1.38],
+              [1.38, 1.65],
+              [1.65, 1.78],
+              [1.85, 2.06],
+              [2.06, 2.8]
+            ],
+            []
+          ]
+        },
+        {
+          "text": "Do you study psychology here at this university?",
+          "audio_path": "dataset_phrases/audio/psychology_long_male_en-US-Wavenet-D.wav",
+          "gender": "male",
+          "words": [
+            "Do",
+            "you",
+            "study",
+            "psychology",
+            "here",
+            "at",
+            "this",
+            "university?"
+          ],
+          "starts": [
+            0.009999999776482582, 0.06499999761581421, 0.20499998331069946, 0.5,
+            1.2638750076293945, 1.5038750171661377, 1.6388750076293945,
+            1.7932499647140503
+          ],
+          "size": "long",
+          "tts": "en-US-Wavenet-D",
+          "name": "psychology_long_male_en-US-Wavenet-D",
+          "vad": [
+            [
+              [0.0, 0.09],
+              [0.09, 0.2],
+              [0.2, 0.5],
+              [0.5, 1.26],
+              [1.26, 1.47],
+              [1.47, 1.63],
+              [1.63, 1.79],
+              [1.79, 2.44]
+            ],
+            []
+          ]
+        }
+      ]
+    }
+  },
+  "first_year": {
+    "short": {
+      "female": [
+        {
+          "text": "Are you a first year student?",
+          "audio_path": "dataset_phrases/audio/first_year_short_female_en-US-Wavenet-G.wav",
+          "gender": "female",
+          "words": ["Are", "you", "a", "first", "year", "student?"],
+          "starts": [
+            0.009999999776482582, 0.09266666322946548, 0.2762083113193512,
+            0.33274999260902405, 0.6860833168029785, 0.8319582939147949
+          ],
+          "size": "short",
+          "tts": "en-US-Wavenet-G",
+          "name": "first_year_short_female_en-US-Wavenet-G",
+          "vad": [
+            [
+              [0.0, 0.08],
+              [0.08, 0.28],
+              [0.28, 0.33],
+              [0.33, 0.68],
+              [0.68, 0.83],
+              [0.83, 1.27]
+            ],
+            []
+          ]
+        },
+        {
+          "text": "Are you a first year student?",
+          "audio_path": "dataset_phrases/audio/first_year_short_female_en-US-Wavenet-H.wav",
+          "gender": "female",
+          "words": ["Are", "you", "a", "first", "year", "student?"],
+          "starts": [
+            0.009999999776482582, 0.08787499368190765, 0.281374990940094,
+            0.3335416615009308, 0.6653749942779541, 0.7973750233650208
+          ],
+          "size": "short",
+          "tts": "en-US-Wavenet-H",
+          "name": "first_year_short_female_en-US-Wavenet-H",
+          "vad": [
+            [
+              [0.0, 0.05],
+              [0.05, 0.28],
+              [0.28, 0.34],
+              [0.34, 0.66],
+              [0.66, 0.8],
+              [0.8, 1.21]
+            ],
+            []
+          ]
+        },
+        {
+          "text": "Are you a first year student?",
+          "audio_path": "dataset_phrases/audio/first_year_short_female_en-US-Wavenet-C.wav",
+          "gender": "female",
+          "words": ["Are", "you", "a", "first", "year", "student?"],
+          "starts": [
+            0.009999999776482582, 0.08500000089406967, 0.29499998688697815,
+            0.3399999737739563, 0.6953332424163818, 0.8353332877159119
+          ],
+          "size": "short",
+          "tts": "en-US-Wavenet-C",
+          "name": "first_year_short_female_en-US-Wavenet-C",
+          "vad": [
+            [
+              [0.0, 0.07],
+              [0.07, 0.27],
+              [0.27, 0.34],
+              [0.34, 0.69],
+              [0.69, 0.84],
+              [0.84, 1.32]
+            ],
+            []
+          ]
+        },
+        {
+          "text": "Are you a first year student?",
+          "audio_path": "dataset_phrases/audio/first_year_short_female_en-US-Wavenet-E.wav",
+          "gender": "female",
+          "words": ["Are", "you", "a", "first", "year", "student?"],
+          "starts": [
+            0.009999999776482582, 0.07999999821186066, 0.26999998092651367,
+            0.3349999785423279, 0.7149583101272583, 0.859958291053772
+          ],
+          "size": "short",
+          "tts": "en-US-Wavenet-E",
+          "name": "first_year_short_female_en-US-Wavenet-E",
+          "vad": [
+            [
+              [0.0, 0.06],
+              [0.06, 0.26],
+              [0.26, 0.33],
+              [0.33, 0.7],
+              [0.7, 0.87],
+              [0.87, 1.35]
+            ],
+            []
+          ]
+        },
+        {
+          "text": "Are you a first year student?",
+          "audio_path": "dataset_phrases/audio/first_year_short_female_en-US-Wavenet-F.wav",
+          "gender": "female",
+          "words": ["Are", "you", "a", "first", "year", "student?"],
+          "starts": [
+            0.009999999776482582, 0.10499999672174454, 0.3199999928474426,
+            0.38999998569488525, 0.7641249299049377, 0.8991249203681946
+          ],
+          "size": "short",
+          "tts": "en-US-Wavenet-F",
+          "name": "first_year_short_female_en-US-Wavenet-F",
+          "vad": [
+            [
+              [0.0, 0.08],
+              [0.08, 0.34],
+              [0.34, 0.37],
+              [0.37, 0.75],
+              [0.75, 0.89],
+              [0.89, 1.42]
+            ],
+            []
+          ]
+        }
+      ],
+      "male": [
+        {
+          "text": "Are you a first year student?",
+          "audio_path": "dataset_phrases/audio/first_year_short_male_en-US-Wavenet-I.wav",
+          "gender": "male",
+          "words": ["Are", "you", "a", "first", "year", "student?"],
+          "starts": [
+            0.009999999776482582, 0.06499999761581421, 0.22362498939037323,
+            0.27129167318344116, 0.6012083292007446, 0.7568749785423279
+          ],
+          "size": "short",
+          "tts": "en-US-Wavenet-I",
+          "name": "first_year_short_male_en-US-Wavenet-I",
+          "vad": [
+            [
+              [0.0, 0.05],
+              [0.05, 0.23],
+              [0.23, 0.27],
+              [0.27, 0.6],
+              [0.6, 0.75],
+              [0.75, 1.17]
+            ],
+            []
+          ]
+        },
+        {
+          "text": "Are you a first year student?",
+          "audio_path": "dataset_phrases/audio/first_year_short_male_en-US-Wavenet-J.wav",
+          "gender": "male",
+          "words": ["Are", "you", "a", "first", "year", "student?"],
+          "starts": [
+            0.009999999776482582, 0.09474999457597733, 0.2682083249092102,
+            0.31320831179618835, 0.6801666021347046, 0.8508749604225159
+          ],
+          "size": "short",
+          "tts": "en-US-Wavenet-J",
+          "name": "first_year_short_male_en-US-Wavenet-J",
+          "vad": [
+            [
+              [0.0, 0.08],
+              [0.08, 0.27],
+              [0.27, 0.32],
+              [0.32, 0.68],
+              [0.68, 0.85],
+              [0.85, 1.28]
+            ],
+            []
+          ]
+        },
+        {
+          "text": "Are you a first year student?",
+          "audio_path": "dataset_phrases/audio/first_year_short_male_en-US-Wavenet-A.wav",
+          "gender": "male",
+          "words": ["Are", "you", "a", "first", "year", "student?"],
+          "starts": [
+            0.009999999776482582, 0.11499999463558197, 0.35999998450279236,
+            0.429999977350235, 0.8342499732971191, 0.9942499399185181
+          ],
+          "size": "short",
+          "tts": "en-US-Wavenet-A",
+          "name": "first_year_short_male_en-US-Wavenet-A",
+          "vad": [
+            [
+              [0.0, 0.09],
+              [0.09, 0.36],
+              [0.36, 0.43],
+              [0.43, 0.82],
+              [0.82, 1.0],
+              [1.0, 1.48]
+            ],
+            []
+          ]
+        },
+        {
+          "text": "Are you a first year student?",
+          "audio_path": "dataset_phrases/audio/first_year_short_male_en-US-Wavenet-B.wav",
+          "gender": "male",
+          "words": ["Are", "you", "a", "first", "year", "student?"],
+          "starts": [
+            0.009999999776482582, 0.10999999940395355, 0.29500001668930054,
+            0.3800000250339508, 0.7591249942779541, 0.9591249823570251
+          ],
+          "size": "short",
+          "tts": "en-US-Wavenet-B",
+          "name": "first_year_short_male_en-US-Wavenet-B",
+          "vad": [
+            [
+              [0.0, 0.09],
+              [0.09, 0.3],
+              [0.3, 0.37],
+              [0.37, 0.74],
+              [0.74, 0.96],
+              [0.96, 1.49]
+            ],
+            []
+          ]
+        },
+        {
+          "text": "Are you a first year student?",
+          "audio_path": "dataset_phrases/audio/first_year_short_male_en-US-Wavenet-D.wav",
+          "gender": "male",
+          "words": ["Are", "you", "a", "first", "year", "student?"],
+          "starts": [
+            0.009999999776482582, 0.07000000029802322, 0.22999998927116394,
+            0.2800000011920929, 0.6137083172798157, 0.7437083125114441
+          ],
+          "size": "short",
+          "tts": "en-US-Wavenet-D",
+          "name": "first_year_short_male_en-US-Wavenet-D",
+          "vad": [
+            [
+              [0.0, 0.05],
+              [0.05, 0.22],
+              [0.22, 0.27],
+              [0.27, 0.61],
+              [0.61, 0.75],
+              [0.75, 1.17]
+            ],
+            []
+          ]
+        }
+      ]
+    },
+    "long": {
+      "female": [
+        {
+          "text": "Are you a first year student here at this university?",
+          "audio_path": "dataset_phrases/audio/first_year_long_female_en-US-Wavenet-G.wav",
+          "gender": "female",
+          "words": [
+            "Are",
+            "you",
+            "a",
+            "first",
+            "year",
+            "student",
+            "here",
+            "at",
+            "this",
+            "university?"
+          ],
+          "starts": [
+            0.009999999776482582, 0.08520832657814026, 0.2680416703224182,
+            0.3204583525657654, 0.6744999885559082, 0.8106249570846558,
+            1.2248748540878296, 1.4887917041778564, 1.6119167804718018,
+            1.796375036239624
+          ],
+          "size": "long",
+          "tts": "en-US-Wavenet-G",
+          "name": "first_year_long_female_en-US-Wavenet-G",
+          "vad": [
+            [
+              [0.0, 0.07],
+              [0.07, 0.27],
+              [0.27, 0.32],
+              [0.32, 0.67],
+              [0.67, 0.81],
+              [0.81, 1.27],
+              [1.27, 1.47],
+              [1.47, 1.61],
+              [1.61, 1.79],
+              [1.79, 2.41]
+            ],
+            []
+          ]
+        },
+        {
+          "text": "Are you a first year student here at this university?",
+          "audio_path": "dataset_phrases/audio/first_year_long_female_en-US-Wavenet-H.wav",
+          "gender": "female",
+          "words": [
+            "Are",
+            "you",
+            "a",
+            "first",
+            "year",
+            "student",
+            "here",
+            "at",
+            "this",
+            "university?"
+          ],
+          "starts": [
+            0.009999999776482582, 0.0807916671037674, 0.2683750092983246,
+            0.3213750123977661, 0.6430832743644714, 0.7617083191871643,
+            1.142458200454712, 1.3571666479110718, 1.4709999561309814,
+            1.6592916250228882
+          ],
+          "size": "long",
+          "tts": "en-US-Wavenet-H",
+          "name": "first_year_long_female_en-US-Wavenet-H",
+          "vad": [
+            [
+              [0.0, 0.05],
+              [0.05, 0.27],
+              [0.27, 0.32],
+              [0.32, 0.64],
+              [0.64, 0.76],
+              [0.76, 1.18],
+              [1.18, 1.34],
+              [1.34, 1.46],
+              [1.46, 1.65],
+              [1.65, 2.3]
+            ],
+            []
+          ]
+        },
+        {
+          "text": "Are you a first year student here at this university?",
+          "audio_path": "dataset_phrases/audio/first_year_long_female_en-US-Wavenet-C.wav",
+          "gender": "female",
+          "words": [
+            "Are",
+            "you",
+            "a",
+            "first",
+            "year",
+            "student",
+            "here",
+            "at",
+            "this",
+            "university?"
+          ],
+          "starts": [
+            0.009999999776482582, 0.07999999821186066, 0.29499998688697815,
+            0.3399999737739563, 0.6854166388511658, 0.815416693687439,
+            1.2502498626708984, 1.5452499389648438, 1.6802499294281006,
+            1.8730415105819702
+          ],
+          "size": "long",
+          "tts": "en-US-Wavenet-C",
+          "name": "first_year_long_female_en-US-Wavenet-C",
+          "vad": [
+            [
+              [0.0, 0.05],
+              [0.05, 0.28],
+              [0.28, 0.33],
+              [0.33, 0.68],
+              [0.68, 0.82],
+              [0.82, 1.3],
+              [1.3, 1.5],
+              [1.5, 1.68],
+              [1.68, 1.86],
+              [1.86, 2.55]
+            ],
+            []
+          ]
+        },
+        {
+          "text": "Are you a first year student here at this university?",
+          "audio_path": "dataset_phrases/audio/first_year_long_female_en-US-Wavenet-E.wav",
+          "gender": "female",
+          "words": [
+            "Are",
+            "you",
+            "a",
+            "first",
+            "year",
+            "student",
+            "here",
+            "at",
+            "this",
+            "university?"
+          ],
+          "starts": [
+            0.009999999776482582, 0.07499999552965164, 0.25999999046325684,
+            0.3199999928474426, 0.699916660785675, 0.8399166464805603,
+            1.2691248655319214, 1.5641249418258667, 1.704124927520752,
+            1.9067498445510864
+          ],
+          "size": "long",
+          "tts": "en-US-Wavenet-E",
+          "name": "first_year_long_female_en-US-Wavenet-E",
+          "vad": [
+            [
+              [0.0, 0.06],
+              [0.06, 0.25],
+              [0.25, 0.31],
+              [0.31, 0.69],
+              [0.69, 0.84],
+              [0.84, 1.35],
+              [1.35, 1.53],
+              [1.53, 1.7],
+              [1.7, 1.9],
+              [1.9, 2.63]
+            ],
+            []
+          ]
+        },
+        {
+          "text": "Are you a first year student here at this university?",
+          "audio_path": "dataset_phrases/audio/first_year_long_female_en-US-Wavenet-F.wav",
+          "gender": "female",
+          "words": [
+            "Are",
+            "you",
+            "a",
+            "first",
+            "year",
+            "student",
+            "here",
+            "at",
+            "this",
+            "university?"
+          ],
+          "starts": [
+            0.009999999776482582, 0.10499999672174454, 0.3199999928474426,
+            0.38499999046325684, 0.7491249442100525, 0.8691249489784241,
+            1.277166485786438, 1.5221666097640991, 1.6671667098999023,
+            1.8554166555404663
+          ],
+          "size": "long",
+          "tts": "en-US-Wavenet-F",
+          "name": "first_year_long_female_en-US-Wavenet-F",
+          "vad": [
+            [
+              [0.0, 0.08],
+              [0.08, 0.34],
+              [0.34, 0.37],
+              [0.37, 0.74],
+              [0.74, 0.86],
+              [0.86, 1.32],
+              [1.32, 1.48],
+              [1.48, 1.66],
+              [1.66, 1.85],
+              [1.85, 2.57]
+            ],
+            []
+          ]
+        }
+      ],
+      "male": [
+        {
+          "text": "Are you a first year student here at this university?",
+          "audio_path": "dataset_phrases/audio/first_year_long_male_en-US-Wavenet-I.wav",
+          "gender": "male",
+          "words": [
+            "Are",
+            "you",
+            "a",
+            "first",
+            "year",
+            "student",
+            "here",
+            "at",
+            "this",
+            "university?"
+          ],
+          "starts": [
+            0.009999999776482582, 0.05999999865889549, 0.22854165732860565,
+            0.26354163885116577, 0.5856666564941406, 0.7145833373069763,
+            1.1046665906906128, 1.3622499704360962, 1.4974583387374878,
+            1.6681249141693115
+          ],
+          "size": "long",
+          "tts": "en-US-Wavenet-I",
+          "name": "first_year_long_male_en-US-Wavenet-I",
+          "vad": [
+            [
+              [0.0, 0.04],
+              [0.04, 0.22],
+              [0.22, 0.27],
+              [0.27, 0.59],
+              [0.59, 0.71],
+              [0.71, 1.16],
+              [1.16, 1.35],
+              [1.35, 1.49],
+              [1.49, 1.66],
+              [1.66, 2.24]
+            ],
+            []
+          ]
+        },
+        {
+          "text": "Are you a first year student here at this university?",
+          "audio_path": "dataset_phrases/audio/first_year_long_male_en-US-Wavenet-J.wav",
+          "gender": "male",
+          "words": [
+            "Are",
+            "you",
+            "a",
+            "first",
+            "year",
+            "student",
+            "here",
+            "at",
+            "this",
+            "university?"
+          ],
+          "starts": [
+            0.009999999776482582, 0.09279166162014008, 0.2645416557788849,
+            0.30954164266586304, 0.6523749828338623, 0.7932500243186951,
+            1.189249873161316, 1.4533333778381348, 1.5640833377838135,
+            1.7570416927337646
+          ],
+          "size": "long",
+          "tts": "en-US-Wavenet-J",
+          "name": "first_year_long_male_en-US-Wavenet-J",
+          "vad": [
+            [
+              [0.0, 0.08],
+              [0.08, 0.26],
+              [0.26, 0.31],
+              [0.31, 0.65],
+              [0.65, 0.8],
+              [0.8, 1.24],
+              [1.24, 1.44],
+              [1.44, 1.56],
+              [1.56, 1.75],
+              [1.75, 2.37]
+            ],
+            []
+          ]
+        },
+        {
+          "text": "Are you a first year student here at this university?",
+          "audio_path": "dataset_phrases/audio/first_year_long_male_en-US-Wavenet-A.wav",
+          "gender": "male",
+          "words": [
+            "Are",
+            "you",
+            "a",
+            "first",
+            "year",
+            "student",
+            "here",
+            "at",
+            "this",
+            "university?"
+          ],
+          "starts": [
+            0.009999999776482582, 0.10999999940395355, 0.3499999940395355,
+            0.41499999165534973, 0.8003333210945129, 0.9553332924842834,
+            1.3910415172576904, 1.666041612625122, 1.806583285331726,
+            2.011583089828491
+          ],
+          "size": "long",
+          "tts": "en-US-Wavenet-A",
+          "name": "first_year_long_male_en-US-Wavenet-A",
+          "vad": [
+            [
+              [0.0, 0.09],
+              [0.09, 0.34],
+              [0.34, 0.41],
+              [0.41, 0.79],
+              [0.79, 0.96],
+              [0.96, 1.43],
+              [1.43, 1.64],
+              [1.64, 1.81],
+              [1.81, 2.0],
+              [2.0, 2.72]
+            ],
+            []
+          ]
+        },
+        {
+          "text": "Are you a first year student here at this university?",
+          "audio_path": "dataset_phrases/audio/first_year_long_male_en-US-Wavenet-B.wav",
+          "gender": "male",
+          "words": [
+            "Are",
+            "you",
+            "a",
+            "first",
+            "year",
+            "student",
+            "here",
+            "at",
+            "this",
+            "university?"
+          ],
+          "starts": [
+            0.009999999776482582, 0.10499999672174454, 0.2849999964237213,
+            0.36500000953674316, 0.7177083492279053, 0.8927083611488342,
+            1.356541633605957, 1.6615417003631592, 1.8197084665298462,
+            2.0597083568573
+          ],
+          "size": "long",
+          "tts": "en-US-Wavenet-B",
+          "name": "first_year_long_male_en-US-Wavenet-B",
+          "vad": [
+            [
+              [0.0, 0.08],
+              [0.08, 0.28],
+              [0.28, 0.36],
+              [0.36, 0.7],
+              [0.7, 0.89],
+              [0.89, 1.41],
+              [1.41, 1.64],
+              [1.64, 1.76],
+              [1.84, 2.04],
+              [2.04, 2.79]
+            ],
+            []
+          ]
+        },
+        {
+          "text": "Are you a first year student here at this university?",
+          "audio_path": "dataset_phrases/audio/first_year_long_male_en-US-Wavenet-D.wav",
+          "gender": "male",
+          "words": [
+            "Are",
+            "you",
+            "a",
+            "first",
+            "year",
+            "student",
+            "here",
+            "at",
+            "this",
+            "university?"
+          ],
+          "starts": [
+            0.009999999776482582, 0.07000000029802322, 0.23000000417232513,
+            0.2750000059604645, 0.6056250333786011, 0.7256250381469727,
+            1.1506248712539673, 1.392874836921692, 1.5328749418258667,
+            1.697874903678894
+          ],
+          "size": "long",
+          "tts": "en-US-Wavenet-D",
+          "name": "first_year_long_male_en-US-Wavenet-D",
+          "vad": [
+            [
+              [0.0, 0.05],
+              [0.05, 0.22],
+              [0.22, 0.27],
+              [0.27, 0.6],
+              [0.6, 0.73],
+              [0.73, 1.18],
+              [1.18, 1.36],
+              [1.36, 1.52],
+              [1.52, 1.69],
+              [1.69, 2.34]
+            ],
+            []
+          ]
+        }
+      ]
+    }
+  },
+  "basketball": {
+    "short": {
+      "female": [
+        {
+          "text": "So do you play basketball?",
+          "audio_path": "dataset_phrases/audio/basketball_short_female_en-US-Wavenet-G.wav",
+          "gender": "female",
+          "words": ["So", "do", "you", "play", "basketball?"],
+          "starts": [
+            0.009999999776482582, 0.22212499380111694, 0.34058332443237305,
+            0.4725833237171173, 0.6829999089241028
+          ],
+          "size": "short",
+          "tts": "en-US-Wavenet-G",
+          "name": "basketball_short_female_en-US-Wavenet-G",
+          "vad": [
+            [
+              [0.0, 0.18],
+              [0.18, 0.33],
+              [0.33, 0.48],
+              [0.48, 0.68],
+              [0.68, 1.33]
+            ],
+            []
+          ]
+        },
+        {
+          "text": "So do you play basketball?",
+          "audio_path": "dataset_phrases/audio/basketball_short_female_en-US-Wavenet-H.wav",
+          "gender": "female",
+          "words": ["So", "do", "you", "play", "basketball?"],
+          "starts": [
+            0.009999999776482582, 0.2070416659116745, 0.30637499690055847,
+            0.4454166889190674, 0.6465833187103271
+          ],
+          "size": "short",
+          "tts": "en-US-Wavenet-H",
+          "name": "basketball_short_female_en-US-Wavenet-H",
+          "vad": [
+            [
+              [0.0, 0.16],
+              [0.16, 0.29],
+              [0.29, 0.45],
+              [0.45, 0.64],
+              [0.64, 1.29]
+            ],
+            []
+          ]
+        },
+        {
+          "text": "So do you play basketball?",
+          "audio_path": "dataset_phrases/audio/basketball_short_female_en-US-Wavenet-C.wav",
+          "gender": "female",
+          "words": ["So", "do", "you", "play", "basketball?"],
+          "starts": [
+            0.009999999776482582, 0.19999998807907104, 0.3149999678134918,
+            0.44999995827674866, 0.6591249108314514
+          ],
+          "size": "short",
+          "tts": "en-US-Wavenet-C",
+          "name": "basketball_short_female_en-US-Wavenet-C",
+          "vad": [
+            [
+              [0.0, 0.18],
+              [0.18, 0.31],
+              [0.31, 0.45],
+              [0.45, 0.65],
+              [0.65, 1.37]
+            ],
+            []
+          ]
+        },
+        {
+          "text": "So do you play basketball?",
+          "audio_path": "dataset_phrases/audio/basketball_short_female_en-US-Wavenet-E.wav",
+          "gender": "female",
+          "words": ["So", "do", "you", "play", "basketball?"],
+          "starts": [
+            0.009999999776482582, 0.2199999988079071, 0.3199999928474426,
+            0.4749999940395355, 0.7056666612625122
+          ],
+          "size": "short",
+          "tts": "en-US-Wavenet-E",
+          "name": "basketball_short_female_en-US-Wavenet-E",
+          "vad": [
+            [
+              [0.0, 0.21],
+              [0.21, 0.31],
+              [0.31, 0.48],
+              [0.48, 0.7],
+              [0.7, 1.41]
+            ],
+            []
+          ]
+        },
+        {
+          "text": "So do you play basketball?",
+          "audio_path": "dataset_phrases/audio/basketball_short_female_en-US-Wavenet-F.wav",
+          "gender": "female",
+          "words": ["So", "do", "you", "play", "basketball?"],
+          "starts": [
+            0.009999999776482582, 0.2150000035762787, 0.32499998807907104,
+            0.4749999940395355, 0.6805416345596313
+          ],
+          "size": "short",
+          "tts": "en-US-Wavenet-F",
+          "name": "basketball_short_female_en-US-Wavenet-F",
+          "vad": [
+            [
+              [0.0, 0.19],
+              [0.19, 0.32],
+              [0.32, 0.47],
+              [0.47, 0.67],
+              [0.67, 1.43]
+            ],
+            []
+          ]
+        }
+      ],
+      "male": [
+        {
+          "text": "So do you play basketball?",
+          "audio_path": "dataset_phrases/audio/basketball_short_male_en-US-Wavenet-I.wav",
+          "gender": "male",
+          "words": ["So", "do", "you", "play", "basketball?"],
+          "starts": [
+            0.009999999776482582, 0.17891666293144226, 0.28437498211860657,
+            0.41599997878074646, 0.6240416169166565
+          ],
+          "size": "short",
+          "tts": "en-US-Wavenet-I",
+          "name": "basketball_short_male_en-US-Wavenet-I",
+          "vad": [
+            [
+              [0.0, 0.16],
+              [0.16, 0.27],
+              [0.27, 0.42],
+              [0.42, 0.62],
+              [0.62, 1.27]
+            ],
+            []
+          ]
+        },
+        {
+          "text": "So do you play basketball?",
+          "audio_path": "dataset_phrases/audio/basketball_short_male_en-US-Wavenet-J.wav",
+          "gender": "male",
+          "words": ["So", "do", "you", "play", "basketball?"],
+          "starts": [
+            0.009999999776482582, 0.20679166913032532, 0.32508331537246704,
+            0.4644583463668823, 0.6915000081062317
+          ],
+          "size": "short",
+          "tts": "en-US-Wavenet-J",
+          "name": "basketball_short_male_en-US-Wavenet-J",
+          "vad": [
+            [
+              [0.03, 0.19],
+              [0.19, 0.31],
+              [0.31, 0.47],
+              [0.47, 0.69],
+              [0.69, 1.37]
+            ],
+            []
+          ]
+        },
+        {
+          "text": "So do you play basketball?",
+          "audio_path": "dataset_phrases/audio/basketball_short_male_en-US-Wavenet-A.wav",
+          "gender": "male",
+          "words": ["So", "do", "you", "play", "basketball?"],
+          "starts": [
+            0.009999999776482582, 0.22499999403953552, 0.3699999749660492,
+            0.5399999618530273, 0.7836249470710754
+          ],
+          "size": "short",
+          "tts": "en-US-Wavenet-A",
+          "name": "basketball_short_male_en-US-Wavenet-A",
+          "vad": [
+            [
+              [0.0, 0.21],
+              [0.21, 0.35],
+              [0.35, 0.55],
+              [0.55, 0.77],
+              [0.77, 1.53]
+            ],
+            []
+          ]
+        },
+        {
+          "text": "So do you play basketball?",
+          "audio_path": "dataset_phrases/audio/basketball_short_male_en-US-Wavenet-B.wav",
+          "gender": "male",
+          "words": ["So", "do", "you", "play", "basketball?"],
+          "starts": [
+            0.009999999776482582, 0.22499999403953552, 0.35999998450279236,
+            0.5299999713897705, 0.8034583330154419
+          ],
+          "size": "short",
+          "tts": "en-US-Wavenet-B",
+          "name": "basketball_short_male_en-US-Wavenet-B",
+          "vad": [
+            [
+              [0.0, 0.22],
+              [0.22, 0.33],
+              [0.33, 0.53],
+              [0.53, 0.79],
+              [0.79, 1.57]
+            ],
+            []
+          ]
+        },
+        {
+          "text": "So do you play basketball?",
+          "audio_path": "dataset_phrases/audio/basketball_short_male_en-US-Wavenet-D.wav",
+          "gender": "male",
+          "words": ["So", "do", "you", "play", "basketball?"],
+          "starts": [
+            0.009999999776482582, 0.1899999976158142, 0.25999999046325684,
+            0.4000000059604645, 0.5979166626930237
+          ],
+          "size": "short",
+          "tts": "en-US-Wavenet-D",
+          "name": "basketball_short_male_en-US-Wavenet-D",
+          "vad": [
+            [
+              [0.0, 0.16],
+              [0.16, 0.26],
+              [0.26, 0.4],
+              [0.4, 0.59],
+              [0.59, 1.3]
+            ],
+            []
+          ]
+        }
+      ]
+    },
+    "long": {
+      "female": [
+        {
+          "text": "So do you play basketball on Thursdays?",
+          "audio_path": "dataset_phrases/audio/basketball_long_female_en-US-Wavenet-G.wav",
+          "gender": "female",
+          "words": [
+            "So",
+            "do",
+            "you",
+            "play",
+            "basketball",
+            "on",
+            "Thursdays?"
+          ],
+          "starts": [
+            0.009999999776482582, 0.2238333374261856, 0.33408331871032715,
+            0.4594583213329315, 0.6807082891464233, 1.353958249092102,
+            1.4959999322891235
+          ],
+          "size": "long",
+          "tts": "en-US-Wavenet-G",
+          "name": "basketball_long_female_en-US-Wavenet-G",
+          "vad": [
+            [
+              [0.0, 0.18],
+              [0.18, 0.33],
+              [0.33, 0.46],
+              [0.46, 0.68],
+              [0.68, 1.35],
+              [1.35, 1.49],
+              [1.49, 2.08]
+            ],
+            []
+          ]
+        },
+        {
+          "text": "So do you play basketball on Thursdays?",
+          "audio_path": "dataset_phrases/audio/basketball_long_female_en-US-Wavenet-H.wav",
+          "gender": "female",
+          "words": [
+            "So",
+            "do",
+            "you",
+            "play",
+            "basketball",
+            "on",
+            "Thursdays?"
+          ],
+          "starts": [
+            0.009999999776482582, 0.20391666889190674, 0.3062500059604645,
+            0.45095834136009216, 0.6523333191871643, 1.2714166641235352,
+            1.4100416898727417
+          ],
+          "size": "long",
+          "tts": "en-US-Wavenet-H",
+          "name": "basketball_long_female_en-US-Wavenet-H",
+          "vad": [
+            [
+              [0.0, 0.16],
+              [0.16, 0.29],
+              [0.29, 0.45],
+              [0.45, 0.65],
+              [0.65, 1.28],
+              [1.28, 1.41],
+              [1.41, 2.01]
+            ],
+            []
+          ]
+        },
+        {
+          "text": "So do you play basketball on Thursdays?",
+          "audio_path": "dataset_phrases/audio/basketball_long_female_en-US-Wavenet-C.wav",
+          "gender": "female",
+          "words": [
+            "So",
+            "do",
+            "you",
+            "play",
+            "basketball",
+            "on",
+            "Thursdays?"
+          ],
+          "starts": [
+            0.009999999776482582, 0.19999998807907104, 0.3099999725818634,
+            0.44999995827674866, 0.6535832285881042, 1.3777081966400146,
+            1.5277082920074463
+          ],
+          "size": "long",
+          "tts": "en-US-Wavenet-C",
+          "name": "basketball_long_female_en-US-Wavenet-C",
+          "vad": [
+            [
+              [0.0, 0.19],
+              [0.19, 0.3],
+              [0.3, 0.44],
+              [0.44, 0.64],
+              [0.64, 1.37],
+              [1.37, 1.53],
+              [1.53, 2.17]
+            ],
+            []
+          ]
+        },
+        {
+          "text": "So do you play basketball on Thursdays?",
+          "audio_path": "dataset_phrases/audio/basketball_long_female_en-US-Wavenet-E.wav",
+          "gender": "female",
+          "words": [
+            "So",
+            "do",
+            "you",
+            "play",
+            "basketball",
+            "on",
+            "Thursdays?"
+          ],
+          "starts": [
+            0.009999999776482582, 0.2149999886751175, 0.3099999725818634,
+            0.45499998331069946, 0.6898750066757202, 1.3756250143051147,
+            1.5356251001358032
+          ],
+          "size": "long",
+          "tts": "en-US-Wavenet-E",
+          "name": "basketball_long_female_en-US-Wavenet-E",
+          "vad": [
+            [
+              [0.0, 0.2],
+              [0.2, 0.3],
+              [0.3, 0.45],
+              [0.45, 0.68],
+              [0.68, 1.36],
+              [1.36, 1.53],
+              [1.53, 2.23]
+            ],
+            []
+          ]
+        },
+        {
+          "text": "So do you play basketball on Thursdays?",
+          "audio_path": "dataset_phrases/audio/basketball_long_female_en-US-Wavenet-F.wav",
+          "gender": "female",
+          "words": [
+            "So",
+            "do",
+            "you",
+            "play",
+            "basketball",
+            "on",
+            "Thursdays?"
+          ],
+          "starts": [
+            0.009999999776482582, 0.2150000035762787, 0.32499998807907104,
+            0.4749999940395355, 0.6790416240692139, 1.4031248092651367,
+            1.5681248903274536
+          ],
+          "size": "long",
+          "tts": "en-US-Wavenet-F",
+          "name": "basketball_long_female_en-US-Wavenet-F",
+          "vad": [
+            [
+              [0.0, 0.19],
+              [0.19, 0.32],
+              [0.32, 0.47],
+              [0.47, 0.67],
+              [0.67, 1.4],
+              [1.4, 1.54],
+              [1.54, 2.25]
+            ],
+            []
+          ]
+        }
+      ],
+      "male": [
+        {
+          "text": "So do you play basketball on Thursdays?",
+          "audio_path": "dataset_phrases/audio/basketball_long_male_en-US-Wavenet-I.wav",
+          "gender": "male",
+          "words": [
+            "So",
+            "do",
+            "you",
+            "play",
+            "basketball",
+            "on",
+            "Thursdays?"
+          ],
+          "starts": [
+            0.009999999776482582, 0.17612498998641968, 0.27904167771339417,
+            0.4205416738986969, 0.6203749179840088, 1.294624924659729,
+            1.4395416975021362
+          ],
+          "size": "long",
+          "tts": "en-US-Wavenet-I",
+          "name": "basketball_long_male_en-US-Wavenet-I",
+          "vad": [
+            [
+              [0.0, 0.16],
+              [0.16, 0.29],
+              [0.29, 0.43],
+              [0.43, 0.61],
+              [0.61, 1.32],
+              [1.32, 1.43],
+              [1.43, 2.03]
+            ],
+            []
+          ]
+        },
+        {
+          "text": "So do you play basketball on Thursdays?",
+          "audio_path": "dataset_phrases/audio/basketball_long_male_en-US-Wavenet-J.wav",
+          "gender": "male",
+          "words": [
+            "So",
+            "do",
+            "you",
+            "play",
+            "basketball",
+            "on",
+            "Thursdays?"
+          ],
+          "starts": [
+            0.009999999776482582, 0.2044583261013031, 0.32099997997283936,
+            0.4482916593551636, 0.6675416827201843, 1.3530000448226929,
+            1.501916766166687
+          ],
+          "size": "long",
+          "tts": "en-US-Wavenet-J",
+          "name": "basketball_long_male_en-US-Wavenet-J",
+          "vad": [
+            [
+              [0.03, 0.19],
+              [0.19, 0.3],
+              [0.3, 0.45],
+              [0.45, 0.66],
+              [0.66, 1.36],
+              [1.36, 1.5],
+              [1.5, 2.16]
+            ],
+            []
+          ]
+        },
+        {
+          "text": "So do you play basketball on Thursdays?",
+          "audio_path": "dataset_phrases/audio/basketball_long_male_en-US-Wavenet-A.wav",
+          "gender": "male",
+          "words": [
+            "So",
+            "do",
+            "you",
+            "play",
+            "basketball",
+            "on",
+            "Thursdays?"
+          ],
+          "starts": [
+            0.009999999776482582, 0.2199999988079071, 0.3649999797344208,
+            0.5399999618530273, 0.7834999561309814, 1.5155000686645508,
+            1.660500168800354
+          ],
+          "size": "long",
+          "tts": "en-US-Wavenet-A",
+          "name": "basketball_long_male_en-US-Wavenet-A",
+          "vad": [
+            [
+              [0.0, 0.21],
+              [0.21, 0.35],
+              [0.35, 0.54],
+              [0.54, 0.77],
+              [0.77, 1.52],
+              [1.52, 1.66],
+              [1.66, 2.37]
+            ],
+            []
+          ]
+        },
+        {
+          "text": "So do you play basketball on Thursdays?",
+          "audio_path": "dataset_phrases/audio/basketball_long_male_en-US-Wavenet-B.wav",
+          "gender": "male",
+          "words": [
+            "So",
+            "do",
+            "you",
+            "play",
+            "basketball",
+            "on",
+            "Thursdays?"
+          ],
+          "starts": [
+            0.009999999776482582, 0.2199999988079071, 0.3449999988079071,
+            0.5099999904632568, 0.7598750591278076, 1.5173333883285522,
+            1.6973334550857544
+          ],
+          "size": "long",
+          "tts": "en-US-Wavenet-B",
+          "name": "basketball_long_male_en-US-Wavenet-B",
+          "vad": [
+            [
+              [0.0, 0.21],
+              [0.21, 0.32],
+              [0.32, 0.51],
+              [0.51, 0.75],
+              [0.75, 1.53],
+              [1.53, 1.69],
+              [1.69, 2.41]
+            ],
+            []
+          ]
+        },
+        {
+          "text": "So do you play basketball on Thursdays?",
+          "audio_path": "dataset_phrases/audio/basketball_long_male_en-US-Wavenet-D.wav",
+          "gender": "male",
+          "words": [
+            "So",
+            "do",
+            "you",
+            "play",
+            "basketball",
+            "on",
+            "Thursdays?"
+          ],
+          "starts": [
+            0.009999999776482582, 0.1899999976158142, 0.25999999046325684,
+            0.4000000059604645, 0.5950000286102295, 1.2884167432785034,
+            1.4134167432785034
+          ],
+          "size": "long",
+          "tts": "en-US-Wavenet-D",
+          "name": "basketball_long_male_en-US-Wavenet-D",
+          "vad": [
+            [
+              [0.0, 0.17],
+              [0.17, 0.26],
+              [0.26, 0.4],
+              [0.4, 0.58],
+              [0.58, 1.29],
+              [1.29, 1.41],
+              [1.41, 2.01]
+            ],
+            []
+          ]
+        }
+      ]
+    }
+  },
+  "experiment": {
+    "short": {
+      "female": [
+        {
+          "text": "Have you participated in any experiments before?",
+          "audio_path": "dataset_phrases/audio/experiment_short_female_en-US-Wavenet-G.wav",
+          "gender": "female",
+          "words": [
+            "Have",
+            "you",
+            "participated",
+            "in",
+            "any",
+            "experiments",
+            "before?"
+          ],
+          "starts": [
+            0.009999999776482582, 0.17404165863990784, 0.29099997878074646,
+            1.0634582042694092, 1.168041467666626, 1.3770831823349,
+            2.011958122253418
+          ],
+          "size": "short",
+          "tts": "en-US-Wavenet-G",
+          "name": "experiment_short_female_en-US-Wavenet-G",
+          "vad": [
+            [
+              [0.0, 0.18],
+              [0.18, 0.29],
+              [0.29, 1.06],
+              [1.06, 1.18],
+              [1.18, 1.37],
+              [1.37, 2.01],
+              [2.01, 2.38]
+            ],
+            []
+          ]
+        },
+        {
+          "text": "Have you participated in any experiments before?",
+          "audio_path": "dataset_phrases/audio/experiment_short_female_en-US-Wavenet-H.wav",
+          "gender": "female",
+          "words": [
+            "Have",
+            "you",
+            "participated",
+            "in",
+            "any",
+            "experiments",
+            "before?"
+          ],
+          "starts": [
+            0.009999999776482582, 0.16041666269302368, 0.2906249761581421,
+            1.0054582357406616, 1.1092082262039185, 1.3044582605361938,
+            1.896749496459961
+          ],
+          "size": "short",
+          "tts": "en-US-Wavenet-H",
+          "name": "experiment_short_female_en-US-Wavenet-H",
+          "vad": [
+            [
+              [0.0, 0.17],
+              [0.17, 0.29],
+              [0.29, 1.01],
+              [1.01, 1.12],
+              [1.12, 1.29],
+              [1.29, 1.9],
+              [1.9, 2.28]
+            ],
+            []
+          ]
+        },
+        {
+          "text": "Have you participated in any experiments before?",
+          "audio_path": "dataset_phrases/audio/experiment_short_female_en-US-Wavenet-C.wav",
+          "gender": "female",
+          "words": [
+            "Have",
+            "you",
+            "participated",
+            "in",
+            "any",
+            "experiments",
+            "before?"
+          ],
+          "starts": [
+            0.009999999776482582, 0.17499999701976776, 0.304999977350235,
+            1.1491249799728394, 1.2729581594467163, 1.4979583024978638,
+            2.1865832805633545
+          ],
+          "size": "short",
+          "tts": "en-US-Wavenet-C",
+          "name": "experiment_short_female_en-US-Wavenet-C",
+          "vad": [
+            [
+              [0.0, 0.17],
+              [0.17, 0.3],
+              [0.3, 1.15],
+              [1.15, 1.27],
+              [1.27, 1.49],
+              [1.49, 2.18],
+              [2.18, 2.6]
+            ],
+            []
+          ]
+        },
+        {
+          "text": "Have you participated in any experiments before?",
+          "audio_path": "dataset_phrases/audio/experiment_short_female_en-US-Wavenet-E.wav",
+          "gender": "female",
+          "words": [
+            "Have",
+            "you",
+            "participated",
+            "in",
+            "any",
+            "experiments",
+            "before?"
+          ],
+          "starts": [
+            0.009999999776482582, 0.14999999105930328, 0.2849999964237213,
+            1.0991249084472656, 1.2145415544509888, 1.4395415782928467,
+            2.1008331775665283
+          ],
+          "size": "short",
+          "tts": "en-US-Wavenet-E",
+          "name": "experiment_short_female_en-US-Wavenet-E",
+          "vad": [
+            [
+              [0.0, 0.14],
+              [0.14, 0.28],
+              [0.28, 1.1],
+              [1.1, 1.22],
+              [1.22, 1.44],
+              [1.44, 2.1],
+              [2.1, 2.55]
+            ],
+            []
+          ]
+        },
+        {
+          "text": "Have you participated in any experiments before?",
+          "audio_path": "dataset_phrases/audio/experiment_short_female_en-US-Wavenet-F.wav",
+          "gender": "female",
+          "words": [
+            "Have",
+            "you",
+            "participated",
+            "in",
+            "any",
+            "experiments",
+            "before?"
+          ],
+          "starts": [
+            0.009999999776482582, 0.17999999225139618, 0.32499998807907104,
+            1.1589999198913574, 1.2762916088104248, 1.4912916421890259,
+            2.1846249103546143
+          ],
+          "size": "short",
+          "tts": "en-US-Wavenet-F",
+          "name": "experiment_short_female_en-US-Wavenet-F",
+          "vad": [
+            [
+              [0.0, 0.18],
+              [0.18, 0.32],
+              [0.32, 1.16],
+              [1.16, 1.27],
+              [1.27, 1.5],
+              [1.5, 2.18],
+              [2.18, 2.62]
+            ],
+            []
+          ]
+        }
+      ],
+      "male": [
+        {
+          "text": "Have you participated in any experiments before?",
+          "audio_path": "dataset_phrases/audio/experiment_short_male_en-US-Wavenet-I.wav",
+          "gender": "male",
+          "words": [
+            "Have",
+            "you",
+            "participated",
+            "in",
+            "any",
+            "experiments",
+            "before?"
+          ],
+          "starts": [
+            0.009999999776482582, 0.14141666889190674, 0.25466665625572205,
+            0.9806249141693115, 1.0918748378753662, 1.2802082300186157,
+            1.8627914190292358
+          ],
+          "size": "short",
+          "tts": "en-US-Wavenet-I",
+          "name": "experiment_short_male_en-US-Wavenet-I",
+          "vad": [
+            [
+              [0.0, 0.14],
+              [0.14, 0.26],
+              [0.26, 0.98],
+              [0.98, 1.1],
+              [1.1, 1.27],
+              [1.27, 1.86],
+              [1.86, 2.26]
+            ],
+            []
+          ]
+        },
+        {
+          "text": "Have you participated in any experiments before?",
+          "audio_path": "dataset_phrases/audio/experiment_short_male_en-US-Wavenet-J.wav",
+          "gender": "male",
+          "words": [
+            "Have",
+            "you",
+            "participated",
+            "in",
+            "any",
+            "experiments",
+            "before?"
+          ],
+          "starts": [
+            0.009999999776482582, 0.1783749908208847, 0.2876666486263275,
+            1.0459165573120117, 1.158249855041504, 1.3579164743423462,
+            1.9780830144882202
+          ],
+          "size": "short",
+          "tts": "en-US-Wavenet-J",
+          "name": "experiment_short_male_en-US-Wavenet-J",
+          "vad": [
+            [
+              [0.0, 0.18],
+              [0.18, 0.29],
+              [0.29, 1.05],
+              [1.05, 1.17],
+              [1.17, 1.34],
+              [1.34, 1.98],
+              [1.98, 2.37]
+            ],
+            []
+          ]
+        },
+        {
+          "text": "Have you participated in any experiments before?",
+          "audio_path": "dataset_phrases/audio/experiment_short_male_en-US-Wavenet-A.wav",
+          "gender": "male",
+          "words": [
+            "Have",
+            "you",
+            "participated",
+            "in",
+            "any",
+            "experiments",
+            "before?"
+          ],
+          "starts": [
+            0.009999999776482582, 0.16499999165534973, 0.33500000834465027,
+            1.2032082080841064, 1.3332083225250244, 1.5832083225250244,
+            2.262458086013794
+          ],
+          "size": "short",
+          "tts": "en-US-Wavenet-A",
+          "name": "experiment_short_male_en-US-Wavenet-A",
+          "vad": [
+            [
+              [0.0, 0.16],
+              [0.16, 0.33],
+              [0.33, 1.2],
+              [1.2, 1.33],
+              [1.33, 1.57],
+              [1.57, 2.26],
+              [2.26, 2.72]
+            ],
+            []
+          ]
+        },
+        {
+          "text": "Have you participated in any experiments before?",
+          "audio_path": "dataset_phrases/audio/experiment_short_male_en-US-Wavenet-B.wav",
+          "gender": "male",
+          "words": [
+            "Have",
+            "you",
+            "participated",
+            "in",
+            "any",
+            "experiments",
+            "before?"
+          ],
+          "starts": [
+            0.009999999776482582, 0.1599999964237213, 0.3050000071525574,
+            1.1291248798370361, 1.277249813079834, 1.5122498273849487,
+            2.2254581451416016
+          ],
+          "size": "short",
+          "tts": "en-US-Wavenet-B",
+          "name": "experiment_short_male_en-US-Wavenet-B",
+          "vad": [
+            [
+              [0.0, 0.16],
+              [0.16, 0.3],
+              [0.3, 1.13],
+              [1.13, 1.27],
+              [1.27, 1.5],
+              [1.5, 2.22],
+              [2.22, 2.72]
+            ],
+            []
+          ]
+        },
+        {
+          "text": "Have you participated in any experiments before?",
+          "audio_path": "dataset_phrases/audio/experiment_short_male_en-US-Wavenet-D.wav",
+          "gender": "male",
+          "words": [
+            "Have",
+            "you",
+            "participated",
+            "in",
+            "any",
+            "experiments",
+            "before?"
+          ],
+          "starts": [
+            0.009999999776482582, 0.12999999523162842, 0.25999999046325684,
+            1.059916615486145, 1.154916524887085, 1.3496664762496948,
+            1.9717912673950195
+          ],
+          "size": "short",
+          "tts": "en-US-Wavenet-D",
+          "name": "experiment_short_male_en-US-Wavenet-D",
+          "vad": [
+            [
+              [0.0, 0.14],
+              [0.14, 0.26],
+              [0.26, 1.06],
+              [1.06, 1.16],
+              [1.16, 1.34],
+              [1.34, 1.97],
+              [1.97, 2.37]
+            ],
+            []
+          ]
+        }
+      ]
+    },
+    "long": {
+      "female": [
+        {
+          "text": "Have you participated in any experiments before here at this university?",
+          "audio_path": "dataset_phrases/audio/experiment_long_female_en-US-Wavenet-G.wav",
+          "gender": "female",
+          "words": [
+            "Have",
+            "you",
+            "participated",
+            "in",
+            "any",
+            "experiments",
+            "before",
+            "here",
+            "at",
+            "this",
+            "university?"
+          ],
+          "starts": [
+            0.009999999776482582, 0.16349998116493225, 0.2826666533946991,
+            1.0512499809265137, 1.1524583101272583, 1.360374927520752,
+            2.003000020980835, 2.3422915935516357, 2.596083402633667,
+            2.7120416164398193, 2.888624906539917
+          ],
+          "size": "long",
+          "tts": "en-US-Wavenet-G",
+          "name": "experiment_long_female_en-US-Wavenet-G",
+          "vad": [
+            [
+              [0.0, 0.17],
+              [0.17, 0.28],
+              [0.28, 1.05],
+              [1.05, 1.16],
+              [1.16, 1.35],
+              [1.35, 2.0],
+              [2.0, 2.33],
+              [2.33, 2.58],
+              [2.58, 2.7],
+              [2.7, 2.88],
+              [2.88, 3.51]
+            ],
+            []
+          ]
+        },
+        {
+          "text": "Have you participated in any experiments before here at this university?",
+          "audio_path": "dataset_phrases/audio/experiment_long_female_en-US-Wavenet-H.wav",
+          "gender": "female",
+          "words": [
+            "Have",
+            "you",
+            "participated",
+            "in",
+            "any",
+            "experiments",
+            "before",
+            "here",
+            "at",
+            "this",
+            "university?"
+          ],
+          "starts": [
+            0.009999999776482582, 0.15458333492279053, 0.2842499911785126,
+            1.0013749599456787, 1.101458191871643, 1.2929582595825195,
+            1.8866662979125977, 2.224041223526001, 2.445624589920044,
+            2.5623745918273926, 2.7372078895568848
+          ],
+          "size": "long",
+          "tts": "en-US-Wavenet-H",
+          "name": "experiment_long_female_en-US-Wavenet-H",
+          "vad": [
+            [
+              [0.0, 0.16],
+              [0.16, 0.28],
+              [0.28, 1.0],
+              [1.0, 1.11],
+              [1.11, 1.27],
+              [1.27, 1.89],
+              [1.89, 2.21],
+              [2.21, 2.43],
+              [2.43, 2.55],
+              [2.55, 2.73],
+              [2.73, 3.37]
+            ],
+            []
+          ]
+        },
+        {
+          "text": "Have you participated in any experiments before here at this university?",
+          "audio_path": "dataset_phrases/audio/experiment_long_female_en-US-Wavenet-C.wav",
+          "gender": "female",
+          "words": [
+            "Have",
+            "you",
+            "participated",
+            "in",
+            "any",
+            "experiments",
+            "before",
+            "here",
+            "at",
+            "this",
+            "university?"
+          ],
+          "starts": [
+            0.009999999776482582, 0.17000000178813934, 0.3050000071525574,
+            1.1491249799728394, 1.2773332595825195, 1.5073332786560059,
+            2.213416576385498, 2.6115832328796387, 2.911583185195923,
+            3.046833038330078, 3.231832981109619
+          ],
+          "size": "long",
+          "tts": "en-US-Wavenet-C",
+          "name": "experiment_long_female_en-US-Wavenet-C",
+          "vad": [
+            [
+              [0.0, 0.17],
+              [0.17, 0.3],
+              [0.3, 1.15],
+              [1.15, 1.28],
+              [1.28, 1.5],
+              [1.5, 2.21],
+              [2.21, 2.59],
+              [2.59, 2.87],
+              [2.87, 3.04],
+              [3.04, 3.22],
+              [3.22, 3.9]
+            ],
+            []
+          ]
+        },
+        {
+          "text": "Have you participated in any experiments before here at this university?",
+          "audio_path": "dataset_phrases/audio/experiment_long_female_en-US-Wavenet-E.wav",
+          "gender": "female",
+          "words": [
+            "Have",
+            "you",
+            "participated",
+            "in",
+            "any",
+            "experiments",
+            "before",
+            "here",
+            "at",
+            "this",
+            "university?"
+          ],
+          "starts": [
+            0.009999999776482582, 0.14499999582767487, 0.2849999964237213,
+            1.0891249179840088, 1.2112499475479126, 1.4362499713897705,
+            2.1027915477752686, 2.4877915382385254, 2.75779128074646,
+            2.8977913856506348, 3.07308292388916
+          ],
+          "size": "long",
+          "tts": "en-US-Wavenet-E",
+          "name": "experiment_long_female_en-US-Wavenet-E",
+          "vad": [
+            [
+              [0.0, 0.14],
+              [0.14, 0.28],
+              [0.28, 1.09],
+              [1.09, 1.22],
+              [1.22, 1.44],
+              [1.44, 2.1],
+              [2.1, 2.47],
+              [2.47, 2.73],
+              [2.73, 2.9],
+              [2.9, 3.06],
+              [3.06, 3.79]
+            ],
+            []
+          ]
+        },
+        {
+          "text": "Have you participated in any experiments before here at this university?",
+          "audio_path": "dataset_phrases/audio/experiment_long_female_en-US-Wavenet-F.wav",
+          "gender": "female",
+          "words": [
+            "Have",
+            "you",
+            "participated",
+            "in",
+            "any",
+            "experiments",
+            "before",
+            "here",
+            "at",
+            "this",
+            "university?"
+          ],
+          "starts": [
+            0.009999999776482582, 0.17999999225139618, 0.32499998807907104,
+            1.1513333320617676, 1.2668750286102295, 1.4718750715255737,
+            2.121875047683716, 2.463124990463257, 2.713124990463257,
+            2.8581249713897705, 3.0399582386016846
+          ],
+          "size": "long",
+          "tts": "en-US-Wavenet-F",
+          "name": "experiment_long_female_en-US-Wavenet-F",
+          "vad": [
+            [
+              [0.0, 0.18],
+              [0.18, 0.32],
+              [0.32, 1.15],
+              [1.15, 1.27],
+              [1.27, 1.48],
+              [1.48, 2.12],
+              [2.12, 2.43],
+              [2.43, 2.68],
+              [2.68, 2.85],
+              [2.85, 3.03],
+              [3.03, 3.74]
+            ],
+            []
+          ]
+        }
+      ],
+      "male": [
+        {
+          "text": "Have you participated in any experiments before here at this university?",
+          "audio_path": "dataset_phrases/audio/experiment_long_male_en-US-Wavenet-I.wav",
+          "gender": "male",
+          "words": [
+            "Have",
+            "you",
+            "participated",
+            "in",
+            "any",
+            "experiments",
+            "before",
+            "here",
+            "at",
+            "this",
+            "university?"
+          ],
+          "starts": [
+            0.009999999776482582, 0.1394583284854889, 0.25962498784065247,
+            0.9702082872390747, 1.0804582834243774, 1.2683748006820679,
+            1.8739162683486938, 2.220582962036133, 2.466541290283203,
+            2.5934996604919434, 2.754333019256592
+          ],
+          "size": "long",
+          "tts": "en-US-Wavenet-I",
+          "name": "experiment_long_male_en-US-Wavenet-I",
+          "vad": [
+            [
+              [0.0, 0.14],
+              [0.14, 0.26],
+              [0.26, 0.98],
+              [0.98, 1.09],
+              [1.09, 1.26],
+              [1.26, 1.87],
+              [1.87, 2.21],
+              [2.21, 2.45],
+              [2.45, 2.59],
+              [2.59, 2.75],
+              [2.75, 3.33]
+            ],
+            []
+          ]
+        },
+        {
+          "text": "Have you participated in any experiments before here at this university?",
+          "audio_path": "dataset_phrases/audio/experiment_long_male_en-US-Wavenet-J.wav",
+          "gender": "male",
+          "words": [
+            "Have",
+            "you",
+            "participated",
+            "in",
+            "any",
+            "experiments",
+            "before",
+            "here",
+            "at",
+            "this",
+            "university?"
+          ],
+          "starts": [
+            0.009999999776482582, 0.16491664946079254, 0.2789166569709778,
+            1.0228333473205566, 1.1301666498184204, 1.3242498636245728,
+            1.9361248016357422, 2.278416156768799, 2.529749631881714,
+            2.639582872390747, 2.821749687194824
+          ],
+          "size": "long",
+          "tts": "en-US-Wavenet-J",
+          "name": "experiment_long_male_en-US-Wavenet-J",
+          "vad": [
+            [
+              [0.0, 0.17],
+              [0.17, 0.28],
+              [0.28, 1.03],
+              [1.03, 1.14],
+              [1.14, 1.32],
+              [1.32, 1.94],
+              [1.94, 2.27],
+              [2.27, 2.51],
+              [2.51, 2.64],
+              [2.64, 2.81],
+              [2.81, 3.41]
+            ],
+            []
+          ]
+        },
+        {
+          "text": "Have you participated in any experiments before here at this university?",
+          "audio_path": "dataset_phrases/audio/experiment_long_male_en-US-Wavenet-A.wav",
+          "gender": "male",
+          "words": [
+            "Have",
+            "you",
+            "participated",
+            "in",
+            "any",
+            "experiments",
+            "before",
+            "here",
+            "at",
+            "this",
+            "university?"
+          ],
+          "starts": [
+            0.009999999776482582, 0.1599999964237213, 0.33000001311302185,
+            1.198041558265686, 1.333625078201294, 1.583625078201294,
+            2.2825419902801514, 2.6767916679382324, 2.9267916679382324,
+            3.059375047683716, 3.2493748664855957
+          ],
+          "size": "long",
+          "tts": "en-US-Wavenet-A",
+          "name": "experiment_long_male_en-US-Wavenet-A",
+          "vad": [
+            [
+              [0.0, 0.16],
+              [0.16, 0.33],
+              [0.33, 1.19],
+              [1.19, 1.33],
+              [1.33, 1.57],
+              [1.57, 2.28],
+              [2.28, 2.67],
+              [2.67, 2.9],
+              [2.9, 3.05],
+              [3.05, 3.24],
+              [3.24, 3.94]
+            ],
+            []
+          ]
+        },
+        {
+          "text": "Have you participated in any experiments before here at this university?",
+          "audio_path": "dataset_phrases/audio/experiment_long_male_en-US-Wavenet-B.wav",
+          "gender": "male",
+          "words": [
+            "Have",
+            "you",
+            "participated",
+            "in",
+            "any",
+            "experiments",
+            "before",
+            "here",
+            "at",
+            "this",
+            "university?"
+          ],
+          "starts": [
+            0.009999999776482582, 0.1599999964237213, 0.29999998211860657,
+            1.1091248989105225, 1.2432916164398193, 1.478291630744934,
+            2.1899585723876953, 2.589958667755127, 2.8549587726593018,
+            3.0178754329681396, 3.237875461578369
+          ],
+          "size": "long",
+          "tts": "en-US-Wavenet-B",
+          "name": "experiment_long_male_en-US-Wavenet-B",
+          "vad": [
+            [
+              [0.0, 0.16],
+              [0.16, 0.29],
+              [0.29, 1.11],
+              [1.11, 1.24],
+              [1.24, 1.46],
+              [1.46, 2.18],
+              [2.18, 2.58],
+              [2.58, 2.84],
+              [2.84, 2.95],
+              [3.02, 3.22],
+              [3.22, 3.97]
+            ],
+            []
+          ]
+        },
+        {
+          "text": "Have you participated in any experiments before here at this university?",
+          "audio_path": "dataset_phrases/audio/experiment_long_male_en-US-Wavenet-D.wav",
+          "gender": "male",
+          "words": [
+            "Have",
+            "you",
+            "participated",
+            "in",
+            "any",
+            "experiments",
+            "before",
+            "here",
+            "at",
+            "this",
+            "university?"
+          ],
+          "starts": [
+            0.009999999776482582, 0.125, 0.25999999046325684, 1.043791651725769,
+            1.138791561126709, 1.3439581394195557, 1.9640828371047974,
+            2.2990825176239014, 2.5307490825653076, 2.6657490730285645,
+            2.820749044418335
+          ],
+          "size": "long",
+          "tts": "en-US-Wavenet-D",
+          "name": "experiment_long_male_en-US-Wavenet-D",
+          "vad": [
+            [
+              [0.0, 0.12],
+              [0.12, 0.26],
+              [0.26, 1.04],
+              [1.04, 1.15],
+              [1.15, 1.34],
+              [1.34, 1.96],
+              [1.96, 2.29],
+              [2.29, 2.5],
+              [2.5, 2.66],
+              [2.66, 2.81],
+              [2.81, 3.46]
+            ],
+            []
+          ]
+        }
+      ]
+    }
+  },
+  "live": {
+    "short": {
+      "female": [
+        {
+          "text": "Do you live by yourself?",
+          "audio_path": "dataset_phrases/audio/live_short_female_en-US-Wavenet-G.wav",
+          "gender": "female",
+          "words": ["Do", "you", "live", "by", "yourself?"],
+          "starts": [
+            0.009999999776482582, 0.10195832699537277, 0.2628333270549774,
+            0.4722916781902313, 0.6655416488647461
+          ],
+          "size": "short",
+          "tts": "en-US-Wavenet-G",
+          "name": "live_short_female_en-US-Wavenet-G",
+          "vad": [
+            [
+              [0.0, 0.11],
+              [0.11, 0.27],
+              [0.27, 0.51],
+              [0.51, 0.65],
+              [0.65, 1.19]
+            ],
+            []
+          ]
+        },
+        {
+          "text": "Do you live by yourself?",
+          "audio_path": "dataset_phrases/audio/live_short_female_en-US-Wavenet-H.wav",
+          "gender": "female",
+          "words": ["Do", "you", "live", "by", "yourself?"],
+          "starts": [
+            0.009999999776482582, 0.09008333086967468, 0.2670416533946991,
+            0.4583333134651184, 0.640541672706604
+          ],
+          "size": "short",
+          "tts": "en-US-Wavenet-H",
+          "name": "live_short_female_en-US-Wavenet-H",
+          "vad": [
+            [
+              [0.0, 0.1],
+              [0.1, 0.26],
+              [0.26, 0.48],
+              [0.48, 0.6],
+              [0.6, 1.19]
+            ],
+            []
+          ]
+        },
+        {
+          "text": "Do you live by yourself?",
+          "audio_path": "dataset_phrases/audio/live_short_female_en-US-Wavenet-C.wav",
+          "gender": "female",
+          "words": ["Do", "you", "live", "by", "yourself?"],
+          "starts": [
+            0.009999999776482582, 0.09999999403953552, 0.2800000011920929,
+            0.48500001430511475, 0.6854583621025085
+          ],
+          "size": "short",
+          "tts": "en-US-Wavenet-C",
+          "name": "live_short_female_en-US-Wavenet-C",
+          "vad": [
+            [
+              [0.0, 0.11],
+              [0.11, 0.26],
+              [0.26, 0.51],
+              [0.51, 0.65],
+              [0.65, 1.26]
+            ],
+            []
+          ]
+        },
+        {
+          "text": "Do you live by yourself?",
+          "audio_path": "dataset_phrases/audio/live_short_female_en-US-Wavenet-E.wav",
+          "gender": "female",
+          "words": ["Do", "you", "live", "by", "yourself?"],
+          "starts": [
+            0.009999999776482582, 0.06999999284744263, 0.26499998569488525,
+            0.4749999940395355, 0.6677500009536743
+          ],
+          "size": "short",
+          "tts": "en-US-Wavenet-E",
+          "name": "live_short_female_en-US-Wavenet-E",
+          "vad": [
+            [
+              [0.0, 0.09],
+              [0.09, 0.24],
+              [0.24, 0.5],
+              [0.5, 0.64],
+              [0.64, 1.25]
+            ],
+            []
+          ]
+        },
+        {
+          "text": "Do you live by yourself?",
+          "audio_path": "dataset_phrases/audio/live_short_female_en-US-Wavenet-F.wav",
+          "gender": "female",
+          "words": ["Do", "you", "live", "by", "yourself?"],
+          "starts": [
+            0.009999999776482582, 0.09000000357627869, 0.28999999165534973,
+            0.5199999809265137, 0.7237083315849304
+          ],
+          "size": "short",
+          "tts": "en-US-Wavenet-F",
+          "name": "live_short_female_en-US-Wavenet-F",
+          "vad": [
+            [
+              [0.0, 0.11],
+              [0.11, 0.27],
+              [0.27, 0.54],
+              [0.54, 0.66],
+              [0.66, 1.35]
+            ],
+            []
+          ]
+        }
+      ],
+      "male": [
+        {
+          "text": "Do you live by yourself?",
+          "audio_path": "dataset_phrases/audio/live_short_male_en-US-Wavenet-I.wav",
+          "gender": "male",
+          "words": ["Do", "you", "live", "by", "yourself?"],
+          "starts": [
+            0.009999999776482582, 0.08354166895151138, 0.23854166269302368,
+            0.4567083418369293, 0.6505833864212036
+          ],
+          "size": "short",
+          "tts": "en-US-Wavenet-I",
+          "name": "live_short_male_en-US-Wavenet-I",
+          "vad": [
+            [
+              [0.0, 0.09],
+              [0.09, 0.22],
+              [0.22, 0.49],
+              [0.49, 0.63],
+              [0.63, 1.18]
+            ],
+            []
+          ]
+        },
+        {
+          "text": "Do you live by yourself?",
+          "audio_path": "dataset_phrases/audio/live_short_male_en-US-Wavenet-J.wav",
+          "gender": "male",
+          "words": ["Do", "you", "live", "by", "yourself?"],
+          "starts": [
+            0.009999999776482582, 0.11520833522081375, 0.29095831513404846,
+            0.5209999680519104, 0.7285416126251221
+          ],
+          "size": "short",
+          "tts": "en-US-Wavenet-J",
+          "name": "live_short_male_en-US-Wavenet-J",
+          "vad": [
+            [
+              [0.03, 0.12],
+              [0.12, 0.3],
+              [0.3, 0.56],
+              [0.56, 0.71],
+              [0.71, 1.29]
+            ],
+            []
+          ]
+        },
+        {
+          "text": "Do you live by yourself?",
+          "audio_path": "dataset_phrases/audio/live_short_male_en-US-Wavenet-A.wav",
+          "gender": "male",
+          "words": ["Do", "you", "live", "by", "yourself?"],
+          "starts": [
+            0.009999999776482582, 0.07500000298023224, 0.3349999785423279,
+            0.5849999785423279, 0.809291660785675
+          ],
+          "size": "short",
+          "tts": "en-US-Wavenet-A",
+          "name": "live_short_male_en-US-Wavenet-A",
+          "vad": [
+            [
+              [0.0, 0.09],
+              [0.09, 0.32],
+              [0.32, 0.63],
+              [0.63, 0.78],
+              [0.78, 1.45]
+            ],
+            []
+          ]
+        },
+        {
+          "text": "Do you live by yourself?",
+          "audio_path": "dataset_phrases/audio/live_short_male_en-US-Wavenet-B.wav",
+          "gender": "male",
+          "words": ["Do", "you", "live", "by", "yourself?"],
+          "starts": [
+            0.009999999776482582, 0.11500000208616257, 0.3400000035762787,
+            0.5699999928474426, 0.8069999814033508
+          ],
+          "size": "short",
+          "tts": "en-US-Wavenet-B",
+          "name": "live_short_male_en-US-Wavenet-B",
+          "vad": [
+            [
+              [0.04, 0.11],
+              [0.11, 0.32],
+              [0.32, 0.61],
+              [0.61, 0.76],
+              [0.76, 1.39]
+            ],
+            []
+          ]
+        },
+        {
+          "text": "Do you live by yourself?",
+          "audio_path": "dataset_phrases/audio/live_short_male_en-US-Wavenet-D.wav",
+          "gender": "male",
+          "words": ["Do", "you", "live", "by", "yourself?"],
+          "starts": [
+            0.009999999776482582, 0.06999999284744263, 0.22999998927116394,
+            0.4350000023841858, 0.6118332743644714
+          ],
+          "size": "short",
+          "tts": "en-US-Wavenet-D",
+          "name": "live_short_male_en-US-Wavenet-D",
+          "vad": [
+            [
+              [0.0, 0.09],
+              [0.09, 0.22],
+              [0.22, 0.47],
+              [0.47, 0.58],
+              [0.58, 1.15]
+            ],
+            []
+          ]
+        }
+      ]
+    },
+    "long": {
+      "female": [
+        {
+          "text": "Do you live by yourself or with someone else?",
+          "audio_path": "dataset_phrases/audio/live_long_female_en-US-Wavenet-G.wav",
+          "gender": "female",
+          "words": [
+            "Do",
+            "you",
+            "live",
+            "by",
+            "yourself",
+            "or",
+            "with",
+            "someone",
+            "else?"
+          ],
+          "starts": [
+            0.009999999776482582, 0.09924999624490738, 0.2647083103656769,
+            0.43854162096977234, 0.6436666250228882, 1.2146250009536743,
+            1.341416597366333, 1.4724998474121094, 1.8069580793380737
+          ],
+          "size": "long",
+          "tts": "en-US-Wavenet-G",
+          "name": "live_long_female_en-US-Wavenet-G",
+          "vad": [
+            [
+              [0.0, 0.11],
+              [0.11, 0.25],
+              [0.25, 0.48],
+              [0.48, 0.63],
+              [0.63, 1.22],
+              [1.22, 1.34],
+              [1.34, 1.48],
+              [1.48, 1.82],
+              [1.82, 2.18]
+            ],
+            []
+          ]
+        },
+        {
+          "text": "Do you live by yourself or with someone else?",
+          "audio_path": "dataset_phrases/audio/live_long_female_en-US-Wavenet-H.wav",
+          "gender": "female",
+          "words": [
+            "Do",
+            "you",
+            "live",
+            "by",
+            "yourself",
+            "or",
+            "with",
+            "someone",
+            "else?"
+          ],
+          "starts": [
+            0.009999999776482582, 0.08241666853427887, 0.2671250104904175,
+            0.4377083480358124, 0.6227500438690186, 1.1138750314712524,
+            1.2269583940505981, 1.3507916927337646, 1.6669999361038208
+          ],
+          "size": "long",
+          "tts": "en-US-Wavenet-H",
+          "name": "live_long_female_en-US-Wavenet-H",
+          "vad": [
+            [
+              [0.0, 0.09],
+              [0.09, 0.25],
+              [0.25, 0.46],
+              [0.46, 0.59],
+              [0.59, 1.12],
+              [1.12, 1.22],
+              [1.22, 1.37],
+              [1.37, 1.68],
+              [1.68, 2.01]
+            ],
+            []
+          ]
+        },
+        {
+          "text": "Do you live by yourself or with someone else?",
+          "audio_path": "dataset_phrases/audio/live_long_female_en-US-Wavenet-C.wav",
+          "gender": "female",
+          "words": [
+            "Do",
+            "you",
+            "live",
+            "by",
+            "yourself",
+            "or",
+            "with",
+            "someone",
+            "else?"
+          ],
+          "starts": [
+            0.009999999776482582, 0.0949999988079071, 0.2800000011920929,
+            0.45000001788139343, 0.6564167141914368, 1.2624166011810303,
+            1.4024165868759155, 1.5474164485931396, 1.896166443824768
+          ],
+          "size": "long",
+          "tts": "en-US-Wavenet-C",
+          "name": "live_long_female_en-US-Wavenet-C",
+          "vad": [
+            [
+              [0.0, 0.11],
+              [0.11, 0.24],
+              [0.24, 0.48],
+              [0.48, 0.62],
+              [0.62, 1.26],
+              [1.26, 1.38],
+              [1.38, 1.55],
+              [1.55, 1.9],
+              [1.9, 2.3]
+            ],
+            []
+          ]
+        },
+        {
+          "text": "Do you live by yourself or with someone else?",
+          "audio_path": "dataset_phrases/audio/live_long_female_en-US-Wavenet-E.wav",
+          "gender": "female",
+          "words": [
+            "Do",
+            "you",
+            "live",
+            "by",
+            "yourself",
+            "or",
+            "with",
+            "someone",
+            "else?"
+          ],
+          "starts": [
+            0.009999999776482582, 0.06499999761581421, 0.25999999046325684,
+            0.44999998807907104, 0.6591666340827942, 1.249333381652832,
+            1.3943333625793457, 1.5443333387374878, 1.9200831651687622
+          ],
+          "size": "long",
+          "tts": "en-US-Wavenet-E",
+          "name": "live_long_female_en-US-Wavenet-E",
+          "vad": [
+            [
+              [0.0, 0.09],
+              [0.09, 0.24],
+              [0.24, 0.48],
+              [0.48, 0.62],
+              [0.62, 1.24],
+              [1.24, 1.38],
+              [1.38, 1.55],
+              [1.55, 1.92],
+              [1.92, 2.3]
+            ],
+            []
+          ]
+        },
+        {
+          "text": "Do you live by yourself or with someone else?",
+          "audio_path": "dataset_phrases/audio/live_long_female_en-US-Wavenet-F.wav",
+          "gender": "female",
+          "words": [
+            "Do",
+            "you",
+            "live",
+            "by",
+            "yourself",
+            "or",
+            "with",
+            "someone",
+            "else?"
+          ],
+          "starts": [
+            0.009999999776482582, 0.08500000089406967, 0.29999998211860657,
+            0.47999998927116394, 0.6793333292007446, 1.2872083187103271,
+            1.4072083234786987, 1.572208285331726, 1.9507497549057007
+          ],
+          "size": "long",
+          "tts": "en-US-Wavenet-F",
+          "name": "live_long_female_en-US-Wavenet-F",
+          "vad": [
+            [
+              [0.0, 0.11],
+              [0.11, 0.31],
+              [0.31, 0.5],
+              [0.5, 0.62],
+              [0.62, 1.28],
+              [1.28, 1.39],
+              [1.39, 1.57],
+              [1.57, 1.95],
+              [1.95, 2.39]
+            ],
+            []
+          ]
+        }
+      ],
+      "male": [
+        {
+          "text": "Do you live by yourself or with someone else?",
+          "audio_path": "dataset_phrases/audio/live_long_male_en-US-Wavenet-I.wav",
+          "gender": "male",
+          "words": [
+            "Do",
+            "you",
+            "live",
+            "by",
+            "yourself",
+            "or",
+            "with",
+            "someone",
+            "else?"
+          ],
+          "starts": [
+            0.009999999776482582, 0.08487499505281448, 0.25,
+            0.41187500953674316, 0.6070416569709778, 1.1305832862854004,
+            1.2712082862854004, 1.4195414781570435, 1.7279164791107178
+          ],
+          "size": "long",
+          "tts": "en-US-Wavenet-I",
+          "name": "live_long_male_en-US-Wavenet-I",
+          "vad": [
+            [
+              [0.0, 0.09],
+              [0.09, 0.25],
+              [0.25, 0.45],
+              [0.45, 0.58],
+              [0.58, 1.13],
+              [1.13, 1.25],
+              [1.25, 1.41],
+              [1.41, 1.74],
+              [1.74, 2.1]
+            ],
+            []
+          ]
+        },
+        {
+          "text": "Do you live by yourself or with someone else?",
+          "audio_path": "dataset_phrases/audio/live_long_male_en-US-Wavenet-J.wav",
+          "gender": "male",
+          "words": [
+            "Do",
+            "you",
+            "live",
+            "by",
+            "yourself",
+            "or",
+            "with",
+            "someone",
+            "else?"
+          ],
+          "starts": [
+            0.009999999776482582, 0.1107916608452797, 0.27704164385795593,
+            0.4715416729450226, 0.6820416450500488, 1.222999930381775,
+            1.3633333444595337, 1.5020415782928467, 1.8373332023620605
+          ],
+          "size": "long",
+          "tts": "en-US-Wavenet-J",
+          "name": "live_long_male_en-US-Wavenet-J",
+          "vad": [
+            [
+              [0.03, 0.12],
+              [0.12, 0.28],
+              [0.28, 0.51],
+              [0.51, 0.66],
+              [0.66, 1.23],
+              [1.23, 1.36],
+              [1.36, 1.54],
+              [1.54, 1.85],
+              [1.85, 2.25]
+            ],
+            []
+          ]
+        },
+        {
+          "text": "Do you live by yourself or with someone else?",
+          "audio_path": "dataset_phrases/audio/live_long_male_en-US-Wavenet-A.wav",
+          "gender": "male",
+          "words": [
+            "Do",
+            "you",
+            "live",
+            "by",
+            "yourself",
+            "or",
+            "with",
+            "someone",
+            "else?"
+          ],
+          "starts": [
+            0.009999999776482582, 0.06499999761581421, 0.33500000834465027,
+            0.550000011920929, 0.7850833535194397, 1.4200834035873413,
+            1.5700833797454834, 1.7450833320617676, 2.1327083110809326
+          ],
+          "size": "long",
+          "tts": "en-US-Wavenet-A",
+          "name": "live_long_male_en-US-Wavenet-A",
+          "vad": [
+            [
+              [0.0, 0.08],
+              [0.08, 0.33],
+              [0.33, 0.6],
+              [0.6, 0.75],
+              [0.75, 1.41],
+              [1.41, 1.56],
+              [1.56, 1.74],
+              [1.74, 2.14],
+              [2.14, 2.6]
+            ],
+            []
+          ]
+        },
+        {
+          "text": "Do you live by yourself or with someone else?",
+          "audio_path": "dataset_phrases/audio/live_long_male_en-US-Wavenet-B.wav",
+          "gender": "male",
+          "words": [
+            "Do",
+            "you",
+            "live",
+            "by",
+            "yourself",
+            "or",
+            "with",
+            "someone",
+            "else?"
+          ],
+          "starts": [
+            0.009999999776482582, 0.10999999940395355, 0.32499998807907104,
+            0.5149999856948853, 0.7559165954589844, 1.3259165287017822,
+            1.4909164905548096, 1.6609164476394653, 2.070624828338623
+          ],
+          "size": "long",
+          "tts": "en-US-Wavenet-B",
+          "name": "live_long_male_en-US-Wavenet-B",
+          "vad": [
+            [
+              [0.0, 0.11],
+              [0.11, 0.29],
+              [0.29, 0.55],
+              [0.55, 0.71],
+              [0.71, 1.31],
+              [1.31, 1.47],
+              [1.47, 1.66],
+              [1.66, 2.08],
+              [2.08, 2.48]
+            ],
+            []
+          ]
+        },
+        {
+          "text": "Do you live by yourself or with someone else?",
+          "audio_path": "dataset_phrases/audio/live_long_male_en-US-Wavenet-D.wav",
+          "gender": "male",
+          "words": [
+            "Do",
+            "you",
+            "live",
+            "by",
+            "yourself",
+            "or",
+            "with",
+            "someone",
+            "else?"
+          ],
+          "starts": [
+            0.009999999776482582, 0.06499999761581421, 0.2449999898672104,
+            0.4099999964237213, 0.5949999690055847, 1.1732499599456787,
+            1.2874583005905151, 1.4124581813812256, 1.7324579954147339
+          ],
+          "size": "long",
+          "tts": "en-US-Wavenet-D",
+          "name": "live_long_male_en-US-Wavenet-D",
+          "vad": [
+            [
+              [0.0, 0.09],
+              [0.09, 0.22],
+              [0.22, 0.45],
+              [0.45, 0.56],
+              [0.56, 1.16],
+              [1.16, 1.27],
+              [1.27, 1.41],
+              [1.41, 1.74],
+              [1.74, 2.12]
+            ],
+            []
+          ]
+        }
+      ]
+    }
+  },
+  "work": {
+    "short": {
+      "female": [
+        {
+          "text": "So you work on the side?",
+          "audio_path": "dataset_phrases/audio/work_short_female_en-US-Wavenet-G.wav",
+          "gender": "female",
+          "words": ["So", "you", "work", "on", "the", "side?"],
+          "starts": [
+            0.009999999776482582, 0.18654166162014008, 0.3257499933242798,
+            0.5841250419616699, 0.7169583439826965, 0.7760833501815796
+          ],
+          "size": "short",
+          "tts": "en-US-Wavenet-G",
+          "name": "work_short_female_en-US-Wavenet-G",
+          "vad": [
+            [
+              [0.0, 0.16],
+              [0.16, 0.34],
+              [0.34, 0.58],
+              [0.58, 0.73],
+              [0.73, 0.79],
+              [0.79, 1.18]
+            ],
+            []
+          ]
+        },
+        {
+          "text": "So you work on the side?",
+          "audio_path": "dataset_phrases/audio/work_short_female_en-US-Wavenet-H.wav",
+          "gender": "female",
+          "words": ["So", "you", "work", "on", "the", "side?"],
+          "starts": [
+            0.009999999776482582, 0.16387499868869781, 0.31962499022483826,
+            0.5654166340827942, 0.6965832710266113, 0.7565833330154419
+          ],
+          "size": "short",
+          "tts": "en-US-Wavenet-H",
+          "name": "work_short_female_en-US-Wavenet-H",
+          "vad": [
+            [
+              [0.0, 0.14],
+              [0.14, 0.33],
+              [0.33, 0.56],
+              [0.56, 0.71],
+              [0.71, 0.76],
+              [0.76, 1.17]
+            ],
+            []
+          ]
+        },
+        {
+          "text": "So you work on the side?",
+          "audio_path": "dataset_phrases/audio/work_short_female_en-US-Wavenet-C.wav",
+          "gender": "female",
+          "words": ["So", "you", "work", "on", "the", "side?"],
+          "starts": [
+            0.009999999776482582, 0.16499999165534973, 0.3149999976158142,
+            0.5849999785423279, 0.7174166440963745, 0.7674165964126587
+          ],
+          "size": "short",
+          "tts": "en-US-Wavenet-C",
+          "name": "work_short_female_en-US-Wavenet-C",
+          "vad": [
+            [
+              [0.0, 0.14],
+              [0.14, 0.32],
+              [0.32, 0.58],
+              [0.58, 0.72],
+              [0.72, 0.77],
+              [0.77, 1.2]
+            ],
+            []
+          ]
+        },
+        {
+          "text": "So you work on the side?",
+          "audio_path": "dataset_phrases/audio/work_short_female_en-US-Wavenet-E.wav",
+          "gender": "female",
+          "words": ["So", "you", "work", "on", "the", "side?"],
+          "starts": [
+            0.009999999776482582, 0.1550000011920929, 0.32500001788139343,
+            0.6065416932106018, 0.7665416598320007, 0.8215416669845581
+          ],
+          "size": "short",
+          "tts": "en-US-Wavenet-E",
+          "name": "work_short_female_en-US-Wavenet-E",
+          "vad": [
+            [
+              [0.0, 0.14],
+              [0.14, 0.32],
+              [0.32, 0.6],
+              [0.6, 0.77],
+              [0.77, 0.83],
+              [0.83, 1.22]
+            ],
+            []
+          ]
+        },
+        {
+          "text": "So you work on the side?",
+          "audio_path": "dataset_phrases/audio/work_short_female_en-US-Wavenet-F.wav",
+          "gender": "female",
+          "words": ["So", "you", "work", "on", "the", "side?"],
+          "starts": [
+            0.009999999776482582, 0.16499999165534973, 0.3399999737739563,
+            0.6346249580383301, 0.7896249294281006, 0.8496249318122864
+          ],
+          "size": "short",
+          "tts": "en-US-Wavenet-F",
+          "name": "work_short_female_en-US-Wavenet-F",
+          "vad": [
+            [
+              [0.0, 0.15],
+              [0.15, 0.33],
+              [0.33, 0.63],
+              [0.63, 0.79],
+              [0.79, 0.84],
+              [0.84, 1.27]
+            ],
+            []
+          ]
+        }
+      ],
+      "male": [
+        {
+          "text": "So you work on the side?",
+          "audio_path": "dataset_phrases/audio/work_short_male_en-US-Wavenet-I.wav",
+          "gender": "male",
+          "words": ["So", "you", "work", "on", "the", "side?"],
+          "starts": [
+            0.009999999776482582, 0.14649999141693115, 0.2979999780654907,
+            0.578499972820282, 0.7150416374206543, 0.7647082805633545
+          ],
+          "size": "short",
+          "tts": "en-US-Wavenet-I",
+          "name": "work_short_male_en-US-Wavenet-I",
+          "vad": [
+            [
+              [0.0, 0.13],
+              [0.13, 0.31],
+              [0.31, 0.58],
+              [0.58, 0.72],
+              [0.72, 0.77],
+              [0.77, 1.15]
+            ],
+            []
+          ]
+        },
+        {
+          "text": "So you work on the side?",
+          "audio_path": "dataset_phrases/audio/work_short_male_en-US-Wavenet-J.wav",
+          "gender": "male",
+          "words": ["So", "you", "work", "on", "the", "side?"],
+          "starts": [
+            0.009999999776482582, 0.1810833215713501, 0.32633331418037415,
+            0.6058332920074463, 0.7566666007041931, 0.8098748922348022
+          ],
+          "size": "short",
+          "tts": "en-US-Wavenet-J",
+          "name": "work_short_male_en-US-Wavenet-J",
+          "vad": [
+            [
+              [0.03, 0.16],
+              [0.16, 0.33],
+              [0.33, 0.61],
+              [0.61, 0.76],
+              [0.76, 0.82],
+              [0.82, 1.22]
+            ],
+            []
+          ]
+        },
+        {
+          "text": "So you work on the side?",
+          "audio_path": "dataset_phrases/audio/work_short_male_en-US-Wavenet-A.wav",
+          "gender": "male",
+          "words": ["So", "you", "work", "on", "the", "side?"],
+          "starts": [
+            0.009999999776482582, 0.17499999701976776, 0.38499999046325684,
+            0.7143332958221436, 0.8693332672119141, 0.9293332695960999
+          ],
+          "size": "short",
+          "tts": "en-US-Wavenet-A",
+          "name": "work_short_male_en-US-Wavenet-A",
+          "vad": [
+            [
+              [0.0, 0.15],
+              [0.15, 0.39],
+              [0.39, 0.71],
+              [0.71, 0.87],
+              [0.87, 0.94],
+              [0.94, 1.4]
+            ],
+            []
+          ]
+        },
+        {
+          "text": "So you work on the side?",
+          "audio_path": "dataset_phrases/audio/work_short_male_en-US-Wavenet-B.wav",
+          "gender": "male",
+          "words": ["So", "you", "work", "on", "the", "side?"],
+          "starts": [
+            0.009999999776482582, 0.17499999701976776, 0.375,
+            0.6654167175292969, 0.8454167246818542, 0.9204167127609253
+          ],
+          "size": "short",
+          "tts": "en-US-Wavenet-B",
+          "name": "work_short_male_en-US-Wavenet-B",
+          "vad": [
+            [
+              [0.0, 0.16],
+              [0.16, 0.35],
+              [0.35, 0.67],
+              [0.67, 0.85],
+              [0.85, 0.93],
+              [0.93, 1.41]
+            ],
+            []
+          ]
+        },
+        {
+          "text": "So you work on the side?",
+          "audio_path": "dataset_phrases/audio/work_short_male_en-US-Wavenet-D.wav",
+          "gender": "male",
+          "words": ["So", "you", "work", "on", "the", "side?"],
+          "starts": [
+            0.009999999776482582, 0.12999999523162842, 0.27000001072883606,
+            0.5099999904632568, 0.6422083377838135, 0.6922082901000977
+          ],
+          "size": "short",
+          "tts": "en-US-Wavenet-D",
+          "name": "work_short_male_en-US-Wavenet-D",
+          "vad": [
+            [
+              [0.0, 0.12],
+              [0.12, 0.26],
+              [0.26, 0.51],
+              [0.51, 0.65],
+              [0.65, 0.7],
+              [0.7, 1.08]
+            ],
+            []
+          ]
+        }
+      ]
+    },
+    "long": {
+      "female": [
+        {
+          "text": "So you work on the side in a supermarket in addition to your studies?",
+          "audio_path": "dataset_phrases/audio/work_long_female_en-US-Wavenet-G.wav",
+          "gender": "female",
+          "words": [
+            "So",
+            "you",
+            "work",
+            "on",
+            "the",
+            "side",
+            "in",
+            "a",
+            "supermarket",
+            "addition",
+            "to",
+            "your",
+            "studies?"
+          ],
+          "starts": [
+            0.009999999776482582, 0.1821666657924652, 0.31724998354911804,
+            0.5572916865348816, 0.6813749670982361, 0.7329999804496765,
+            1.1046249866485596, 1.1967915296554565, 1.2520831823349,
+            2.0469164848327637, 2.4448330402374268, 2.5216665267944336,
+            2.6324164867401123
+          ],
+          "size": "long",
+          "tts": "en-US-Wavenet-G",
+          "name": "work_long_female_en-US-Wavenet-G",
+          "vad": [
+            [
+              [0.0, 0.15],
+              [0.15, 0.33],
+              [0.33, 0.56],
+              [0.56, 0.69],
+              [0.69, 0.74],
+              [0.74, 1.1],
+              [1.1, 1.21],
+              [1.21, 1.26],
+              [1.26, 1.95],
+              [1.95, 2.05],
+              [2.05, 2.44],
+              [2.44, 2.52],
+              [2.52, 2.63],
+              [2.63, 3.09]
+            ],
+            []
+          ]
+        },
+        {
+          "text": "So you work on the side in a supermarket in addition to your studies?",
+          "audio_path": "dataset_phrases/audio/work_long_female_en-US-Wavenet-H.wav",
+          "gender": "female",
+          "words": [
+            "So",
+            "you",
+            "work",
+            "on",
+            "the",
+            "side",
+            "in",
+            "a",
+            "supermarket",
+            "addition",
+            "to",
+            "your",
+            "studies?"
+          ],
+          "starts": [
+            0.009999999776482582, 0.15558333694934845, 0.30533334612846375,
+            0.5383332967758179, 0.6594166159629822, 0.7122499346733093,
+            1.0664582252502441, 1.151999831199646, 1.2019997835159302,
+            1.951624870300293, 2.339707851409912, 2.421666145324707,
+            2.540499687194824
+          ],
+          "size": "long",
+          "tts": "en-US-Wavenet-H",
+          "name": "work_long_female_en-US-Wavenet-H",
+          "vad": [
+            [
+              [0.0, 0.13],
+              [0.13, 0.31],
+              [0.31, 0.53],
+              [0.53, 0.67],
+              [0.67, 0.72],
+              [0.72, 1.07],
+              [1.07, 1.16],
+              [1.16, 1.21],
+              [1.21, 1.87],
+              [1.87, 1.97],
+              [1.97, 2.34],
+              [2.34, 2.43],
+              [2.43, 2.54],
+              [2.54, 3.03]
+            ],
+            []
+          ]
+        },
+        {
+          "text": "So you work on the side in a supermarket in addition to your studies?",
+          "audio_path": "dataset_phrases/audio/work_long_female_en-US-Wavenet-C.wav",
+          "gender": "female",
+          "words": [
+            "So",
+            "you",
+            "work",
+            "on",
+            "the",
+            "side",
+            "in",
+            "a",
+            "supermarket",
+            "addition",
+            "to",
+            "your",
+            "studies?"
+          ],
+          "starts": [
+            0.009999999776482582, 0.16499999165534973, 0.3099999725818634,
+            0.5649999976158142, 0.6865000128746033, 0.7365000247955322,
+            1.1365000009536743, 1.2237915992736816, 1.2787915468215942,
+            2.1499998569488525, 2.564166784286499, 2.6641669273376465,
+            2.7841670513153076
+          ],
+          "size": "long",
+          "tts": "en-US-Wavenet-C",
+          "name": "work_long_female_en-US-Wavenet-C",
+          "vad": [
+            [
+              [0.0, 0.14],
+              [0.14, 0.31],
+              [0.31, 0.57],
+              [0.57, 0.69],
+              [0.69, 0.74],
+              [0.74, 1.13],
+              [1.13, 1.23],
+              [1.23, 1.28],
+              [1.28, 2.04],
+              [2.04, 2.15],
+              [2.15, 2.56],
+              [2.56, 2.68],
+              [2.68, 2.79],
+              [2.79, 3.29]
+            ],
+            []
+          ]
+        },
+        {
+          "text": "So you work on the side in a supermarket in addition to your studies?",
+          "audio_path": "dataset_phrases/audio/work_long_female_en-US-Wavenet-E.wav",
+          "gender": "female",
+          "words": [
+            "So",
+            "you",
+            "work",
+            "on",
+            "the",
+            "side",
+            "in",
+            "a",
+            "supermarket",
+            "addition",
+            "to",
+            "your",
+            "studies?"
+          ],
+          "starts": [
+            0.009999999776482582, 0.1550000011920929, 0.3050000071525574,
+            0.5649999976158142, 0.7126249670982361, 0.7726249694824219,
+            1.1376248598098755, 1.248999834060669, 1.30899977684021,
+            2.1982080936431885, 2.629957914352417, 2.7199578285217285,
+            2.8549578189849854
+          ],
+          "size": "long",
+          "tts": "en-US-Wavenet-E",
+          "name": "work_long_female_en-US-Wavenet-E",
+          "vad": [
+            [
+              [0.0, 0.14],
+              [0.14, 0.31],
+              [0.31, 0.56],
+              [0.56, 0.72],
+              [0.72, 0.78],
+              [0.78, 1.14],
+              [1.14, 1.25],
+              [1.25, 1.31],
+              [1.31, 2.07],
+              [2.07, 2.2],
+              [2.2, 2.62],
+              [2.62, 2.73],
+              [2.73, 2.85],
+              [2.85, 3.44]
+            ],
+            []
+          ]
+        },
+        {
+          "text": "So you work on the side in a supermarket in addition to your studies?",
+          "audio_path": "dataset_phrases/audio/work_long_female_en-US-Wavenet-F.wav",
+          "gender": "female",
+          "words": [
+            "So",
+            "you",
+            "work",
+            "on",
+            "the",
+            "side",
+            "in",
+            "a",
+            "supermarket",
+            "addition",
+            "to",
+            "your",
+            "studies?"
+          ],
+          "starts": [
+            0.009999999776482582, 0.17000000178813934, 0.3400000035762787,
+            0.6049583554267883, 0.749958336353302, 0.799958348274231,
+            1.1549582481384277, 1.2529999017715454, 1.3129998445510864,
+            2.1664164066314697, 2.5902915000915527, 2.6702916622161865,
+            2.7952916622161865
+          ],
+          "size": "long",
+          "tts": "en-US-Wavenet-F",
+          "name": "work_long_female_en-US-Wavenet-F",
+          "vad": [
+            [
+              [0.0, 0.15],
+              [0.15, 0.33],
+              [0.33, 0.61],
+              [0.61, 0.75],
+              [0.75, 0.79],
+              [0.79, 1.15],
+              [1.15, 1.25],
+              [1.25, 1.31],
+              [1.31, 2.04],
+              [2.04, 2.17],
+              [2.17, 2.57],
+              [2.57, 2.68],
+              [2.68, 2.78],
+              [2.78, 3.35]
+            ],
+            []
+          ]
+        }
+      ],
+      "male": [
+        {
+          "text": "So you work on the side in a supermarket in addition to your studies?",
+          "audio_path": "dataset_phrases/audio/work_long_male_en-US-Wavenet-I.wav",
+          "gender": "male",
+          "words": [
+            "So",
+            "you",
+            "work",
+            "on",
+            "the",
+            "side",
+            "in",
+            "a",
+            "supermarket",
+            "addition",
+            "to",
+            "your",
+            "studies?"
+          ],
+          "starts": [
+            0.009999999776482582, 0.1431249976158142, 0.30429166555404663,
+            0.546999990940094, 0.6662916541099548, 0.7084583044052124,
+            1.0831248760223389, 1.173874855041504, 1.2212498188018799,
+            2.0097498893737793, 2.4034996032714844, 2.48449969291687,
+            2.6084580421447754
+          ],
+          "size": "long",
+          "tts": "en-US-Wavenet-I",
+          "name": "work_long_male_en-US-Wavenet-I",
+          "vad": [
+            [
+              [0.0, 0.13],
+              [0.13, 0.31],
+              [0.31, 0.55],
+              [0.55, 0.67],
+              [0.67, 0.72],
+              [0.72, 1.09],
+              [1.09, 1.18],
+              [1.18, 1.23],
+              [1.23, 1.9],
+              [1.9, 2.01],
+              [2.01, 2.4],
+              [2.4, 2.5],
+              [2.5, 2.6],
+              [2.6, 3.07]
+            ],
+            []
+          ]
+        },
+        {
+          "text": "So you work on the side in a supermarket in addition to your studies?",
+          "audio_path": "dataset_phrases/audio/work_long_male_en-US-Wavenet-J.wav",
+          "gender": "male",
+          "words": [
+            "So",
+            "you",
+            "work",
+            "on",
+            "the",
+            "side",
+            "in",
+            "a",
+            "supermarket",
+            "addition",
+            "to",
+            "your",
+            "studies?"
+          ],
+          "starts": [
+            0.009999999776482582, 0.1860416680574417, 0.3211666941642761,
+            0.5792917013168335, 0.7117500305175781, 0.7617499828338623,
+            1.1591249704360962, 1.2474164962768555, 1.2907497882843018,
+            2.0853331089019775, 2.4905831813812256, 2.5694997310638428,
+            2.693457841873169
+          ],
+          "size": "long",
+          "tts": "en-US-Wavenet-J",
+          "name": "work_long_male_en-US-Wavenet-J",
+          "vad": [
+            [
+              [0.03, 0.16],
+              [0.16, 0.32],
+              [0.32, 0.58],
+              [0.58, 0.72],
+              [0.72, 0.78],
+              [0.78, 1.17],
+              [1.17, 1.26],
+              [1.26, 1.3],
+              [1.3, 1.97],
+              [1.97, 2.09],
+              [2.09, 2.49],
+              [2.49, 2.58],
+              [2.58, 2.69],
+              [2.69, 3.19]
+            ],
+            []
+          ]
+        },
+        {
+          "text": "So you work on the side in a supermarket in addition to your studies?",
+          "audio_path": "dataset_phrases/audio/work_long_male_en-US-Wavenet-A.wav",
+          "gender": "male",
+          "words": [
+            "So",
+            "you",
+            "work",
+            "on",
+            "the",
+            "side",
+            "in",
+            "a",
+            "supermarket",
+            "addition",
+            "to",
+            "your",
+            "studies?"
+          ],
+          "starts": [
+            0.009999999776482582, 0.16499999165534973, 0.3700000047683716,
+            0.6657916903495789, 0.8057916760444641, 0.8657916784286499,
+            1.297124981880188, 1.4071248769760132, 1.4721249341964722,
+            2.3804163932800293, 2.813791036605835, 2.8937909603118896,
+            3.034207582473755
+          ],
+          "size": "long",
+          "tts": "en-US-Wavenet-A",
+          "name": "work_long_male_en-US-Wavenet-A",
+          "vad": [
+            [
+              [0.0, 0.14],
+              [0.14, 0.37],
+              [0.37, 0.66],
+              [0.66, 0.81],
+              [0.81, 0.87],
+              [0.87, 1.28],
+              [1.28, 1.41],
+              [1.41, 1.48],
+              [1.48, 2.26],
+              [2.26, 2.38],
+              [2.38, 2.8],
+              [2.8, 2.89],
+              [2.89, 3.03],
+              [3.03, 3.61]
+            ],
+            []
+          ]
+        },
+        {
+          "text": "So you work on the side in a supermarket in addition to your studies?",
+          "audio_path": "dataset_phrases/audio/work_long_male_en-US-Wavenet-B.wav",
+          "gender": "male",
+          "words": [
+            "So",
+            "you",
+            "work",
+            "on",
+            "the",
+            "side",
+            "in",
+            "a",
+            "supermarket",
+            "addition",
+            "to",
+            "your",
+            "studies?"
+          ],
+          "starts": [
+            0.009999999776482582, 0.17000000178813934, 0.3499999940395355,
+            0.6004999876022339, 0.7554999589920044, 0.825499951839447,
+            1.2198748588562012, 1.324874758720398, 1.4048748016357422,
+            2.2997915744781494, 2.769958019256592, 2.8549580574035645,
+            3.0286247730255127
+          ],
+          "size": "long",
+          "tts": "en-US-Wavenet-B",
+          "name": "work_long_male_en-US-Wavenet-B",
+          "vad": [
+            [
+              [0.0, 0.15],
+              [0.15, 0.33],
+              [0.33, 0.61],
+              [0.61, 0.76],
+              [0.76, 0.83],
+              [0.83, 1.23],
+              [1.23, 1.33],
+              [1.33, 1.41],
+              [1.41, 2.16],
+              [2.16, 2.3],
+              [2.3, 2.76],
+              [2.76, 2.87],
+              [2.87, 3.01],
+              [3.01, 3.62]
+            ],
+            []
+          ]
+        },
+        {
+          "text": "So you work on the side in a supermarket in addition to your studies?",
+          "audio_path": "dataset_phrases/audio/work_long_male_en-US-Wavenet-D.wav",
+          "gender": "male",
+          "words": [
+            "So",
+            "you",
+            "work",
+            "on",
+            "the",
+            "side",
+            "in",
+            "a",
+            "supermarket",
+            "addition",
+            "to",
+            "your",
+            "studies?"
+          ],
+          "starts": [
+            0.009999999776482582, 0.13499999046325684, 0.2800000011920929,
+            0.5149999856948853, 0.6349583268165588, 0.684958279132843,
+            1.064958095550537, 1.1549580097198486, 1.2012913227081299,
+            2.037041187286377, 2.4485414028167725, 2.5285415649414062,
+            2.6485416889190674
+          ],
+          "size": "long",
+          "tts": "en-US-Wavenet-D",
+          "name": "work_long_male_en-US-Wavenet-D",
+          "vad": [
+            [
+              [0.0, 0.13],
+              [0.13, 0.27],
+              [0.27, 0.52],
+              [0.52, 0.64],
+              [0.64, 0.69],
+              [0.69, 1.06],
+              [1.06, 1.16],
+              [1.16, 1.22],
+              [1.22, 1.94],
+              [1.94, 2.04],
+              [2.04, 2.45],
+              [2.45, 2.53],
+              [2.53, 2.65],
+              [2.65, 3.14]
+            ],
+            []
+          ]
+        }
+      ]
+    }
+  },
+  "bike": {
+    "short": {
+      "female": [
+        {
+          "text": "Did you come here by bike?",
+          "audio_path": "dataset_phrases/audio/bike_short_female_en-US-Wavenet-G.wav",
+          "gender": "female",
+          "words": ["Did", "you", "come", "here", "by", "bike?"],
+          "starts": [
+            0.009999999776482582, 0.18929165601730347, 0.3008333146572113,
+            0.5220416188240051, 0.744583249092102, 0.9103332757949829
+          ],
+          "size": "short",
+          "tts": "en-US-Wavenet-G",
+          "name": "bike_short_female_en-US-Wavenet-G",
+          "vad": [
+            [
+              [0.03, 0.18],
+              [0.18, 0.31],
+              [0.31, 0.52],
+              [0.52, 0.75],
+              [0.75, 0.92],
+              [0.92, 1.28]
+            ],
+            []
+          ]
+        },
+        {
+          "text": "Did you come here by bike?",
+          "audio_path": "dataset_phrases/audio/bike_short_female_en-US-Wavenet-H.wav",
+          "gender": "female",
+          "words": ["Did", "you", "come", "here", "by", "bike?"],
+          "starts": [
+            0.009999999776482582, 0.15804165601730347, 0.2747499942779541,
+            0.4857916533946991, 0.6660416722297668, 0.8261250257492065
+          ],
+          "size": "short",
+          "tts": "en-US-Wavenet-H",
+          "name": "bike_short_female_en-US-Wavenet-H",
+          "vad": [
+            [
+              [0.0, 0.16],
+              [0.16, 0.27],
+              [0.27, 0.49],
+              [0.49, 0.67],
+              [0.67, 0.83],
+              [0.83, 1.19]
+            ],
+            []
+          ]
+        },
+        {
+          "text": "Did you come here by bike?",
+          "audio_path": "dataset_phrases/audio/bike_short_female_en-US-Wavenet-C.wav",
+          "gender": "female",
+          "words": ["Did", "you", "come", "here", "by", "bike?"],
+          "starts": [
+            0.009999999776482582, 0.1899999976158142, 0.30000001192092896,
+            0.5350000262260437, 0.7350000143051147, 0.925000011920929
+          ],
+          "size": "short",
+          "tts": "en-US-Wavenet-C",
+          "name": "bike_short_female_en-US-Wavenet-C",
+          "vad": [
+            [
+              [0.0, 0.18],
+              [0.18, 0.29],
+              [0.29, 0.53],
+              [0.53, 0.74],
+              [0.74, 0.92],
+              [0.92, 1.23]
+            ],
+            []
+          ]
+        },
+        {
+          "text": "Did you come here by bike?",
+          "audio_path": "dataset_phrases/audio/bike_short_female_en-US-Wavenet-E.wav",
+          "gender": "female",
+          "words": ["Did", "you", "come", "here", "by", "bike?"],
+          "starts": [
+            0.009999999776482582, 0.13499999046325684, 0.25999999046325684,
+            0.4899999797344208, 0.7102499604225159, 0.9002499580383301
+          ],
+          "size": "short",
+          "tts": "en-US-Wavenet-E",
+          "name": "bike_short_female_en-US-Wavenet-E",
+          "vad": [
+            [
+              [0.0, 0.13],
+              [0.13, 0.26],
+              [0.26, 0.49],
+              [0.49, 0.72],
+              [0.72, 0.89],
+              [0.89, 1.24]
+            ],
+            []
+          ]
+        },
+        {
+          "text": "Did you come here by bike?",
+          "audio_path": "dataset_phrases/audio/bike_short_female_en-US-Wavenet-F.wav",
+          "gender": "female",
+          "words": ["Did", "you", "come", "here", "by", "bike?"],
+          "starts": [
+            0.009999999776482582, 0.17499999701976776, 0.3100000023841858,
+            0.5400000214576721, 0.7535416483879089, 0.9435416460037231
+          ],
+          "size": "short",
+          "tts": "en-US-Wavenet-F",
+          "name": "bike_short_female_en-US-Wavenet-F",
+          "vad": [
+            [
+              [0.0, 0.17],
+              [0.17, 0.3],
+              [0.3, 0.53],
+              [0.53, 0.76],
+              [0.76, 0.94],
+              [0.94, 1.25]
+            ],
+            []
+          ]
+        }
+      ],
+      "male": [
+        {
+          "text": "Did you come here by bike?",
+          "audio_path": "dataset_phrases/audio/bike_short_male_en-US-Wavenet-I.wav",
+          "gender": "male",
+          "words": ["Did", "you", "come", "here", "by", "bike?"],
+          "starts": [
+            0.009999999776482582, 0.14945831894874573, 0.27283331751823425,
+            0.4827916622161865, 0.7032499313354492, 0.8842499256134033
+          ],
+          "size": "short",
+          "tts": "en-US-Wavenet-I",
+          "name": "bike_short_male_en-US-Wavenet-I",
+          "vad": [
+            [
+              [0.0, 0.15],
+              [0.15, 0.27],
+              [0.27, 0.48],
+              [0.48, 0.7],
+              [0.7, 0.88],
+              [0.88, 1.25]
+            ],
+            []
+          ]
+        },
+        {
+          "text": "Did you come here by bike?",
+          "audio_path": "dataset_phrases/audio/bike_short_male_en-US-Wavenet-J.wav",
+          "gender": "male",
+          "words": ["Did", "you", "come", "here", "by", "bike?"],
+          "starts": [
+            0.009999999776482582, 0.1979166567325592, 0.320416659116745,
+            0.5431666970252991, 0.7706666588783264, 0.9612082839012146
+          ],
+          "size": "short",
+          "tts": "en-US-Wavenet-J",
+          "name": "bike_short_male_en-US-Wavenet-J",
+          "vad": [
+            [
+              [0.03, 0.2],
+              [0.2, 0.32],
+              [0.32, 0.55],
+              [0.55, 0.77],
+              [0.77, 0.96],
+              [0.96, 1.32]
+            ],
+            []
+          ]
+        },
+        {
+          "text": "Did you come here by bike?",
+          "audio_path": "dataset_phrases/audio/bike_short_male_en-US-Wavenet-A.wav",
+          "gender": "male",
+          "words": ["Did", "you", "come", "here", "by", "bike?"],
+          "starts": [
+            0.009999999776482582, 0.17499999701976776, 0.3400000035762787,
+            0.5849999785423279, 0.7804999351501465, 0.9904999732971191
+          ],
+          "size": "short",
+          "tts": "en-US-Wavenet-A",
+          "name": "bike_short_male_en-US-Wavenet-A",
+          "vad": [
+            [
+              [0.0, 0.17],
+              [0.17, 0.34],
+              [0.34, 0.58],
+              [0.58, 0.78],
+              [0.78, 0.99],
+              [0.99, 1.44]
+            ],
+            []
+          ]
+        },
+        {
+          "text": "Did you come here by bike?",
+          "audio_path": "dataset_phrases/audio/bike_short_male_en-US-Wavenet-B.wav",
+          "gender": "male",
+          "words": ["Did", "you", "come", "here", "by", "bike?"],
+          "starts": [
+            0.009999999776482582, 0.2199999988079071, 0.3649999797344208,
+            0.5949999690055847, 0.8619582653045654, 1.0869582891464233
+          ],
+          "size": "short",
+          "tts": "en-US-Wavenet-B",
+          "name": "bike_short_male_en-US-Wavenet-B",
+          "vad": [
+            [
+              [0.03, 0.21],
+              [0.21, 0.37],
+              [0.37, 0.59],
+              [0.59, 0.86],
+              [0.86, 1.08],
+              [1.08, 1.48]
+            ],
+            []
+          ]
+        },
+        {
+          "text": "Did you come here by bike?",
+          "audio_path": "dataset_phrases/audio/bike_short_male_en-US-Wavenet-D.wav",
+          "gender": "male",
+          "words": ["Did", "you", "come", "here", "by", "bike?"],
+          "starts": [
+            0.009999999776482582, 0.14999999105930328, 0.25999999046325684,
+            0.4699999988079071, 0.6593749523162842, 0.8393748998641968
+          ],
+          "size": "short",
+          "tts": "en-US-Wavenet-D",
+          "name": "bike_short_male_en-US-Wavenet-D",
+          "vad": [
+            [
+              [0.0, 0.15],
+              [0.15, 0.26],
+              [0.26, 0.47],
+              [0.47, 0.66],
+              [0.66, 0.83],
+              [0.83, 1.22]
+            ],
+            []
+          ]
+        }
+      ]
+    },
+    "long": {
+      "female": [
+        {
+          "text": "Did you come here by bike this morning?",
+          "audio_path": "dataset_phrases/audio/bike_long_female_en-US-Wavenet-G.wav",
+          "gender": "female",
+          "words": [
+            "Did",
+            "you",
+            "come",
+            "here",
+            "by",
+            "bike",
+            "this",
+            "morning?"
+          ],
+          "starts": [
+            0.009999999776482582, 0.18424999713897705, 0.2997500002384186,
+            0.5228333473205566, 0.7683332562446594, 0.923041582107544,
+            1.241916537284851, 1.418624758720398
+          ],
+          "size": "long",
+          "tts": "en-US-Wavenet-G",
+          "name": "bike_long_female_en-US-Wavenet-G",
+          "vad": [
+            [
+              [0.0, 0.18],
+              [0.18, 0.3],
+              [0.3, 0.52],
+              [0.52, 0.77],
+              [0.77, 0.93],
+              [0.93, 1.24],
+              [1.24, 1.4],
+              [1.4, 1.75]
+            ],
+            []
+          ]
+        },
+        {
+          "text": "Did you come here by bike this morning?",
+          "audio_path": "dataset_phrases/audio/bike_long_female_en-US-Wavenet-H.wav",
+          "gender": "female",
+          "words": [
+            "Did",
+            "you",
+            "come",
+            "here",
+            "by",
+            "bike",
+            "this",
+            "morning?"
+          ],
+          "starts": [
+            0.009999999776482582, 0.1511666625738144, 0.2681249976158142,
+            0.47187501192092896, 0.6497083306312561, 0.8044583797454834,
+            1.1036250591278076, 1.284500002861023
+          ],
+          "size": "long",
+          "tts": "en-US-Wavenet-H",
+          "name": "bike_long_female_en-US-Wavenet-H",
+          "vad": [
+            [
+              [0.0, 0.15],
+              [0.15, 0.27],
+              [0.27, 0.47],
+              [0.47, 0.65],
+              [0.65, 0.8],
+              [0.8, 1.1],
+              [1.1, 1.27],
+              [1.27, 1.61]
+            ],
+            []
+          ]
+        },
+        {
+          "text": "Did you come here by bike this morning?",
+          "audio_path": "dataset_phrases/audio/bike_long_female_en-US-Wavenet-C.wav",
+          "gender": "female",
+          "words": [
+            "Did",
+            "you",
+            "come",
+            "here",
+            "by",
+            "bike",
+            "this",
+            "morning?"
+          ],
+          "starts": [
+            0.009999999776482582, 0.1850000023841858, 0.30000001192092896,
+            0.5200000405311584, 0.7328749895095825, 0.9078750014305115,
+            1.2432082891464233, 1.4382082223892212
+          ],
+          "size": "long",
+          "tts": "en-US-Wavenet-C",
+          "name": "bike_long_female_en-US-Wavenet-C",
+          "vad": [
+            [
+              [0.0, 0.18],
+              [0.18, 0.29],
+              [0.29, 0.52],
+              [0.52, 0.74],
+              [0.74, 0.9],
+              [0.9, 1.25],
+              [1.25, 1.42],
+              [1.42, 1.8]
+            ],
+            []
+          ]
+        },
+        {
+          "text": "Did you come here by bike this morning?",
+          "audio_path": "dataset_phrases/audio/bike_long_female_en-US-Wavenet-E.wav",
+          "gender": "female",
+          "words": [
+            "Did",
+            "you",
+            "come",
+            "here",
+            "by",
+            "bike",
+            "this",
+            "morning?"
+          ],
+          "starts": [
+            0.009999999776482582, 0.13499999046325684, 0.2549999952316284,
+            0.47999998927116394, 0.7222916483879089, 0.9022916555404663,
+            1.212916612625122, 1.4279165267944336
+          ],
+          "size": "long",
+          "tts": "en-US-Wavenet-E",
+          "name": "bike_long_female_en-US-Wavenet-E",
+          "vad": [
+            [
+              [0.0, 0.13],
+              [0.13, 0.25],
+              [0.25, 0.48],
+              [0.48, 0.73],
+              [0.73, 0.9],
+              [0.9, 1.24],
+              [1.24, 1.41],
+              [1.41, 1.84]
+            ],
+            []
+          ]
+        },
+        {
+          "text": "Did you come here by bike this morning?",
+          "audio_path": "dataset_phrases/audio/bike_long_female_en-US-Wavenet-F.wav",
+          "gender": "female",
+          "words": [
+            "Did",
+            "you",
+            "come",
+            "here",
+            "by",
+            "bike",
+            "this",
+            "morning?"
+          ],
+          "starts": [
+            0.009999999776482582, 0.17499999701976776, 0.3050000071525574,
+            0.5249999761581421, 0.7309999465942383, 0.9059999585151672,
+            1.2495416402816772, 1.4645415544509888
+          ],
+          "size": "long",
+          "tts": "en-US-Wavenet-F",
+          "name": "bike_long_female_en-US-Wavenet-F",
+          "vad": [
+            [
+              [0.0, 0.17],
+              [0.17, 0.3],
+              [0.3, 0.52],
+              [0.52, 0.73],
+              [0.73, 0.9],
+              [0.9, 1.23],
+              [1.26, 1.45],
+              [1.45, 1.86]
+            ],
+            []
+          ]
+        }
+      ],
+      "male": [
+        {
+          "text": "Did you come here by bike this morning?",
+          "audio_path": "dataset_phrases/audio/bike_long_male_en-US-Wavenet-I.wav",
+          "gender": "male",
+          "words": [
+            "Did",
+            "you",
+            "come",
+            "here",
+            "by",
+            "bike",
+            "this",
+            "morning?"
+          ],
+          "starts": [
+            0.009999999776482582, 0.14674998819828033, 0.2523749768733978,
+            0.4324166476726532, 0.6513332724571228, 0.8173749446868896,
+            1.141958236694336, 1.3212082386016846
+          ],
+          "size": "long",
+          "tts": "en-US-Wavenet-I",
+          "name": "bike_long_male_en-US-Wavenet-I",
+          "vad": [
+            [
+              [0.0, 0.15],
+              [0.15, 0.26],
+              [0.26, 0.44],
+              [0.44, 0.65],
+              [0.65, 0.82],
+              [0.82, 1.15],
+              [1.15, 1.31],
+              [1.31, 1.65]
+            ],
+            []
+          ]
+        },
+        {
+          "text": "Did you come here by bike this morning?",
+          "audio_path": "dataset_phrases/audio/bike_long_male_en-US-Wavenet-J.wav",
+          "gender": "male",
+          "words": [
+            "Did",
+            "you",
+            "come",
+            "here",
+            "by",
+            "bike",
+            "this",
+            "morning?"
+          ],
+          "starts": [
+            0.009999999776482582, 0.19108332693576813, 0.3125,
+            0.5328750014305115, 0.7602500319480896, 0.9272500276565552,
+            1.2449584007263184, 1.43708336353302
+          ],
+          "size": "long",
+          "tts": "en-US-Wavenet-J",
+          "name": "bike_long_male_en-US-Wavenet-J",
+          "vad": [
+            [
+              [0.03, 0.2],
+              [0.2, 0.32],
+              [0.32, 0.54],
+              [0.54, 0.76],
+              [0.76, 0.93],
+              [0.93, 1.25],
+              [1.25, 1.43],
+              [1.43, 1.78]
+            ],
+            []
+          ]
+        },
+        {
+          "text": "Did you come here by bike this morning?",
+          "audio_path": "dataset_phrases/audio/bike_long_male_en-US-Wavenet-A.wav",
+          "gender": "male",
+          "words": [
+            "Did",
+            "you",
+            "come",
+            "here",
+            "by",
+            "bike",
+            "this",
+            "morning?"
+          ],
+          "starts": [
+            0.009999999776482582, 0.16999998688697815, 0.3349999785423279,
+            0.5699999928474426, 0.7758333086967468, 0.9758332967758179,
+            1.347583293914795, 1.5475832223892212
+          ],
+          "size": "long",
+          "tts": "en-US-Wavenet-A",
+          "name": "bike_long_male_en-US-Wavenet-A",
+          "vad": [
+            [
+              [0.0, 0.16],
+              [0.16, 0.34],
+              [0.34, 0.57],
+              [0.57, 0.78],
+              [0.78, 0.97],
+              [0.97, 1.35],
+              [1.35, 1.53],
+              [1.53, 1.93]
+            ],
+            []
+          ]
+        },
+        {
+          "text": "Did you come here by bike this morning?",
+          "audio_path": "dataset_phrases/audio/bike_long_male_en-US-Wavenet-B.wav",
+          "gender": "male",
+          "words": [
+            "Did",
+            "you",
+            "come",
+            "here",
+            "by",
+            "bike",
+            "this",
+            "morning?"
+          ],
+          "starts": [
+            0.009999999776482582, 0.20999999344348907, 0.35499998927116394,
+            0.5699999928474426, 0.8432499766349792, 1.0532499551773071,
+            1.4033750295639038, 1.638374924659729
+          ],
+          "size": "long",
+          "tts": "en-US-Wavenet-B",
+          "name": "bike_long_male_en-US-Wavenet-B",
+          "vad": [
+            [
+              [0.0, 0.2],
+              [0.2, 0.35],
+              [0.35, 0.57],
+              [0.57, 0.84],
+              [0.84, 1.05],
+              [1.05, 1.43],
+              [1.43, 1.62],
+              [1.62, 2.09]
+            ],
+            []
+          ]
+        },
+        {
+          "text": "Did you come here by bike this morning?",
+          "audio_path": "dataset_phrases/audio/bike_long_male_en-US-Wavenet-D.wav",
+          "gender": "male",
+          "words": [
+            "Did",
+            "you",
+            "come",
+            "here",
+            "by",
+            "bike",
+            "this",
+            "morning?"
+          ],
+          "starts": [
+            0.009999999776482582, 0.14499999582767487, 0.25999999046325684,
+            0.46000000834465027, 0.6478332877159119, 0.822833240032196,
+            1.1728333234786987, 1.373583197593689
+          ],
+          "size": "long",
+          "tts": "en-US-Wavenet-D",
+          "name": "bike_long_male_en-US-Wavenet-D",
+          "vad": [
+            [
+              [0.0, 0.14],
+              [0.14, 0.26],
+              [0.26, 0.46],
+              [0.46, 0.66],
+              [0.66, 0.81],
+              [0.81, 1.18],
+              [1.18, 1.35],
+              [1.35, 1.68]
+            ],
+            []
+          ]
+        }
+      ]
+    }
+  },
+  "drive": {
+    "short": {
+      "female": [
+        {
+          "text": "So did you drive here?",
+          "audio_path": "dataset_phrases/audio/drive_short_female_en-US-Wavenet-G.wav",
+          "gender": "female",
+          "words": ["So", "did", "you", "drive", "here?"],
+          "starts": [
+            0.009999999776482582, 0.21124999225139618, 0.39274999499320984,
+            0.500749945640564, 0.8046666979789734
+          ],
+          "size": "short",
+          "tts": "en-US-Wavenet-G",
+          "name": "drive_short_female_en-US-Wavenet-G",
+          "vad": [
+            [
+              [0.0, 0.18],
+              [0.18, 0.38],
+              [0.38, 0.5],
+              [0.5, 0.84],
+              [0.84, 1.04]
+            ],
+            []
+          ]
+        },
+        {
+          "text": "So did you drive here?",
+          "audio_path": "dataset_phrases/audio/drive_short_female_en-US-Wavenet-H.wav",
+          "gender": "female",
+          "words": ["So", "did", "you", "drive", "here?"],
+          "starts": [
+            0.009999999776482582, 0.21045833826065063, 0.36116668581962585,
+            0.4700833261013031, 0.7627500295639038
+          ],
+          "size": "short",
+          "tts": "en-US-Wavenet-H",
+          "name": "drive_short_female_en-US-Wavenet-H",
+          "vad": [
+            [
+              [0.03, 0.16],
+              [0.16, 0.36],
+              [0.36, 0.47],
+              [0.47, 0.8],
+              [0.8, 1.0]
+            ],
+            []
+          ]
+        },
+        {
+          "text": "So did you drive here?",
+          "audio_path": "dataset_phrases/audio/drive_short_female_en-US-Wavenet-C.wav",
+          "gender": "female",
+          "words": ["So", "did", "you", "drive", "here?"],
+          "starts": [
+            0.009999999776482582, 0.19499999284744263, 0.3749999701976776,
+            0.47499996423721313, 0.8021249771118164
+          ],
+          "size": "short",
+          "tts": "en-US-Wavenet-C",
+          "name": "drive_short_female_en-US-Wavenet-C",
+          "vad": [
+            [
+              [0.0, 0.18],
+              [0.18, 0.36],
+              [0.36, 0.47],
+              [0.47, 0.84],
+              [0.84, 1.05]
+            ],
+            []
+          ]
+        },
+        {
+          "text": "So did you drive here?",
+          "audio_path": "dataset_phrases/audio/drive_short_female_en-US-Wavenet-E.wav",
+          "gender": "female",
+          "words": ["So", "did", "you", "drive", "here?"],
+          "starts": [
+            0.009999999776482582, 0.20999999344348907, 0.36000001430511475,
+            0.49500003457069397, 0.780333399772644
+          ],
+          "size": "short",
+          "tts": "en-US-Wavenet-E",
+          "name": "drive_short_female_en-US-Wavenet-E",
+          "vad": [
+            [
+              [0.0, 0.2],
+              [0.2, 0.35],
+              [0.35, 0.49],
+              [0.49, 0.84],
+              [0.84, 1.08]
+            ],
+            []
+          ]
+        },
+        {
+          "text": "So did you drive here?",
+          "audio_path": "dataset_phrases/audio/drive_short_female_en-US-Wavenet-F.wav",
+          "gender": "female",
+          "words": ["So", "did", "you", "drive", "here?"],
+          "starts": [
+            0.009999999776482582, 0.20499999821186066, 0.3799999952316284, 0.5,
+            0.8208333253860474
+          ],
+          "size": "short",
+          "tts": "en-US-Wavenet-F",
+          "name": "drive_short_female_en-US-Wavenet-F",
+          "vad": [
+            [
+              [0.0, 0.19],
+              [0.19, 0.38],
+              [0.38, 0.5],
+              [0.5, 0.88],
+              [0.88, 1.09]
+            ],
+            []
+          ]
+        }
+      ],
+      "male": [
+        {
+          "text": "So did you drive here?",
+          "audio_path": "dataset_phrases/audio/drive_short_male_en-US-Wavenet-I.wav",
+          "gender": "male",
+          "words": ["So", "did", "you", "drive", "here?"],
+          "starts": [
+            0.009999999776482582, 0.17295832931995392, 0.32641664147377014,
+            0.4374166429042816, 0.7589166760444641
+          ],
+          "size": "short",
+          "tts": "en-US-Wavenet-I",
+          "name": "drive_short_male_en-US-Wavenet-I",
+          "vad": [
+            [
+              [0.0, 0.16],
+              [0.16, 0.33],
+              [0.33, 0.44],
+              [0.44, 0.79],
+              [0.79, 0.98]
+            ],
+            []
+          ]
+        },
+        {
+          "text": "So did you drive here?",
+          "audio_path": "dataset_phrases/audio/drive_short_male_en-US-Wavenet-J.wav",
+          "gender": "male",
+          "words": ["So", "did", "you", "drive", "here?"],
+          "starts": [
+            0.009999999776482582, 0.1991249918937683, 0.35858333110809326,
+            0.47620829939842224, 0.825749933719635
+          ],
+          "size": "short",
+          "tts": "en-US-Wavenet-J",
+          "name": "drive_short_male_en-US-Wavenet-J",
+          "vad": [
+            [
+              [0.03, 0.19],
+              [0.19, 0.37],
+              [0.37, 0.48],
+              [0.48, 0.87],
+              [0.87, 1.07]
+            ],
+            []
+          ]
+        },
+        {
+          "text": "So did you drive here?",
+          "audio_path": "dataset_phrases/audio/drive_short_male_en-US-Wavenet-A.wav",
+          "gender": "male",
+          "words": ["So", "did", "you", "drive", "here?"],
+          "starts": [
+            0.009999999776482582, 0.20999999344348907, 0.41999998688697815,
+            0.5600000023841858, 0.9323750138282776
+          ],
+          "size": "short",
+          "tts": "en-US-Wavenet-A",
+          "name": "drive_short_male_en-US-Wavenet-A",
+          "vad": [
+            [
+              [0.0, 0.2],
+              [0.2, 0.42],
+              [0.42, 0.56],
+              [0.56, 0.95],
+              [0.95, 1.22]
+            ],
+            []
+          ]
+        },
+        {
+          "text": "So did you drive here?",
+          "audio_path": "dataset_phrases/audio/drive_short_male_en-US-Wavenet-B.wav",
+          "gender": "male",
+          "words": ["So", "did", "you", "drive", "here?"],
+          "starts": [
+            0.009999999776482582, 0.2149999886751175, 0.41999998688697815,
+            0.574999988079071, 0.9548333883285522
+          ],
+          "size": "short",
+          "tts": "en-US-Wavenet-B",
+          "name": "drive_short_male_en-US-Wavenet-B",
+          "vad": [
+            [
+              [0.0, 0.2],
+              [0.2, 0.41],
+              [0.41, 0.56],
+              [0.56, 0.99],
+              [0.99, 1.28]
+            ],
+            []
+          ]
+        },
+        {
+          "text": "So did you drive here?",
+          "audio_path": "dataset_phrases/audio/drive_short_male_en-US-Wavenet-D.wav",
+          "gender": "male",
+          "words": ["So", "did", "you", "drive", "here?"],
+          "starts": [
+            0.009999999776482582, 0.1850000023841858, 0.3199999928474426,
+            0.42499998211860657, 0.7397083640098572
+          ],
+          "size": "short",
+          "tts": "en-US-Wavenet-D",
+          "name": "drive_short_male_en-US-Wavenet-D",
+          "vad": [
+            [
+              [0.0, 0.16],
+              [0.16, 0.32],
+              [0.32, 0.42],
+              [0.42, 0.76],
+              [0.76, 0.97]
+            ],
+            []
+          ]
+        }
+      ]
+    },
+    "long": {
+      "female": [
+        {
+          "text": "So did you drive here this morning?",
+          "audio_path": "dataset_phrases/audio/drive_long_female_en-US-Wavenet-G.wav",
+          "gender": "female",
+          "words": ["So", "did", "you", "drive", "here", "this", "morning?"],
+          "starts": [
+            0.009999999776482582, 0.21266666054725647, 0.38491666316986084,
+            0.4865416884422302, 0.7917500138282776, 0.9775833487510681,
+            1.1977500915527344
+          ],
+          "size": "long",
+          "tts": "en-US-Wavenet-G",
+          "name": "drive_long_female_en-US-Wavenet-G",
+          "vad": [
+            [
+              [0.0, 0.17],
+              [0.17, 0.38],
+              [0.38, 0.49],
+              [0.49, 0.83],
+              [0.83, 1.01],
+              [1.01, 1.18],
+              [1.18, 1.55]
+            ],
+            []
+          ]
+        },
+        {
+          "text": "So did you drive here this morning?",
+          "audio_path": "dataset_phrases/audio/drive_long_female_en-US-Wavenet-H.wav",
+          "gender": "female",
+          "words": ["So", "did", "you", "drive", "here", "this", "morning?"],
+          "starts": [
+            0.009999999776482582, 0.2019999921321869, 0.35112500190734863,
+            0.4619999825954437, 0.762416660785675, 0.9285833239555359,
+            1.1539583206176758
+          ],
+          "size": "long",
+          "tts": "en-US-Wavenet-H",
+          "name": "drive_long_female_en-US-Wavenet-H",
+          "vad": [
+            [
+              [0.0, 0.16],
+              [0.16, 0.35],
+              [0.35, 0.46],
+              [0.46, 0.79],
+              [0.79, 0.96],
+              [0.96, 1.14],
+              [1.14, 1.5]
+            ],
+            []
+          ]
+        },
+        {
+          "text": "So did you drive here this morning?",
+          "audio_path": "dataset_phrases/audio/drive_long_female_en-US-Wavenet-C.wav",
+          "gender": "female",
+          "words": ["So", "did", "you", "drive", "here", "this", "morning?"],
+          "starts": [
+            0.009999999776482582, 0.1899999976158142, 0.375, 0.4749999940395355,
+            0.7800833582878113, 0.9550833702087402, 1.198791742324829
+          ],
+          "size": "long",
+          "tts": "en-US-Wavenet-C",
+          "name": "drive_long_female_en-US-Wavenet-C",
+          "vad": [
+            [
+              [0.0, 0.18],
+              [0.18, 0.36],
+              [0.36, 0.47],
+              [0.47, 0.81],
+              [0.81, 0.99],
+              [0.99, 1.17],
+              [1.17, 1.58]
+            ],
+            []
+          ]
+        },
+        {
+          "text": "So did you drive here this morning?",
+          "audio_path": "dataset_phrases/audio/drive_long_female_en-US-Wavenet-E.wav",
+          "gender": "female",
+          "words": ["So", "did", "you", "drive", "here", "this", "morning?"],
+          "starts": [
+            0.009999999776482582, 0.19999998807907104, 0.3499999940395355,
+            0.47999998927116394, 0.7747917175292969, 0.9847916960716248,
+            1.2408334016799927
+          ],
+          "size": "long",
+          "tts": "en-US-Wavenet-E",
+          "name": "drive_long_female_en-US-Wavenet-E",
+          "vad": [
+            [
+              [0.0, 0.19],
+              [0.19, 0.34],
+              [0.34, 0.48],
+              [0.48, 0.84],
+              [0.84, 1.02],
+              [1.02, 1.22],
+              [1.22, 1.65]
+            ],
+            []
+          ]
+        },
+        {
+          "text": "So did you drive here this morning?",
+          "audio_path": "dataset_phrases/audio/drive_long_female_en-US-Wavenet-F.wav",
+          "gender": "female",
+          "words": ["So", "did", "you", "drive", "here", "this", "morning?"],
+          "starts": [
+            0.009999999776482582, 0.20499999821186066, 0.3799999952316284, 0.5,
+            0.8115000128746033, 1.0115000009536743, 1.2569166421890259
+          ],
+          "size": "long",
+          "tts": "en-US-Wavenet-F",
+          "name": "drive_long_female_en-US-Wavenet-F",
+          "vad": [
+            [
+              [0.0, 0.19],
+              [0.19, 0.38],
+              [0.38, 0.5],
+              [0.5, 0.86],
+              [0.86, 1.04],
+              [1.04, 1.24],
+              [1.24, 1.65]
+            ],
+            []
+          ]
+        }
+      ],
+      "male": [
+        {
+          "text": "So did you drive here this morning?",
+          "audio_path": "dataset_phrases/audio/drive_long_male_en-US-Wavenet-I.wav",
+          "gender": "male",
+          "words": ["So", "did", "you", "drive", "here", "this", "morning?"],
+          "starts": [
+            0.009999999776482582, 0.16737499833106995, 0.3230416476726532,
+            0.434749960899353, 0.746958315372467, 0.9204166531562805,
+            1.15066659450531
+          ],
+          "size": "long",
+          "tts": "en-US-Wavenet-I",
+          "name": "drive_long_male_en-US-Wavenet-I",
+          "vad": [
+            [
+              [0.0, 0.16],
+              [0.16, 0.32],
+              [0.32, 0.43],
+              [0.43, 0.78],
+              [0.78, 0.96],
+              [0.96, 1.14],
+              [1.14, 1.47]
+            ],
+            []
+          ]
+        },
+        {
+          "text": "So did you drive here this morning?",
+          "audio_path": "dataset_phrases/audio/drive_long_male_en-US-Wavenet-J.wav",
+          "gender": "male",
+          "words": ["So", "did", "you", "drive", "here", "this", "morning?"],
+          "starts": [
+            0.009999999776482582, 0.1992083191871643, 0.34829166531562805,
+            0.4585832953453064, 0.7839166522026062, 0.9747916460037231,
+            1.1969999074935913
+          ],
+          "size": "long",
+          "tts": "en-US-Wavenet-J",
+          "name": "drive_long_male_en-US-Wavenet-J",
+          "vad": [
+            [
+              [0.03, 0.19],
+              [0.19, 0.36],
+              [0.36, 0.45],
+              [0.45, 0.83],
+              [0.83, 1.01],
+              [1.01, 1.19],
+              [1.19, 1.55]
+            ],
+            []
+          ]
+        },
+        {
+          "text": "So did you drive here this morning?",
+          "audio_path": "dataset_phrases/audio/drive_long_male_en-US-Wavenet-A.wav",
+          "gender": "male",
+          "words": ["So", "did", "you", "drive", "here", "this", "morning?"],
+          "starts": [
+            0.009999999776482582, 0.20999999344348907, 0.41999998688697815,
+            0.5699999928474426, 0.9313333630561829, 1.1263333559036255,
+            1.3727916479110718
+          ],
+          "size": "long",
+          "tts": "en-US-Wavenet-A",
+          "name": "drive_long_male_en-US-Wavenet-A",
+          "vad": [
+            [
+              [0.0, 0.2],
+              [0.2, 0.42],
+              [0.42, 0.56],
+              [0.56, 0.96],
+              [0.96, 1.17],
+              [1.17, 1.35],
+              [1.35, 1.76]
+            ],
+            []
+          ]
+        },
+        {
+          "text": "So did you drive here this morning?",
+          "audio_path": "dataset_phrases/audio/drive_long_male_en-US-Wavenet-B.wav",
+          "gender": "male",
+          "words": ["So", "did", "you", "drive", "here", "this", "morning?"],
+          "starts": [
+            0.009999999776482582, 0.20999999344348907, 0.4050000011920929,
+            0.5550000071525574, 0.9125000238418579, 1.1475001573562622,
+            1.4276669025421143
+          ],
+          "size": "long",
+          "tts": "en-US-Wavenet-B",
+          "name": "drive_long_male_en-US-Wavenet-B",
+          "vad": [
+            [
+              [0.0, 0.2],
+              [0.2, 0.4],
+              [0.4, 0.55],
+              [0.55, 0.95],
+              [0.95, 1.2],
+              [1.2, 1.4],
+              [1.4, 1.9]
+            ],
+            []
+          ]
+        },
+        {
+          "text": "So did you drive here this morning?",
+          "audio_path": "dataset_phrases/audio/drive_long_male_en-US-Wavenet-D.wav",
+          "gender": "male",
+          "words": ["So", "did", "you", "drive", "here", "this", "morning?"],
+          "starts": [
+            0.009999999776482582, 0.17999999225139618, 0.3199999928474426,
+            0.42499998211860657, 0.7289583683013916, 0.8989583849906921,
+            1.133958339691162
+          ],
+          "size": "long",
+          "tts": "en-US-Wavenet-D",
+          "name": "drive_long_male_en-US-Wavenet-D",
+          "vad": [
+            [
+              [0.0, 0.16],
+              [0.16, 0.32],
+              [0.32, 0.41],
+              [0.41, 0.76],
+              [0.76, 0.94],
+              [0.94, 1.11],
+              [1.11, 1.44]
+            ],
+            []
+          ]
+        }
+      ]
+    }
+  }
+}
