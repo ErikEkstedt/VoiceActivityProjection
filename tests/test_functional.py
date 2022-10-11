@@ -11,7 +11,7 @@ def waveform():
     x, _ = load_waveform(
         "example/student_long_female_en-US-Wavenet-G.wav", sample_rate=SAMPLE_RATE
     )
-    return x
+    return x[0]  # -> (n_samples,)
 
 
 @pytest.mark.functional

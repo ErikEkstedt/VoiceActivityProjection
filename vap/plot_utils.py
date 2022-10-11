@@ -5,12 +5,9 @@ import matplotlib as mpl
 import matplotlib.pyplot as plt
 from typing import Optional, Union, List, Tuple
 
+from vap.audio import log_mel_spectrogram
 from vap.utils import read_json
-
-SAMPLE_RATE = 16_000
-N_MELS = 80
-N_FFT = 400
-HOP_LENGTH = 320
+import vap.functional as VF
 
 
 def to_mono(waveform: torch.Tensor) -> torch.Tensor:
@@ -22,26 +19,6 @@ def to_mono(waveform: torch.Tensor) -> torch.Tensor:
         raise NotImplementedError(
             f"{waveform.shape} must be (N, 2, n_samples) or (2, n_samples)"
         )
-
-
-def log_mel_spectrogram(
-    waveform: torch.Tensor,
-    n_mels: int = N_MELS,
-    n_fft: int = N_FFT,
-    hop_length: int = HOP_LENGTH,
-    sample_rate: int = SAMPLE_RATE,
-) -> torch.Tensor:
-    mel_spec = AT.MelSpectrogram(
-        sample_rate=sample_rate,
-        n_fft=n_fft,
-        hop_length=hop_length,
-        n_mels=n_mels,
-        normalized=True,
-    )(waveform)
-    log_mel_spec = torch.clamp(mel_spec, min=1e-10).log10()
-    log_mel_spec = torch.maximum(log_mel_spec, log_mel_spec.max() - 8.0)
-    log_mel_spec = (log_mel_spec + 4.0) / 4.0
-    return log_mel_spec
 
 
 def plot_stereo_mel_spec(
@@ -73,6 +50,47 @@ def plot_stereo_mel_spec(
     plt.subplots_adjust(
         left=0.05, bottom=None, right=0.99, top=0.99, wspace=0.01, hspace=0
     )
+    if plot:
+        plt.pause(0.1)
+    return ax
+
+
+def plot_mel_spec(
+    waveform: torch.Tensor,
+    ax: mpl.axes.Axes,
+    vad: Optional[torch.Tensor] = None,
+    mel_spec: Optional[torch.Tensor] = None,
+    no_ticks: bool = False,
+    cmap: str = "inferno",
+    interpolation: bool = True,
+    frame_hz: int = 50,
+    sample_rate: int = 16000,
+    plot: bool = False,
+) -> List[mpl.axes.Axes]:
+    if mel_spec is None:
+        hop_length = int(sample_rate / frame_hz)
+        mel_spec = log_mel_spectrogram(waveform, hop_length=hop_length)
+
+    if mel_spec.ndim == 2:
+        pass
+    elif mel_spec.ndim == 3 and mel_spec.shape[0] == 1:
+        mel_spec = mel_spec.squeeze(0)
+    else:
+        raise NotImplementedError(
+            f'Trying to plot multiple channels with. Use "plot_stereo_mel_spec" instead. {waveform.shape}'
+        )
+
+    n_mels, n_frames = mel_spec.shape
+
+    interp = None
+    if not interpolation:
+        interp = "none"
+    ax.imshow(mel_spec, aspect="auto", origin="lower", interpolation=interp, cmap=cmap)
+    if vad is not None:
+        ax.plot(vad[:n_frames] * (n_mels - 1), alpha=0.9, linewidth=5, color="b")
+    if no_ticks:
+        ax.set_xticks([])
+        ax.set_yticks([])
     if plot:
         plt.pause(0.1)
     return ax
@@ -135,12 +153,12 @@ def plot_next_speaker_probs(
             not_vad = torch.logical_not(vad[:n_frames]).float()
             p_bc = p_bc * not_vad
 
-        ax.plot(0.5 + p_bc[:, 0], color="darkgreen")
-        ax.plot(0.5 - p_bc[:, 1], color="darkgreen")
+        ax.plot(0.5 + p_bc[:, 0] / 2, color="darkgreen")
+        ax.plot(0.5 - p_bc[:, 1] / 2, color="darkgreen")
         ax.fill_between(
-            x, 0.5 + p_bc[:, 0], mid_line, color="g", alpha=alpha_bc, label="BC"
+            x, 0.5 + p_bc[:, 0] / 2, mid_line, color="g", alpha=alpha_bc, label="BC"
         )
-        ax.fill_between(x, mid_line, 0.5 - p_bc[:, 1], color="g", alpha=alpha_bc)
+        ax.fill_between(x, mid_line, 0.5 - p_bc[:, 1] / 2, color="g", alpha=alpha_bc)
         # ax.hlines(y=0.5, xmin=0, xmax=n_frames, color="k")
 
     if legend:
@@ -227,6 +245,144 @@ def plot_evaluation_scores(
     if plot:
         plt.pause(0.1)
     return fig, ax, scores
+
+
+def plot_words(
+    words,
+    word_starts: List[float],
+    ax: mpl.axes.Axes,
+    word_ends: Optional[List[float]] = None,
+    rows: int = 4,
+    frame_hz: int = 50,
+    fontsize: int = 12,
+    color: str = "k",
+    linewidth: int = 2,
+):
+    if word_ends is None:
+        word_ends = [None for a in word_starts]
+    y_min, y_max = ax.get_ylim()
+    diff = y_max - y_min
+    pad = diff * 0.05
+    # Plot text on top of waveform
+    for ii, (word, start_time, end_time) in enumerate(
+        zip(words, word_starts, word_ends)
+    ):
+        yy = pad + y_min + diff * (ii % rows) / rows
+        start_text = start_time * frame_hz
+
+        alignment = "left"
+        if end_time is not None:
+            alignment = "center"
+            x_text = start_text + 0.5 * frame_hz * (end_time - start_time)
+        else:
+            x_text = start_text
+
+        ax.vlines(
+            start_text,
+            ymin=y_min + pad,
+            ymax=y_max - pad,
+            linestyle="dashed",
+            linewidth=linewidth,
+            color=color,
+            alpha=0.8,
+        )
+        ax.text(
+            x=x_text,
+            y=yy,
+            s=word,
+            fontsize=fontsize,
+            horizontalalignment=alignment,
+            color=color,
+        )
+
+    # final end of word
+    if word_ends[0] is not None:
+        ax.vlines(
+            word_ends[-1] * frame_hz,
+            ymin=y_min + pad,
+            ymax=y_max - pad,
+            linewidth=3,
+            color="r",
+            alpha=0.8,
+        )
+
+    return ax
+
+
+def plot_sample_waveform(
+    sample, ax: mpl.axes.Axes, downsample: int = 10, sample_rate: int = 16000
+) -> mpl.axes.Axes:
+
+    x = sample["waveform"].squeeze()[..., ::downsample]
+    ax.plot(x, color="lightblue", zorder=0)  # , alpha=0.2)
+    ax.set_xlim([0, len(x)])
+    ax.set_xticks([])
+    ax.set_ylim([-1, 1])
+    ax.set_yticks([])
+    ax.set_ylabel("waveform", fontsize=14)
+    if "words" in sample:
+        ax = plot_words(
+            sample["words"],
+            word_starts=sample["starts"],
+            word_ends=sample.get("ends", None),
+            ax=ax,
+            fontsize=14,
+            linewidth=2,
+            frame_hz=int(sample_rate / downsample),
+        )
+    return ax
+
+
+def plot_sample_mel_spec(
+    sample, ax: mpl.axes.Axes, frame_hz: int = 50
+) -> mpl.axes.Axes:
+    ax = plot_mel_spec(sample["waveform"].squeeze(), ax=ax, cmap="magma", no_ticks=True)
+    ax.yaxis.tick_right()
+    ax.set_ylabel("Mel (Hz)", fontsize=14)
+    if "words" in sample:
+        ax = plot_words(
+            sample["words"],
+            word_starts=sample["starts"],
+            word_ends=sample.get("ends", None),
+            ax=ax,
+            fontsize=14,
+            frame_hz=frame_hz,
+            color="w",
+        )
+    return ax
+
+
+def plot_sample_f0(
+    sample, ax: mpl.axes.Axes, sample_rate: int = 16000
+) -> mpl.axes.Axes:
+    f0 = VF.pitch_praat(sample["waveform"].squeeze(), sample_rate=sample_rate)
+    f0[f0 == 0] = torch.nan
+    ax.plot(f0, "o", markersize=3, color="b")
+    ymin, ymax = ax.get_ylim()
+    diff = ymax - ymin
+    if diff < 10:
+        ymin -= 5
+        ymax += 5
+        ax.set_ylim([ymin, ymax])
+    ax.set_xlim([0, len(f0)])
+    ax.set_xticks([])
+    ax.set_ylabel("F0 (Hz)", fontsize=14)
+    ax.yaxis.tick_right()
+    return ax
+
+
+def plot_phrases_sample(sample, probs, frame_hz: int = 50, sample_rate: int = 16000):
+    # Calculate axs
+    fig, ax = plt.subplots(4, 1, figsize=(9, 6))
+    ax[0] = plot_sample_waveform(sample, ax=ax[0], sample_rate=sample_rate)
+    ax[1] = plot_sample_mel_spec(sample, ax=ax[1], frame_hz=frame_hz)
+    ax[2] = plot_sample_f0(sample, ax=ax[2])
+    ax[3] = plot_next_speaker_probs(p_ns=probs["p"][0], ax=ax[3])  # , p_bc=p_bc)
+    if sample.get("ends", None) is not None:
+        end_frame = sample["ends"][-1] * frame_hz
+        ax[3].vlines(x=end_frame, ymin=-1, ymax=1, color="r", linewidth=2)
+    plt.subplots_adjust(left=0.08, bottom=0.01, right=0.95, top=0.99, hspace=0.04)
+    return fig, ax
 
 
 if __name__ == "__main__":

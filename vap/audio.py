@@ -1,8 +1,15 @@
 import torch
 import torchaudio
 import torchaudio.functional as AF
+import torchaudio.transforms as AT
 from torchaudio.backend.sox_io_backend import info as info_sox
 from typing import Any, Dict, Optional, Union, Tuple
+
+
+SAMPLE_RATE = 16_000
+N_MELS = 80
+N_FFT = 400
+HOP_LENGTH = 320
 
 
 def time_to_samples(t: float, sample_rate: int) -> int:
@@ -35,9 +42,7 @@ def load_waveform(
     sample_rate: Optional[int] = 16000,
     start_time: Optional[float] = None,
     end_time: Optional[float] = None,
-    normalize: bool = True,
     mono: bool = False,
-    audio_normalize_threshold: float = 0.05,
 ) -> Tuple[torch.Tensor, int]:
     if start_time is None and end_time is None:
         x, sr = torchaudio.load(path)
@@ -57,15 +62,32 @@ def load_waveform(
 
     if mono and x.shape[0] > 1:
         x = x.mean(dim=0).unsqueeze(0)
-        if normalize:
-            if x.abs().max() > audio_normalize_threshold:
-                x /= x.abs().max()
 
     if sample_rate is not None:
         if sr != sample_rate:
             x = AF.resample(x, orig_freq=sr, new_freq=sample_rate)
             sr = sample_rate
     return x, sr
+
+
+def log_mel_spectrogram(
+    waveform: torch.Tensor,
+    n_mels: int = N_MELS,
+    n_fft: int = N_FFT,
+    hop_length: int = HOP_LENGTH,
+    sample_rate: int = SAMPLE_RATE,
+) -> torch.Tensor:
+    mel_spec = AT.MelSpectrogram(
+        sample_rate=sample_rate,
+        n_fft=n_fft,
+        hop_length=hop_length,
+        n_mels=n_mels,
+        normalized=True,
+    )(waveform)
+    log_mel_spec = torch.clamp(mel_spec, min=1e-10).log10()
+    log_mel_spec = torch.maximum(log_mel_spec, log_mel_spec.max() - 8.0)
+    log_mel_spec = (log_mel_spec + 4.0) / 4.0
+    return log_mel_spec
 
 
 if __name__ == "__main__":

@@ -107,31 +107,26 @@ def pitch_praat(
 ) -> torch.Tensor:
     device = waveform.device
 
-    if waveform.ndim == 1:
+    def _single_pitch(waveform):
         sound = torch_to_praat_sound(waveform, sample_rate)
         pitch = sound.to_pitch(
             time_step=hop_time, pitch_floor=f0_min, pitch_ceiling=f0_max
         )
-        f0 = torch.from_numpy(pitch.selected_array["frequency"]).float().to(device)
+        return torch.from_numpy(pitch.selected_array["frequency"]).float().to(device)
+
+    if waveform.ndim == 1:
+        f0 = _single_pitch(waveform)
     elif waveform.ndim == 2:
         f0s = []
         for n in range(waveform.shape[0]):
-            sound = torch_to_praat_sound(waveform[n], sample_rate)
-            pitch = sound.to_pitch(
-                time_step=hop_time, pitch_floor=f0_min, pitch_ceiling=f0_max
-            )
-            f0s.append(torch.from_numpy(pitch.selected_array["frequency"]).float())
+            f0s.append(_single_pitch(waveform[n]))
         f0 = torch.stack(f0s).to(device)
     else:
         f0s = []
         for n in range(waveform.shape[0]):
             chs = []
             for ch in range(waveform.shape[1]):
-                sound = torch_to_praat_sound(waveform[n, ch], sample_rate)
-                pitch = sound.to_pitch(
-                    time_step=hop_time, pitch_floor=f0_min, pitch_ceiling=f0_max
-                )
-                chs.append(torch.from_numpy(pitch.selected_array["frequency"]).float())
+                chs.append(_single_pitch(waveform[n, ch]))
             f0s.append(torch.stack(chs))
         f0 = torch.stack(f0s).to(device)
     return f0
@@ -144,11 +139,31 @@ def intensity_praat(
     f0_min: int = F0_MIN,
     subtract_mean: bool = False,
 ) -> torch.Tensor:
-    sound = torch_to_praat_sound(waveform, sample_rate=sample_rate)
-    intensity = sound.to_intensity(
-        minimum_pitch=f0_min, time_step=hop_time, subtract_mean=subtract_mean
-    )
-    return praat_to_torch(intensity)
+    device = waveform.device
+
+    def _single_intensity(waveform):
+        sound = torch_to_praat_sound(waveform, sample_rate=sample_rate)
+        intensity = sound.to_intensity(
+            minimum_pitch=f0_min, time_step=hop_time, subtract_mean=subtract_mean
+        )
+        return praat_to_torch(intensity)[0]
+
+    if waveform.ndim == 1:
+        intensity = _single_intensity(waveform)
+    elif waveform.ndim == 2:
+        intensities = []
+        for n in range(waveform.shape[0]):
+            intensities.append(_single_intensity(waveform[n]))
+        intensity = torch.stack(intensities).to(device)
+    else:
+        intensities = []
+        for n in range(waveform.shape[0]):
+            chs = []
+            for ch in range(waveform.shape[1]):
+                chs.append(_single_intensity(waveform[n, ch]))
+            intensities.append(torch.stack(chs))
+        intensity = torch.stack(intensities).to(device)
+    return intensity
 
 
 def pitch_praat_flatten(
@@ -164,6 +179,9 @@ def pitch_praat_flatten(
     Inspiration:
         http://phonetics.linguistics.ucla.edu/facilities/acoustic/FlatIntonationSynthesizer.txt
     """
+    assert (
+        waveform.ndim == 1
+    ), "praat functions only takes single samples -> waveform.ndim == 1."
     device = waveform.device
     if isinstance(target_f0, torch.Tensor):
         target_f0 = target_f0.item()
@@ -197,6 +215,9 @@ def pitch_praat_shift(
     f0_max: int = F0_MAX,
     sample_rate: int = SAMPLE_RATE,
 ) -> torch.Tensor:
+    assert (
+        waveform.ndim == 1
+    ), "praat functions only takes single samples -> waveform.ndim == 1."
     device = waveform.device
     sound = torch_to_praat_sound(waveform, sample_rate)
 
@@ -233,6 +254,9 @@ def intensity_praat_flatten(
     hop_time: float = HOP_TIME,
     f0_min: int = F0_MIN,
 ):
+    assert (
+        waveform.ndim == 1
+    ), "praat functions only takes single samples -> waveform.ndim == 1."
     sound = torch_to_praat_sound(waveform, sample_rate=sample_rate)
     snd_intensity = sound.to_intensity(
         minimum_pitch=f0_min, time_step=hop_time, subtract_mean=False
@@ -272,13 +296,26 @@ if __name__ == "__main__":
 
     wavpath = "example/student_long_female_en-US-Wavenet-G.wav"
     info = get_audio_info(wavpath)
-
     waveform, sample_rate = load_waveform(wavpath)
     vad = load_vad_list(
         "example/student_long_female_en-US-Wavenet-G_vad_list.json",
         duration=info["duration"],
     )
     print("waveform: ", tuple(waveform.shape))
+
+    batch_wav = torch.stack([waveform] * 4)
+    print("batch_wav: ", tuple(batch_wav.shape))
+    f0 = pitch_praat(batch_wav[:, 0], sample_rate)
+    print("f0: ", tuple(f0.shape))
+    intens = intensity_praat(batch_wav[:, 0], sample_rate)
+    print("intens: ", tuple(intens.shape))
+
+    hop_time = 0.01
+    f0_min = 60
+    f0_max = 600
+    sound = torch_to_praat_sound(waveform)
+    manipulation = call(sound, "To Manipulation", hop_time, f0_min, f0_max)
+    pitch_tier = call(manipulation, "Extract pitch tier")
 
     x = intensity_praat_flatten(waveform, target_intensity=50)
 
