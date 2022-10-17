@@ -2,7 +2,6 @@ import torch
 import torchaudio
 import torchaudio.functional as AF
 import torchaudio.transforms as AT
-from torchaudio.backend.sox_io_backend import info as info_sox
 from typing import Any, Dict, Optional, Union, Tuple
 
 
@@ -25,7 +24,7 @@ def sample_to_time(n_samples: int, sample_rate: int) -> float:
 
 
 def get_audio_info(audio_path: str) -> Dict[str, Any]:
-    info = info_sox(audio_path)
+    info = torchaudio.info(audio_path)
     return {
         "name": audio_path,
         "duration": sample_to_time(info.num_frames, info.sample_rate),
