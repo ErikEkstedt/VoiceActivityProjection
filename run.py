@@ -1,13 +1,13 @@
 from argparse import ArgumentParser
-import matplotlib as mpl
+
+# import matplotlib as mpl
 import matplotlib.pyplot as plt
 import torch
 
-mpl.use("tkagg")
+# mpl.use("tkagg")
 
 from vap.model import VAPModel
 from vap.utils import everything_deterministic, read_json, write_json
-
 from vap.plot_utils import plot_phrases_sample
 
 everything_deterministic()
@@ -103,9 +103,11 @@ if __name__ == "__main__":
 
     print("loss: ", loss.keys())
     if args.plot:
-        print("PLOT THE RESULT")
         fig, _ = plot_phrases_sample(
             sample, probs, frame_hz=model.frame_hz, sample_rate=model.sample_rate
         )
-        plt.show()
-        input()
+        plt.pause(0.01)
+        ans = input("Save figure? (y/n) ")
+        if ans.lower() == "y":
+            fig.savefig(args.savepath.replace(".json", ".png"))
+        plt.close("all")
