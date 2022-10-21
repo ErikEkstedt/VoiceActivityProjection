@@ -21,12 +21,17 @@ def test_cpc_train(config_name):
     model = VAPModel(conf)
 
     conf["data"]["num_workers"] = 0
-    conf["data"]["batch_size"] = 2
+    conf["data"]["batch_size"] = 20
     conf["data"]["audio_duration"] = 10
+
+    for k, v in conf["data"].items():
+        print(f"{k}: {v}")
+
     dm = DialogAudioDM(audio_mono=not model.stereo, **conf["data"])
+    print(dm)
     dm.prepare_data()
 
     cfg_dict = dict(conf)
     cfg_dict["trainer"]["fast_dev_run"] = True
-    trainer = pl.Trainer(**cfg_dict["trainer"])
+    trainer = pl.Trainer(**cfg_dict["trainer"], logger=None)
     trainer.fit(model, datamodule=dm)

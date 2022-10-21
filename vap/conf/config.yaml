@@ -45,17 +45,16 @@ data:
   type: "sliding"
   sample_rate: ${model.sample_rate}
   audio_duration: ${model.audio_duration}
-  audio_normalize: true
-  audio_overlap: 1
-  # VAD
+  audio_normalize: false
+  audio_overlap: 2
   vad_hz: ${model.frame_hz}
   vad_horizon: 2
   vad_history: ${model.va_cond.history}
   vad_history_times: [60, 30, 10, 5]
-  # Data
-  train_files: null
-  val_files: null
-  test_files: null
+  flip_channels: true
+  flip_probability: 0.5
+  mask_vad: true
+  mask_vad_probability: 0.3
   batch_size: 16
   num_workers: 24
 

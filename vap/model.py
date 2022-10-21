@@ -6,6 +6,7 @@ import einops
 from einops.layers.torch import Rearrange
 from typing import Any, Optional, Dict, Union, Tuple, List
 
+from datasets_turntaking.utils import load_waveform
 from vap.encoder import Encoder
 from vap.transformer import GPT, GPTStereo
 from vap.utils import (
@@ -13,9 +14,9 @@ from vap.utils import (
     batch_to_device,
 )
 from vap.audio import get_audio_info, time_to_frames
+
 from vap_turn_taking import VAP, TurnTakingMetrics
 from vap_turn_taking.utils import vad_list_to_onehot, get_activity_history
-from datasets_turntaking.utils import load_waveform
 
 everything_deterministic()
 
@@ -53,7 +54,7 @@ class VAPHead(nn.Module):
                 )
                 self.output_dim = (2, n_bins)
             else:
-                self.n_classes = 2**self.total_bins
+                self.n_classes = 2 ** self.total_bins
                 self.projection_head = nn.Linear(input_dim, self.n_classes)
                 self.output_dim = self.n_classes
 
