@@ -1,6 +1,6 @@
 defaults:
   - model: vap_50hz
-  - events: events
+  - events: events_new
 
 seed: 1
 verbose: false

@@ -1,0 +1,28 @@
+metric:
+  time: 0.1 # duration of regions over whidh to measure model prediction
+  pad_time: 0.05 # duration of silence before the above measurement region
+  prediction_region_time: 0.5 # The duration of the prediction region prior to actual event
+  min_context: 3.0  # minimum context require for valid prediction
+
+shift_hold:
+  pre_cond_time: 1.0  # single speaker only active prior to silence
+  post_cond_time: 1.0  # single speaker only active after silence
+  prediction_region_on_active: True  # only predict on completely active regions (no pauses included)
+  equal: True  # select equal amounts of Hold vs Shift
+
+backchannel:
+  pre_cond_time: 1.0  # Time a speaker must be silent before a segment to be considered a backchannel
+  post_cond_time: 2.0 # Time a speaker must be silent after a segment to be considered a backchannel
+  max_duration: 1.0  # The maximum duration to be considered 'short' i.e. a backchannel
+  negative_pad_left_time: 1.0  # negative regions must be at least this time away from last activity
+  negative_pad_right_time: 2.0 # negative regions must be at least this time away from next activity
+
+
+long_short:
+  onset_region_time: 0.2  # the duration of region to measure long/short
+  onset_condition_time: 1.0  # A long onset (shift) must be at least this long to be a 'Long'
+
+threshold:
+  short_long: 0.5
+  pred_shift: 0.3
+  pred_bc: 0.1
