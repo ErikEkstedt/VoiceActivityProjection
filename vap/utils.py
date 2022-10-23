@@ -168,7 +168,7 @@ def load_hydra_conf(config_path="conf", config_name="config"):
     from hydra import compose, initialize
 
     try:
-        initialize(config_path=config_path)
+        initialize(version_base=None, config_path=config_path)
     except:
         pass
 

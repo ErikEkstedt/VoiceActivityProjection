@@ -9,8 +9,8 @@ from pytorch_lightning.callbacks import (
     LearningRateMonitor,
     StochasticWeightAveraging,
 )
-from pytorch_lightning.loggers import WandbLogger
-from pytorch_lightning.strategies import DDPStrategy
+from pytorch_lightning.loggers.wandb import WandbLogger
+from pytorch_lightning.strategies.ddp import DDPStrategy
 
 from vap.callbacks import WandbArtifactCallback
 from vap.model import VAPModel
@@ -18,7 +18,7 @@ from vap.utils import everything_deterministic
 from datasets_turntaking import DialogAudioDM
 
 
-@hydra.main(config_path="conf", config_name="config")
+@hydra.main(version_base=None, config_path="conf", config_name="config")
 def train(cfg: DictConfig) -> None:
     cfg_dict = OmegaConf.to_object(cfg)
     cfg_dict = dict(cfg_dict)
