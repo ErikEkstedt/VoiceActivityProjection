@@ -1,4 +1,5 @@
 # Custom
+wandb/
 pyrightconfig.json
 runs/
 runs_*/
