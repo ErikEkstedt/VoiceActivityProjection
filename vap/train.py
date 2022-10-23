@@ -23,27 +23,31 @@ def train(cfg: DictConfig) -> None:
     cfg_dict = OmegaConf.to_object(cfg)
     cfg_dict = dict(cfg_dict)
 
+    pl.seed_everything(cfg_dict["seed"])
+    local_rank = environ.get("LOCAL_RANK", 0)
+
     if "debug" in cfg_dict:
         environ["WANDB_MODE"] = "offline"
         print("DEBUG -> OFFLINE MODE")
 
-    pl.seed_everything(cfg_dict["seed"])
-    local_rank = environ.get("LOCAL_RANK", 0)
-
+    #####################################################
+    # Model
+    #####################################################
     if cfg_dict["verbose"]:
         print("Model Conf")
         for k, v in cfg_dict["model"].items():
             print(f"{k}: {v}")
         print("#" * 60)
-
     model = VAPModel(cfg_dict)
 
+    ##################################################
+    # Data
+    ##################################################
     if cfg_dict["verbose"]:
         print("DataModule")
         for k, v in cfg_dict["data"].items():
             print(f"{k}: {v}")
         print("#" * 60)
-
     dm = DialogAudioDM(audio_mono=not model.stereo, **cfg_dict["data"])
     dm.prepare_data()
 

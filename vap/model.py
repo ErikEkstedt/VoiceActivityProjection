@@ -357,7 +357,7 @@ class VAPModel(pl.LightningModule):
         self.val_ls_metric(preds=preds["ls"], target=targets["ls"])
         self.val_sp_metric(preds=preds["pred_shift"], target=targets["pred_shift"])
         self.val_bp_metric(
-            preds=preds["pred_backchannel"], target=targets["pred_backchannel_neg"]
+            preds=preds["pred_backchannel"], target=targets["pred_backchannel"]
         )
         # Log
         self.log("val_f1_hs", self.val_hs_metric, on_step=True, on_epoch=True)
