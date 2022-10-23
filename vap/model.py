@@ -353,12 +353,16 @@ class VAPModel(pl.LightningModule):
         # Otherwise try manual
 
         # Update... I presume
-        self.val_hs_metric(preds=preds["hs"], target=targets["hs"])
-        self.val_ls_metric(preds=preds["ls"], target=targets["ls"])
-        self.val_sp_metric(preds=preds["pred_shift"], target=targets["pred_shift"])
-        self.val_bp_metric(
-            preds=preds["pred_backchannel"], target=targets["pred_backchannel"]
-        )
+        if preds["hs"] is not None:
+            self.val_hs_metric(preds=preds["hs"], target=targets["hs"])
+        if preds["ls"] is not None:
+            self.val_ls_metric(preds=preds["ls"], target=targets["ls"])
+        if preds["pred_shift"] is not None:
+            self.val_sp_metric(preds=preds["pred_shift"], target=targets["pred_shift"])
+        if preds["pred_backchannel"] is not None:
+            self.val_bp_metric(
+                preds=preds["pred_backchannel"], target=targets["pred_backchannel"]
+            )
         # Log
         self.log("val_f1_hs", self.val_hs_metric, on_step=True, on_epoch=True)
         self.log("val_f1_ls", self.val_ls_metric, on_step=True, on_epoch=True)
@@ -368,6 +372,7 @@ class VAPModel(pl.LightningModule):
 
 if __name__ == "__main__":
 
+    from os import cpu_count
     from datasets_turntaking import DialogAudioDM
     from vap.utils import load_hydra_conf
 
@@ -380,8 +385,8 @@ if __name__ == "__main__":
         datasets=["switchboard", "fisher"],
         audio_duration=conf["data"]["audio_duration"],
         audio_mono=not model.stereo,
-        batch_size=20,
-        num_workers=24,
+        batch_size=4,
+        num_workers=cpu_count(),
     )
     dm.prepare_data()
     dm.setup()
