@@ -21,7 +21,11 @@ everything_deterministic()
 
 class VAPHead(nn.Module):
     def __init__(
-        self, input_dim: int, n_bins: int = 4, representation: str = "discrete"
+        self,
+        input_dim: int,
+        n_bins: int = 4,
+        representation: str = "discrete",
+        bias_w_distribution: bool = True,
     ):
         super().__init__()
         self.representation = representation
@@ -40,6 +44,10 @@ class VAPHead(nn.Module):
                 self.n_classes = 2 ** self.total_bins
                 self.projection_head = nn.Linear(input_dim, self.n_classes)
                 self.output_dim = self.n_classes
+                if bias_w_distribution:
+                    self.projection_head.bias.data = torch.load(
+                        "example/label_probs.pt"
+                    ).log()
 
     def __repr__(self):
         s = "VAPHead\n"
@@ -222,6 +230,18 @@ class VAPModel(pl.LightningModule):
         self.val_sp_metric = F1Score(num_classes=2, average="weighted", multiclass=True)
         self.val_bp_metric = F1Score(num_classes=2, average="weighted", multiclass=True)
 
+    @property
+    def run_name(self):
+        s = "VAP"
+        s += f"_{self.frame_hz}Hz"
+        s += f"_ad{self.audio_duration_training}s"
+        s += f"_{self.conf['model']['ar']['channel_layers']}"
+        s += str(self.conf["model"]["ar"]["num_layers"])
+        s += str(self.conf["model"]["ar"]["num_heads"])
+        if not self.stereo:
+            s += "_mono"
+        return s
+
     def forward(
         self,
         waveform: torch.Tensor,
@@ -380,6 +400,7 @@ if __name__ == "__main__":
     config_name = "model/vap_50hz"  # "model/vap_50hz_stereo"
     conf["model"] = load_hydra_conf(config_name=config_name)["model"]
     model = VAPModel(conf)
+    print(model.run_name)
 
     dm = DialogAudioDM(
         datasets=["switchboard", "fisher"],
