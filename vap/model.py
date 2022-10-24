@@ -1,5 +1,6 @@
 import torch
 import torch.nn as nn
+import torch.nn.functional as F
 from torchmetrics.classification.f_beta import F1Score
 from torchmetrics.classification.precision_recall_curve import PrecisionRecallCurve
 import pytorch_lightning as pl
@@ -8,15 +9,22 @@ from typing import Optional, Dict
 
 from vap.encoder import Encoder
 from vap.transformer import GPT, GPTStereo
-from vap.utils import (
-    everything_deterministic,
-    batch_to_device,
-)
+from vap.utils import everything_deterministic
 
 from vap_turn_taking.vap_new import VAP
 from vap_turn_taking.events import TurnTakingEventsNew
 
 everything_deterministic()
+
+
+def loss_fn_va(v1: torch.Tensor, v2: torch.Tensor, va: torch.Tensor) -> torch.Tensor:
+    """Loss for Voice Activity classification (BCE)"""
+    n_batch, n_frames, _ = v1.shape  # (B, N_FRAMES, 1)
+    v1_label = va[:, :n_frames, :1]  # -> (B, N_FRAMES, 1)
+    v2_label = va[:, :n_frames, 1:]  # -> (B, N_FRAMES, 1)
+    l1 = F.binary_cross_entropy_with_logits(v1, v1_label)
+    l2 = F.binary_cross_entropy_with_logits(v2, v2_label)
+    return (l1 + l2) / 2
 
 
 class VAPHead(nn.Module):
@@ -130,6 +138,10 @@ class ProjectionModel(nn.Module):
             dropout=conf["ar"]["dropout"],
         )
 
+        # VAD objective -> x1, x2 -> logits ->  BCE
+        if self.stereo:
+            self.va_classifier = nn.Linear(conf["ar"]["dim"], 1)
+
         # Appropriate VAP-head
         self.vap_representation = conf["vap"]["type"]
         self.vap_head = VAPHead(
@@ -143,17 +155,27 @@ class ProjectionModel(nn.Module):
         waveform: torch.Tensor,
         va: Optional[torch.Tensor] = None,
         va_history: Optional[torch.Tensor] = None,
-    ) -> torch.Tensor:
+    ) -> Dict[str, torch.Tensor]:
+
+        ret = {}  # return dict
         if self.stereo:
             # Placeholder before defining architecture
+            assert (
+                waveform.shape[1] == 2
+            ), f"Expects 2 channels (B, 2, n_samples) got {waveform.shape}"
             x1 = self.encoder(waveform[:, :1])  # speaker 1
             x2 = self.encoder(waveform[:, 1:])  # speaker 2
             x1 = self.projection(x1)
             x2 = self.projection(x2)
             # Autoregressive
-            x1 = self.ar_channel(x1)
-            x2 = self.ar_channel(x2)
-            z = self.ar(x1, x2)
+            x1 = self.ar_channel(x1)["x"]
+            x2 = self.ar_channel(x2)["x"]
+            out = self.ar(x1, x2)
+            z = out["x"]
+
+            # Vad Objective
+            ret["v1"] = self.va_classifier(out["x1"])
+            ret["v2"] = self.va_classifier(out["x2"])
         else:
             assert va is not None, "Requires voice-activity input but va=None"
             z = self.encoder(waveform)
@@ -168,9 +190,9 @@ class ProjectionModel(nn.Module):
             # Add vad-conditioning to audio features
             z = z + vc
             # Autoregressive
-            z = self.ar(z)
-        logits = self.vap_head(z)
-        return logits
+            z = self.ar(z)["x"]
+        ret["logits"] = self.vap_head(z)
+        return ret
 
 
 class VAPModel(pl.LightningModule):
@@ -183,7 +205,7 @@ class VAPModel(pl.LightningModule):
         self.audio_duration_training = conf["model"]["audio_duration"]
 
         # Model
-        self.net = ProjectionModel(conf["model"])
+        self.net: nn.Module = ProjectionModel(conf["model"])
 
         # VAP: labels, logits -> zero-shot probs
         sh_opts = conf["events"]["shift_hold"]
@@ -209,7 +231,7 @@ class VAPModel(pl.LightningModule):
             frame_hz=self.frame_hz,
             equal_hold_shift=sh_opts["pre_cond_time"],
         )
-        self.VAP = VAP(
+        self.VAP: nn.Module = VAP(
             objective=conf["model"]["vap"]["type"],
             bin_times=conf["model"]["vap"]["bin_times"],
             frame_hz=conf["model"]["frame_hz"],
@@ -247,8 +269,7 @@ class VAPModel(pl.LightningModule):
         waveform: torch.Tensor,
         va: Optional[torch.Tensor] = None,
         va_history: Optional[torch.Tensor] = None,
-        return_events: bool = False,
-    ):
+    ) -> Dict[str, torch.Tensor]:
         assert (
             waveform.ndim == 3
         ), f"Expects (B, N_CHANNEL, N_SAMPLES) got {waveform.shape}"
@@ -261,46 +282,8 @@ class VAPModel(pl.LightningModule):
                 va_history.ndim == 3
             ), f"Expects (B, N_FRAMES, 5) got {va_history.shape}"
 
-        logits = self.net(waveform, va=va, va_history=va_history)
-        vap_out = self.VAP(logits=logits, va=va)
-        vap_out["logits"] = logits
-
-        n_max_frames = logits.shape[1] - self.horizon
-
-        if return_events:
-            events = self.event_extractor(va, max_frame=n_max_frames)
-            vap_out.update(events)
-
-        # Output keys
-        #  ["probs", "logits"]
-        #  if va is not None:
-        #  ["probs", "p", "p_bc", "labels", "logits"]
-        #  if return_events:
-        #       ['shift', 'hold', 'short', 'long',
-        #       'pred_shift', 'pred_shift_neg',
-        #       'pred_bc', 'pred_bc_neg']
-        return vap_out
-
-    def configure_optimizers(self) -> Dict:
-        opt = torch.optim.AdamW(
-            self.parameters(),
-            lr=self.learning_rate,
-            betas=self.conf["optimizer"]["betas"],
-            weight_decay=self.conf["optimizer"]["weight_decay"],
-        )
-        lr_scheduler = torch.optim.lr_scheduler.CosineAnnealingLR(
-            optimizer=opt,
-            T_max=self.conf["optimizer"].get("lr_scheduler_tmax", 10),
-            last_epoch=-1,
-        )
-        return {
-            "optimizer": opt,
-            "lr_scheduler": {
-                "scheduler": lr_scheduler,
-                "interval": self.conf["optimizer"].get("lr_scheduler_interval", "step"),
-                "frequency": self.conf["optimizer"].get("lr_scheduler_freq", 1000),
-            },
-        }
+        # net returns: 'logits' and Optionally (if stereo) 'v1' and 'v2' for vad classification
+        return self.net(waveform, va=va, va_history=va_history)
 
     def shared_step(
         self, batch: Dict, reduction: str = "mean"
@@ -327,7 +310,7 @@ class VAPModel(pl.LightningModule):
         ########################################
         # Forward pass -> logits: torch.Tensor
         ########################################
-        logits = self.net(
+        out = self(
             waveform=batch["waveform"],
             va=batch["vad"][:, :n_max_frames],
             va_history=vah_input,
@@ -335,19 +318,49 @@ class VAPModel(pl.LightningModule):
 
         ########################################
         # VAP-Head: Extract Probs and Labels
-        vap_out = self.VAP(logits=logits, va=batch["vad"])
-        vap_out["logits"] = logits
+        vap_out = self.VAP(logits=out["logits"], va=batch["vad"])
+        out.update(vap_out)
         ########################################
 
-        loss = self.VAP.loss_fn(logits, vap_out["labels"])
-        vap_out["loss"] = loss
-        return vap_out
+        if "v1" in out:
+            loss_va = loss_fn_va(v1=out["v1"], v2=out["v2"], va=batch["vad"])
+            out["loss_va"] = loss_va
+
+        loss = self.VAP.loss_fn(out["logits"], out["labels"], reduction=reduction)
+        out["loss"] = loss
+        return out
+
+    def configure_optimizers(self) -> Dict:
+        opt = torch.optim.AdamW(
+            self.parameters(),
+            lr=self.learning_rate,
+            betas=self.conf["optimizer"]["betas"],
+            weight_decay=self.conf["optimizer"]["weight_decay"],
+        )
+        lr_scheduler = torch.optim.lr_scheduler.CosineAnnealingLR(
+            optimizer=opt,
+            T_max=self.conf["optimizer"].get("lr_scheduler_tmax", 10),
+            last_epoch=-1,
+        )
+        return {
+            "optimizer": opt,
+            "lr_scheduler": {
+                "scheduler": lr_scheduler,
+                "interval": self.conf["optimizer"].get("lr_scheduler_interval", "step"),
+                "frequency": self.conf["optimizer"].get("lr_scheduler_freq", 1000),
+            },
+        }
 
     def training_step(self, batch, batch_idx, **kwargs):
         out = self.shared_step(batch)
         batch_size = batch["waveform"].shape[0]
         self.log("loss", out["loss"], batch_size=batch_size, sync_dist=True)
-        return {"loss": out["loss"]}
+
+        loss = out["loss"]
+        if "loss_va" in out:
+            self.log("loss_va", out["loss_va"], batch_size=batch_size, sync_dist=True)
+            loss += out["loss_va"]
+        return {"loss": loss}
 
     def validation_step(self, batch, batch_idx, **kwargs):
         """validation step"""
@@ -358,6 +371,10 @@ class VAPModel(pl.LightningModule):
 
         # log validation loss
         self.log("val_loss", out["loss"], batch_size=batch_size, sync_dist=True)
+        if "loss_va" in out:
+            self.log(
+                "val_loss_va", out["loss_va"], batch_size=batch_size, sync_dist=True
+            )
 
         # Event Metrics
         events = self.event_extractor(batch["vad"])
@@ -366,51 +383,76 @@ class VAPModel(pl.LightningModule):
             p=out["p"], p_bc=out["p_bc"], events=events
         )
 
-        # How to log torchmetrics
-        # https://torchmetrics.readthedocs.io/en/stable/pages/lightning.html
-        #   self.valid_acc(logits, y)
-        #   self.log('valid_acc', self.valid_acc, on_step=True, on_epoch=True)
-        # Otherwise try manual
-
-        # Update... I presume
         if preds["hs"] is not None:
             self.val_hs_metric(preds=preds["hs"], target=targets["hs"])
+
         if preds["ls"] is not None:
             self.val_ls_metric(preds=preds["ls"], target=targets["ls"])
+
         if preds["pred_shift"] is not None:
             self.val_sp_metric(preds=preds["pred_shift"], target=targets["pred_shift"])
+
         if preds["pred_backchannel"] is not None:
             self.val_bp_metric(
                 preds=preds["pred_backchannel"], target=targets["pred_backchannel"]
             )
+
         # Log
-        self.log("val_f1_hs", self.val_hs_metric, on_step=True, on_epoch=True)
-        self.log("val_f1_ls", self.val_ls_metric, on_step=True, on_epoch=True)
-        self.log("val_f1_pred_sh", self.val_sp_metric, on_step=True, on_epoch=True)
-        self.log("val_f1_preed_bc", self.val_bp_metric, on_step=True, on_epoch=True)
+        self.log("val_f1_hs", self.val_hs_metric, on_step=False, on_epoch=True)
+        self.log("val_f1_ls", self.val_ls_metric, on_step=False, on_epoch=True)
+        self.log("val_f1_pred_sh", self.val_sp_metric, on_step=False, on_epoch=True)
+        self.log("val_f1_pred_bc", self.val_bp_metric, on_step=False, on_epoch=True)
 
 
 if __name__ == "__main__":
 
     from os import cpu_count
     from datasets_turntaking import DialogAudioDM
-    from vap.utils import load_hydra_conf
+    from vap.utils import load_hydra_conf, batch_to_device
 
     conf = load_hydra_conf()
     config_name = "model/vap_50hz"  # "model/vap_50hz_stereo"
+    config_name = "model/vap_50hz_stereo"  # "model/vap_50hz_stereo"
     conf["model"] = load_hydra_conf(config_name=config_name)["model"]
     model = VAPModel(conf)
+    if torch.cuda.is_available():
+        model = model.to("cuda")
     print(model.run_name)
-
     dm = DialogAudioDM(
         datasets=["switchboard", "fisher"],
         audio_duration=conf["data"]["audio_duration"],
+        vad_history=conf["model"]["va_cond"]["history"],
         audio_mono=not model.stereo,
-        batch_size=4,
+        batch_size=2,
         num_workers=cpu_count(),
     )
     dm.prepare_data()
     dm.setup()
 
-    trainer = pl.Trainer(accelerator="gpu", devices=-1, fast_dev_run=1)
-    trainer.fit(model, datamodule=dm)
+    batch = next(iter(dm.val_dataloader()))
+
+    batch = batch_to_device(batch, "cuda")
+
+    out = model.forward(waveform=batch["waveform"], va=batch["vad"])
+    print("-" * 50)
+    print("FORWARD")
+    for k, v in out.items():
+        if isinstance(v, torch.Tensor):
+            print(f"{k}: {tuple(v.shape)}")
+        else:
+            print(f"{k}: {v}")
+
+    out = model.shared_step(batch)
+    print("")
+    print("-" * 50)
+    print("SHARED STEP")
+    for k, v in out.items():
+        if "loss" in k:
+            print(k, v)
+        elif isinstance(v, torch.Tensor):
+            print(f"{k}: {tuple(v.shape)}")
+        else:
+            print(f"{k}: {v}")
+
+    # trainer = pl.Trainer(accelerator="gpu", devices=-1, fast_dev_run=1)
+    # trainer.fit(model, datamodule=dm)

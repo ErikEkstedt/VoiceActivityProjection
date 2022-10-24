@@ -3,7 +3,7 @@ import torch
 import torch.nn as nn
 import torch.nn.functional as F
 from einops.layers.torch import Rearrange
-from typing import Optional, Tuple
+from typing import Dict, Optional, Tuple
 
 
 def prepare_causal_mask(T, device="cpu"):
@@ -323,7 +323,9 @@ class GPT(nn.Module):
             torch.nn.init.zeros_(module.bias)
             torch.nn.init.ones_(module.weight)
 
-    def forward(self, x, attention=False):
+    def forward(
+        self, x: torch.Tensor, attention: bool = False
+    ) -> Dict[str, torch.Tensor]:
         all_attention = []
 
         for layer in self.layers:
@@ -331,11 +333,63 @@ class GPT(nn.Module):
             if attention:
                 all_attention.append(self_attn_weights)
 
+        ret = {"x": x}
+
         if attention:
             self_attn_weights = torch.stack(all_attention, dim=1)
-            return x, self_attn_weights
+            ret["attn"] = self_attn_weights
 
-        return x
+        return ret
+
+
+class Combinator(nn.Module):
+    """
+    Combines the "ego-centric" representations from identical 'towers'
+    processing channel 0 and 1. The towers are identical (shared weights)
+    and therefore channel agnostic, e.g. they don't know if they process information
+    from the view of speaker A or B.
+
+    Here we have specific layers associated with each channel to join the representations
+    into a single coherent space with channel information included.
+    """
+
+    def __init__(self, dim: int, activation: str = "GELU"):
+        super().__init__()
+        self.dim = dim
+
+        # Channel information
+        self.h0_a = nn.Linear(dim, dim, bias=False)  # Channel 0
+        self.h0_b = nn.Linear(dim, dim, bias=False)  # Channel 1
+        self.ln0_a = nn.LayerNorm(self.dim)
+        self.ln0_b = nn.LayerNorm(self.dim)
+
+        # Combine to single representation
+        self.combinator = nn.Linear(2 * dim, dim, bias=False)
+        self.ln_combinator = nn.LayerNorm(self.dim)
+
+        # Activation
+        self.activation = getattr(nn, activation)()
+
+    def forward(self, x1: torch.Tensor, x2: torch.Tensor) -> torch.Tensor:
+        """
+        Combines the hidden states from identical 'towers' which have processed
+        each channel from an 'ego-centric' view. However, the towers are channel agnostic
+        by default (shared weights) so in this step we process the information from channel 0, 1
+        separately into a joint representation.
+
+        The final representation will (see GPTStereo -> ProjectionModel) go into a final linear
+        layer to produce logits.
+        """
+
+        # Channel specific information
+        ha = self.activation(self.ln0_a(self.h0_a(x1)))
+        hb = self.activation(self.ln0_b(self.h0_b(x2)))
+        h = torch.cat((ha, hb), dim=-1)
+
+        # Joint information
+        h = self.combinator(h)
+        h = self.ln_combinator(h)
+        return h
 
 
 class GPTStereo(GPT):
@@ -355,20 +409,26 @@ class GPTStereo(GPT):
         self.layers = nn.ModuleList(layers)
 
         # Combine output from both 'towers'
-        self.combinator = nn.Linear(self.dim * 2, self.dim)
-        self.ln_combinator = nn.LayerNorm(self.dim)
+        self.combinator = Combinator(dim=self.dim, activation="GELU")
 
-    def forward(self, x1: torch.Tensor, x2: torch.Tensor, attention: bool = False):
-        if attention:
-            print("WARNING: StereoGPT attention is not implemented yet...")
+    def forward(
+        self, x1: torch.Tensor, x2: torch.Tensor, attention: bool = False
+    ) -> Dict[str, torch.Tensor]:
 
+        attn_lists = []
         for layer in self.layers:
             x1, x2, attn_list = layer(x1=x1, x2=x2)
+            if attention:
+                attn_lists.append(attn_list)
 
-        x = torch.cat((x1, x2), dim=-1)
-        x = self.combinator(x)
-        x = self.ln_combinator(x)
-        return x
+        x = self.combinator(x1, x2)
+
+        ret = {"x": x, "x1": x1, "x2": x2}
+
+        if attention:
+            ret["attn_list"] = attn_lists
+
+        return ret
 
 
 def test_gpt():

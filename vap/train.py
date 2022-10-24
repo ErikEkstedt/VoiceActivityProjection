@@ -61,10 +61,10 @@ def train(cfg: DictConfig) -> None:
     else:
         # Callbacks & Logger
         logger = WandbLogger(
-            # save_dir=SA,
             project=cfg_dict["wandb"]["project"],
             name=model.run_name,
             log_model=False,
+            save_dir="runs",
         )
 
         if local_rank == 0:
