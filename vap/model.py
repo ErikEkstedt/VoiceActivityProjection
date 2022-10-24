@@ -207,11 +207,14 @@ class VAPModel(pl.LightningModule):
         # Model
         self.net: nn.Module = ProjectionModel(conf["model"])
 
+        # Training params
+        self.learning_rate = conf["optimizer"]["learning_rate"]
+
         # VAP: labels, logits -> zero-shot probs
-        sh_opts = conf["events"]["shift_hold"]
-        bc_opts = conf["events"]["backchannel"]
-        sl_opts = conf["events"]["long_short"]
-        mt_opts = conf["events"]["metric"]
+        sh_opts = self.conf["events"]["shift_hold"]
+        bc_opts = self.conf["events"]["backchannel"]
+        sl_opts = self.conf["events"]["long_short"]
+        mt_opts = self.conf["events"]["metric"]
         self.event_extractor = TurnTakingEventsNew(
             sh_pre_cond_time=sh_opts["pre_cond_time"],
             sh_post_cond_time=sh_opts["post_cond_time"],
@@ -241,9 +244,6 @@ class VAPModel(pl.LightningModule):
         self.vad_history_times = self.conf["data"]["vad_history_times"]
         self.horizon = self.VAP.horizon
         self.horizon_time = self.VAP.horizon_time
-
-        # Training params
-        self.learning_rate = conf["optimizer"]["learning_rate"]
         self.save_hyperparameters()
 
         # Metrics
@@ -291,8 +291,7 @@ class VAPModel(pl.LightningModule):
         waveform: torch.Tensor,
         va: Optional[torch.Tensor] = None,
         va_history: Optional[torch.Tensor] = None,
-        pad_horizon: bool = True,
-        pad_noise_scale: float = 0.0,
+        max_time: Optional[float] = None,
     ):
 
         assert (
@@ -326,6 +325,10 @@ class VAPModel(pl.LightningModule):
                 va = pad_va(out["vad"])
                 vap_out = self.VAP(logits=out["logits"], va=va)
                 out.update(vap_out)
+            va_oh = (out["vad"] > 0.5) * 1
+            events = self.event_extractor(va_oh, max_time=max_time)
+            out.update(events)
+
         else:
             vapad = pad_va(va)
             vap_out = self.VAP(logits=out["logits"], va=vapad)
