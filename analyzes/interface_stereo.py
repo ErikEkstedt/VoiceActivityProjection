@@ -46,13 +46,29 @@ def get_figure(idx=0):
     batch = dset[idx]
     batch = batch_to_device(batch, model.device)
 
-    out = model.output(waveform=batch["waveform"])
-    fig, _ = plot_stereo(
+    out = model.output(waveform=batch["waveform"])  # , max_time=30)
+    # print(out.keys())
+    fig, ax = plot_stereo(
         waveform=batch["waveform"][0].cpu(),
         p_ns=out["p"][0, :, 0].cpu(),
         vad=out["vad"][0].cpu(),
         plot=False,
     )
+
+    # print("Shifts: ", out["shift"])
+    # print("Shorts: ", out["short"])
+    if len(out["shift"][0]) > 0:
+        for start, end, speaker in out["shift"][0]:
+            # color = "b" if speaker == 0 else "orange"
+            # ax[-1].axvline(x=start, color=color, linewidth=4)
+            ax[-1].axvline(x=start, color="r", linewidth=2)
+
+    if len(out["short"][0]) > 0:
+        for start, end, speaker in out["short"][0]:
+            color = "orange" if speaker == 0 else "b"
+            ax[-1].axvline(x=start, color=color, linewidth=4)
+            # ax[-1].axvline(x=start, color="green", linewidth=4)
+
     return fig
 
 
