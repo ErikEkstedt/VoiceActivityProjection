@@ -21,11 +21,66 @@ def to_mono(waveform: torch.Tensor) -> torch.Tensor:
         )
 
 
+def plot_stereo(
+    waveform: torch.Tensor,
+    p_ns: torch.Tensor,
+    vad: torch.Tensor,
+    plot: bool = True,
+    figsize=(9, 6),
+):
+    assert (
+        waveform.ndim == 2
+    ), f"Expected waveform of shape (2, n_samples) got {waveform.shape}"
+
+    assert (
+        waveform.shape[0] == 2
+    ), f"Expected waveform of shape (2, n_samples) got {waveform.shape}"
+
+    assert vad.ndim == 2, f"Expected vad of shape (n_frames, 2) got {vad.shape}"
+    assert vad.shape[-1] == 2, f"Expected vad of shape (n_frames, 2) got {vad.shape}"
+
+    fig, ax = plt.subplots(4, 1, figsize=figsize)
+    _ = plot_waveform(waveform=waveform[0], ax=ax[0])
+    _ = plot_waveform(waveform=waveform[1], ax=ax[0], color="orange")
+    ax[0].set_xticks([])
+
+    plot_stereo_mel_spec(waveform, ax=[ax[1], ax[2]], vad=vad)
+    plot_next_speaker_probs(p_ns=p_ns, ax=ax[3])
+    plt.subplots_adjust(
+        left=0.08, bottom=None, right=None, top=None, wspace=None, hspace=0.04
+    )
+    if plot:
+        plt.pause(0.1)
+    return fig, ax
+
+
+def plot_waveform(
+    waveform,
+    ax: mpl.axes.Axes,
+    color: str = "lightblue",
+    alpha: float = 0.6,
+    downsample: int = 10,
+    sample_rate: int = 16000,
+) -> mpl.axes.Axes:
+    assert (
+        waveform.ndim == 1
+    ), f"Expects a single channel waveform (n_samples, ) got {waveform.shape}"
+    x = waveform[..., ::downsample]
+    ax.plot(x, color=color, zorder=0, alpha=alpha)  # , alpha=0.2)
+    ax.set_xlim([0, len(x)])
+    # ax.set_xticks(ax.get_xticks()/sample_rate/downsample)
+    ax.set_ylim([-1, 1])
+    ax.set_yticks([])
+    ax.set_ylabel("waveform", fontsize=14)
+    return ax
+
+
 def plot_stereo_mel_spec(
     waveform: torch.Tensor,
     ax: List[mpl.axes.Axes],
     vad: Optional[torch.Tensor] = None,
     mel_spec: Optional[torch.Tensor] = None,
+    fontsize: int = 12,
     plot: bool = False,
 ) -> List[mpl.axes.Axes]:
     if mel_spec is None:
@@ -39,7 +94,7 @@ def plot_stereo_mel_spec(
             ax[ch].plot(
                 vad[:n_frames, ch] * (n_mels - 1),
                 alpha=0.9,
-                linewidth=5,
+                linewidth=2,
                 color=colors[ch],
             )
 
@@ -47,6 +102,8 @@ def plot_stereo_mel_spec(
     ax[1].set_xticks([])
     ax[0].set_yticks([])
     ax[1].set_yticks([])
+    ax[0].set_ylabel("A", fontsize=fontsize)
+    ax[1].set_ylabel("B", fontsize=fontsize)
     plt.subplots_adjust(
         left=0.05, bottom=None, right=0.99, top=0.99, wspace=0.01, hspace=0
     )
@@ -132,6 +189,7 @@ def plot_next_speaker_probs(
         color=color[1],
         label="B",
     )
+    ax.plot(p_ns, color="k", linewidth=0.8)
     ax.set_xlim([0, len(p_ns)])
     ax.set_xticks([])
     ax.set_yticks([0.25, 0.75], ["SHIFT", "HOLD"], fontsize=fontsize)
@@ -163,7 +221,7 @@ def plot_next_speaker_probs(
 
     if legend:
         ax.legend(loc="lower left")
-    ax.hlines(y=0.5, xmin=0, xmax=len(p_ns), linewidth=2, color="k")
+    ax.axhline(y=0.5, linestyle="dashed", linewidth=2, color="k")
     return ax
 
 

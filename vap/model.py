@@ -285,6 +285,53 @@ class VAPModel(pl.LightningModule):
         # net returns: 'logits' and Optionally (if stereo) 'v1' and 'v2' for vad classification
         return self.net(waveform, va=va, va_history=va_history)
 
+    @torch.no_grad()
+    def output(
+        self,
+        waveform: torch.Tensor,
+        va: Optional[torch.Tensor] = None,
+        va_history: Optional[torch.Tensor] = None,
+        pad_horizon: bool = True,
+        pad_noise_scale: float = 0.0,
+    ):
+
+        assert (
+            waveform.ndim == 3
+        ), f"Expects waveform of shape (B, C, n_sample) got {waveform.shape}"
+
+        if va is not None:
+            assert (
+                va.ndim == 3
+            ), f"Expects waveform of shape (B, n_frames, 2) got {va.shape}"
+
+        if va_history is not None:
+            assert (
+                va_history.ndim == 3
+            ), f"Expects waveform of shape (B, n_frames, 5) got {va_history.shape}"
+
+        def pad_va(va):
+            b = va.shape[0]
+            zero_pad = torch.zeros((b, self.horizon, 2), device=va.device)
+            return torch.cat((va, zero_pad), dim=1)
+
+        out = self(waveform, va, va_history)
+
+        if "v1" in out:
+            vad_logits = torch.cat((out["v1"], out["v2"]), dim=-1)
+            out["vad"] = vad_logits.sigmoid()
+            out.pop("v1")
+            out.pop("v2")
+            if va is None:
+                # pad horizon for labels
+                va = pad_va(out["vad"])
+                vap_out = self.VAP(logits=out["logits"], va=va)
+                out.update(vap_out)
+        else:
+            vapad = pad_va(va)
+            vap_out = self.VAP(logits=out["logits"], va=vapad)
+            out.update(vap_out)
+        return out
+
     def shared_step(
         self, batch: Dict, reduction: str = "mean"
     ) -> Dict[str, torch.Tensor]:
@@ -403,6 +450,61 @@ class VAPModel(pl.LightningModule):
         self.log("val_f1_pred_sh", self.val_sp_metric, on_step=False, on_epoch=True)
         self.log("val_f1_pred_bc", self.val_bp_metric, on_step=False, on_epoch=True)
 
+    def test_step(self, batch, batch_idx, **kwargs):
+        """validation step"""
+
+        if not hasattr(self, "test_hs_metric"):
+            # Metrics
+            self.test_hs_metric = F1Score(
+                num_classes=2, average="weighted", multiclass=True
+            )
+            self.test_ls_metric = F1Score(
+                num_classes=2, average="weighted", multiclass=True
+            )
+            self.test_sp_metric = F1Score(
+                num_classes=2, average="weighted", multiclass=True
+            )
+            self.test_bp_metric = F1Score(
+                num_classes=2, average="weighted", multiclass=True
+            )
+
+        # Regular forward pass
+        out = self.shared_step(batch)
+        batch_size = batch["vad"].shape[0]
+
+        # log validation loss
+        self.log("val_loss", out["loss"], batch_size=batch_size, sync_dist=True)
+        if "loss_va" in out:
+            self.log(
+                "val_loss_va", out["loss_va"], batch_size=batch_size, sync_dist=True
+            )
+
+        # Event Metrics
+        events = self.event_extractor(batch["vad"])
+        preds, targets = self.VAP.extract_prediction_and_targets(
+            p=out["p"], p_bc=out["p_bc"], events=events
+        )
+
+        if preds["hs"] is not None:
+            self.test_hs_metric(preds=preds["hs"], target=targets["hs"])
+
+        if preds["ls"] is not None:
+            self.test_ls_metric(preds=preds["ls"], target=targets["ls"])
+
+        if preds["pred_shift"] is not None:
+            self.test_sp_metric(preds=preds["pred_shift"], target=targets["pred_shift"])
+
+        if preds["pred_backchannel"] is not None:
+            self.test_bp_metric(
+                preds=preds["pred_backchannel"], target=targets["pred_backchannel"]
+            )
+
+        # Log
+        self.log("test_f1_hs", self.test_hs_metric, on_step=False, on_epoch=True)
+        self.log("test_f1_ls", self.test_ls_metric, on_step=False, on_epoch=True)
+        self.log("test_f1_pred_sh", self.test_sp_metric, on_step=False, on_epoch=True)
+        self.log("test_f1_pred_bc", self.test_bp_metric, on_step=False, on_epoch=True)
+
 
 if __name__ == "__main__":
 
@@ -454,5 +556,5 @@ if __name__ == "__main__":
         else:
             print(f"{k}: {v}")
 
-    # trainer = pl.Trainer(accelerator="gpu", devices=-1, fast_dev_run=1)
-    # trainer.fit(model, datamodule=dm)
+    # trainer = pl.Trainer(accelerator="gpu", devices=-1)
+    # trainer.test(model, dataloaders=dm.val_dataloader())

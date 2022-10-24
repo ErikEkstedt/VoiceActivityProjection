@@ -2,7 +2,7 @@ import torch
 import torchaudio
 import torchaudio.functional as AF
 import torchaudio.transforms as AT
-from typing import Any, Dict, Optional, Union, Tuple
+from typing import Any, Dict, Optional, Tuple
 
 
 SAMPLE_RATE = 16_000

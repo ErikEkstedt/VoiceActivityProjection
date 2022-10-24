@@ -4,7 +4,41 @@ from os.path import dirname
 
 from typing import List, Optional, Tuple
 
-from vap.audio import time_to_frames
+from vap.audio import time_to_frames, load_waveform
+from vap_turn_taking.utils import vad_list_to_onehot
+
+
+def load_sample(
+    path: str,
+    vad_list_path: Optional[str] = None,
+    sample_rate: int = 16000,
+    frame_hz=50,
+    noise_scale: float = 0.005,
+    force_stereo: bool = True,
+    device: Optional[str] = None,
+):
+    waveform, _ = load_waveform(path, sample_rate=sample_rate)
+
+    # Add channel with minimal noise as second channel
+    if force_stereo and waveform.ndim == 2 and waveform.shape[0] == 1:
+        z = torch.randn_like(waveform) * noise_scale
+        # waveform = torch.stack((waveform, z), dim=1)
+        waveform = torch.stack((z, waveform), dim=1)
+
+    vad = None
+    if vad_list_path is not None:
+        vad_list = read_json(vad_list_path)
+        duration = waveform.shape[-1] / sample_rate
+        vad = vad_list_to_onehot(
+            vad_list, hop_time=int(1 / frame_hz), duration=duration, channel_last=True
+        )
+
+    if device is not None:
+        waveform = waveform.to(device)
+        if vad is not None:
+            vad = vad.to(device)
+
+    return waveform, vad
 
 
 def repo_root():
