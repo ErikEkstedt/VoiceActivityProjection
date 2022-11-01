@@ -36,6 +36,6 @@ def test_cpc_train(config_name):
         else:
             print(f"{k}: {v}")
 
-    loss, out, batch = model.shared_step(batch)
-    loss["loss"].backward()
+    out = model.shared_step(batch)
+    out["loss"].backward()
     opt.step()

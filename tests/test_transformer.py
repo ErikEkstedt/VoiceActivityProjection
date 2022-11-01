@@ -22,7 +22,7 @@ def test_gpt():
 
     # Z2 -> X1 grads
     x1 = torch.rand((4, 20, model.dim)).requires_grad_(True)
-    z = model(x1)
+    z = model(x1)["x"]
     z.sum().backward()
     n1 = x1.grad.abs().sum()
     assert z.shape == x1.shape, "Different shapes"
@@ -76,7 +76,7 @@ def test_gpt_stereo():
     # Z2 -> X1 grads
     x1 = torch.rand((4, 20, model.dim)).requires_grad_(True)
     x2 = torch.rand((4, 20, model.dim)).requires_grad_(True)
-    z = model(x1, x2)
+    z = model(x1, x2)["x"]
     z.sum().backward()
     n1 = x1.grad.abs().sum()
     n2 = x1.grad.abs().sum()

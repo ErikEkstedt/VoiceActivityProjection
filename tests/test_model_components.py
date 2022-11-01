@@ -77,7 +77,7 @@ def test_projection_model(config_name):
         if conf["va_cond"]["history"]:
             vah = torch.rand((B, out_frames, conf["va_cond"]["history_bins"]))
 
-    logits = net(waveform=waveform, va=va, va_history=vah)
+    logits = net(waveform=waveform, va=va, va_history=vah)["logits"]
 
     output_shape = (B, out_frames, net.vap_head.output_dim)
     if net.vap_head.representation == "comparative":
