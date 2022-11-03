@@ -2,6 +2,7 @@ from omegaconf import DictConfig, OmegaConf
 from os import environ
 import hydra
 import wandb
+import torch
 import pytorch_lightning as pl
 from pytorch_lightning.callbacks import (
     ModelCheckpoint,
@@ -52,6 +53,9 @@ def train(cfg: DictConfig) -> None:
     dm.prepare_data()
 
     if cfg_dict["trainer"]["fast_dev_run"]:
+        if not torch.cuda.is_available():
+            cfg_dict["trainer"].pop("accelerator")
+            cfg_dict["trainer"].pop("devices")
         trainer = pl.Trainer(**cfg_dict["trainer"])
         print("NAME: " + model.run_name)
         print(cfg_dict["model"])
