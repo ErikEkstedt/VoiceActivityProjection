@@ -30,7 +30,7 @@ def get_slopes(n):
     def get_slopes_power_of_2(n):
         start = 2 ** (-(2 ** -(math.log2(n) - 3)))
         ratio = start
-        return [start * ratio**i for i in range(n)]
+        return [start * ratio ** i for i in range(n)]
 
     # In the paper, we only train models that have 2^a heads for some a. This function has
     # some good properties that only occur when the input is a power of 2. To maintain that even
@@ -360,12 +360,7 @@ class Combinator(nn.Module):
         # Channel information
         self.h0_a = nn.Linear(dim, dim, bias=False)  # Channel 0
         self.h0_b = nn.Linear(dim, dim, bias=False)  # Channel 1
-        self.ln0_a = nn.LayerNorm(self.dim)
-        self.ln0_b = nn.LayerNorm(self.dim)
-
-        # Combine to single representation
-        # self.combinator = nn.Linear(2 * dim, dim, bias=False)
-        # self.ln_combinator = nn.LayerNorm(self.dim)
+        self.ln = nn.LayerNorm(self.dim)
 
         # Activation
         self.activation = getattr(nn, activation)()
@@ -382,13 +377,9 @@ class Combinator(nn.Module):
         """
 
         # Channel specific information
-        ha = self.activation(self.ln0_a(self.h0_a(x1)))
-        hb = self.activation(self.ln0_b(self.h0_b(x2)))
+        ha = self.activation(self.ln(self.h0_a(x1)))
+        hb = self.activation(self.ln(self.h0_b(x2)))
         h = ha + hb  # combine estimations from both parties
-        # h = torch.cat((ha, hb), dim=-1)
-        # Joint information
-        # h = self.combinator(h)
-        # h = self.ln_combinator(h)
         return h
 
 

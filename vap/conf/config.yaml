@@ -12,8 +12,8 @@ wandb:
 
 optimizer:
   alpha: 0.6
-  learning_rate: 3.63e-4
-  find_learning_rate: true
+  learning_rate: 3e-5
+  find_learning_rate: false
   betas: [0.9, 0.999]
   weight_decay: 0.001
   lr_scheduler_interval: "step"
@@ -40,10 +40,11 @@ trainer:
   fast_dev_run: 0
   deterministic: true
   max_epochs: 60
+  precision: 32
 
 data:
   datasets: ["switchboard", "fisher"]
-  type: "sliding"
+  type: "events"
   sample_rate: ${model.sample_rate}
   audio_duration: ${model.audio_duration}
   audio_normalize: false

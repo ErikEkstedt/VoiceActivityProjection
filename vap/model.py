@@ -49,7 +49,7 @@ class VAPHead(nn.Module):
                 )
                 self.output_dim = (2, n_bins)
             else:
-                self.n_classes = 2**self.total_bins
+                self.n_classes = 2 ** self.total_bins
                 self.projection_head = nn.Linear(input_dim, self.n_classes)
                 self.output_dim = self.n_classes
                 if bias_w_distribution:
@@ -123,7 +123,7 @@ class ProjectionModel(nn.Module):
             )
         else:
             self.vad_condition = VACondition(
-                dim=self.encoder.output_dim,
+                dim=conf["ar"]["dim"],
                 va_history=conf["va_cond"]["history"],
                 va_history_bins=conf["va_cond"]["history_bins"],
             )
@@ -389,19 +389,22 @@ class VAPModel(pl.LightningModule):
             betas=self.conf["optimizer"]["betas"],
             weight_decay=self.conf["optimizer"]["weight_decay"],
         )
-        lr_scheduler = torch.optim.lr_scheduler.CosineAnnealingLR(
-            optimizer=opt,
-            T_max=self.conf["optimizer"].get("lr_scheduler_tmax", 10),
-            last_epoch=-1,
-        )
-        return {
-            "optimizer": opt,
-            "lr_scheduler": {
-                "scheduler": lr_scheduler,
-                "interval": self.conf["optimizer"].get("lr_scheduler_interval", "step"),
-                "frequency": self.conf["optimizer"].get("lr_scheduler_freq", 1000),
-            },
+        # lr_scheduler = {
+        #         "scheduler": torch.optim.lr_scheduler.CosineAnnealingLR(
+        #             optimizer=opt,
+        #             T_max=self.conf["optimizer"].get("lr_scheduler_tmax", 10),
+        #             last_epoch=-1,
+        #         ),
+        #         "interval": self.conf["optimizer"].get("lr_scheduler_interval", "step"),
+        #         "frequency": self.conf["optimizer"].get("lr_scheduler_freq", 1000),
+        #     }
+        lr_scheduler = {
+            "scheduler": torch.optim.lr_scheduler.ReduceLROnPlateau(
+                opt, mode="min", factor=0.5, patience=4
+            ),
+            "monitor": "val_loss",
         }
+        return {"optimizer": opt, "lr_scheduler": lr_scheduler}
 
     def training_step(self, batch, batch_idx, **kwargs):
         out = self.shared_step(batch)
