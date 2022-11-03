@@ -23,7 +23,10 @@ def load_sample(
     if force_stereo and waveform.ndim == 2 and waveform.shape[0] == 1:
         z = torch.randn_like(waveform) * noise_scale
         # waveform = torch.stack((waveform, z), dim=1)
-        waveform = torch.stack((z, waveform), dim=1)
+        waveform = torch.stack((waveform, z), dim=1)
+
+    if waveform.ndim == 2:
+        waveform = waveform.unsqueeze(0)
 
     vad = None
     if vad_list_path is not None:
