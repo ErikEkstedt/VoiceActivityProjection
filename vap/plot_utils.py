@@ -89,7 +89,8 @@ def plot_stereo_mel_spec(
     colors = ["b", "orange"]
     n_channels, n_mels, n_frames = mel_spec.shape
     for ch in range(n_channels):
-        ax[ch].imshow(mel_spec[ch], aspect="auto", origin="lower")
+        # print(mel_spec[ch].max(), mel_spec[ch].min())
+        ax[ch].imshow(mel_spec[ch], aspect="auto", origin="lower", vmin=-1.5, vmax=1.5)
         if vad is not None:
             ax[ch].plot(
                 vad[:n_frames, ch] * (n_mels - 1),
