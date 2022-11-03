@@ -400,7 +400,10 @@ class VAPModel(pl.LightningModule):
         #     }
         lr_scheduler = {
             "scheduler": torch.optim.lr_scheduler.ReduceLROnPlateau(
-                opt, mode="min", factor=0.5, patience=4
+                opt,
+                mode="min",
+                factor=self.conf["optimizer"]["factor"],
+                patience=self.conf["optimizer"]["patience"],
             ),
             "monitor": "val_loss",
         }

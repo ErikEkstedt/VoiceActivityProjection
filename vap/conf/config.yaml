@@ -12,13 +12,15 @@ wandb:
 
 optimizer:
   alpha: 0.6
-  learning_rate: 3e-5
+  learning_rate: 3.63e-4
   find_learning_rate: false
   betas: [0.9, 0.999]
   weight_decay: 0.001
   lr_scheduler_interval: "step"
   lr_scheduler_freq: 100
   lr_scheduler_tmax: 2500
+  lr_scheduler_patience: 2
+  lr_scheduler_factor: 0.5
   swa_enable: false
   swa_lrs: 0.05
   swa_epoch_start: 5
@@ -56,7 +58,7 @@ data:
   flip_channels: true
   flip_probability: 0.5
   mask_vad: true
-  mask_vad_probability: 0.3
+  mask_vad_probability: 0.5
   batch_size: 16
   num_workers: 24
 
