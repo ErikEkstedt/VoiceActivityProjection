@@ -1,10 +1,11 @@
 import torch
 from argparse import ArgumentParser
+from os.path import basename
 
 import matplotlib.pyplot as plt
 
 from vap.model import VAPModel
-from vap.utils import load_sample, batch_to_device, everything_deterministic
+from vap.utils import load_sample, batch_to_device, everything_deterministic, write_json
 from vap.plot_utils import plot_stereo
 
 
@@ -19,7 +20,7 @@ def get_args():
         "-c",
         "--checkpoint",
         type=str,
-        default="example/VAP_50Hz_ad20s_134-epoch1-val_2.55.ckpt",
+        default="example/VAP_50Hz_ad20s_134-epoch13-val_2.49.ckpt",
         help="Path to trained model",
     )
     parser.add_argument(
@@ -81,5 +82,23 @@ if __name__ == "__main__":
     p_ns = out["p"][0, :, 0].cpu()
     p_bc = out["p_bc"][0].cpu()
 
-    fig, ax = plot_stereo(wav, p_ns, vad, plot=False)
-    plt.show()
+    name = basename(args.wav).replace(".wav", "")
+
+    output = {
+        "p": out["p"][0].cpu().tolist(),
+        "p_bc": out["p_bc"][0].cpu().tolist(),
+        "vad": out["vad"][0].cpu().tolist(),
+    }
+
+    if args.full:
+        output["probs"] = out["propbs"][0].cpu()
+
+    write_json(output, name + ".json")
+    print(f"Saved output as {name}.json")
+
+    if args.plot:
+        fig, ax = plot_stereo(wav, p_ns, vad, plot=False)
+        fig.savefig(name + ".png")
+        print(f"Saved figure as {name}.png")
+        print("Close figure to continue")
+        plt.show()
