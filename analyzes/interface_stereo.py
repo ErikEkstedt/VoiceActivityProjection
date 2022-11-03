@@ -7,8 +7,9 @@ from vap.utils import everything_deterministic, batch_to_device
 from vap.plot_utils import plot_stereo
 from datasets_turntaking import DialogAudioDM
 
-# CHECKPOINT = "example/VAP_50Hz_ad20s_134-epoch1-val_2.55.ckpt"
-CHECKPOINT = "example/VAP_50Hz_ad20s_134-epoch3-val_2.52.ckpt"
+# CHECKPOINT = "example/VAP_50Hz_ad20s_134-epoch13-val_2.49.ckpt"
+# CHECKPOINT = "example/VAP_50Hz_ad20s_118_old-epoch41-val_2.43.ckpt"
+CHECKPOINT = "example/VAP_50Hz_ad20s_118-epoch19-val_2.47.ckpt"
 
 # Reproducability
 everything_deterministic()
@@ -25,15 +26,15 @@ def load_model(checkpoint=CHECKPOINT):
 @st.cache
 def load_dset(conf):
     dm = DialogAudioDM(
-        datasets=["switchboard", "fisher"],
-        audio_duration=30,
-        audio_overlap=10,
+        datasets=["switchboard"],
+        audio_duration=10,
+        audio_overlap=2,
         vad_history=conf["model"]["va_cond"]["history"],
         audio_mono=False,
         batch_size=1,
         num_workers=0,
-        flip_channels=False,
-        mask_vad=False,
+        mask_vad=True,
+        mask_vad_probability=1.0,
     )
     dm.prepare_data()
     dm.setup()
@@ -47,13 +48,14 @@ def get_figure(idx=0):
     # get sample
     batch = dset[idx]
     batch = batch_to_device(batch, model.device)
+    print(batch.keys())
 
     out = model.output(waveform=batch["waveform"])  # , max_time=30)
     # print(out.keys())
     fig, ax = plot_stereo(
         waveform=batch["waveform"][0].cpu(),
         p_ns=out["p"][0, :, 0].cpu(),
-        vad=out["vad"][0].cpu(),
+        vad=batch["vad"][0].cpu(),
         plot=False,
     )
 
