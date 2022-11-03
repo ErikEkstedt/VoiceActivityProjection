@@ -49,7 +49,7 @@ class VAPHead(nn.Module):
                 )
                 self.output_dim = (2, n_bins)
             else:
-                self.n_classes = 2 ** self.total_bins
+                self.n_classes = 2**self.total_bins
                 self.projection_head = nn.Linear(input_dim, self.n_classes)
                 self.output_dim = self.n_classes
                 if bias_w_distribution:
@@ -171,11 +171,13 @@ class ProjectionModel(nn.Module):
             x1 = self.ar_channel(x1)["x"]
             x2 = self.ar_channel(x2)["x"]
             out = self.ar(x1, x2)
-            z = out["x"]
 
             # Vad Objective
             ret["v1"] = self.va_classifier(out["x1"])
             ret["v2"] = self.va_classifier(out["x2"])
+
+            # projection
+            z = out["x"]
         else:
             assert va is not None, "Requires voice-activity input but va=None"
             z = self.encoder(waveform)

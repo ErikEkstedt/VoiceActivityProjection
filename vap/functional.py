@@ -10,7 +10,7 @@ except ImportError:
         "Missing dependency 'praat-parselmouth'. Please install ('pip install praat-parselmouth') if you require praat-based augmentations."
     )
 
-from vap.encoder import CConv1d
+from vap.encoder_components import CConv1d
 
 """
 * Praat: https://www.fon.hum.uva.nl/praat/
