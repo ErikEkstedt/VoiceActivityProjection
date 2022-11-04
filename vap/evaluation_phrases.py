@@ -517,3 +517,7 @@ if __name__ == "__main__":
         save=args.save_figs_wav,
         savepath=args.savepath,
     )
+    if not args.save_figs_wav:
+        fig.savefig(name + ".png")
+        print("Saved global stats figure -> ", name + ".png")
+        plt.show()
