@@ -287,6 +287,13 @@ class VAPModel(pl.LightningModule):
         # net returns: 'logits' and Optionally (if stereo) 'v1' and 'v2' for vad classification
         return self.net(waveform, va=va, va_history=va_history)
 
+    def _pad_zero_channel(self, waveform):
+        assert (
+            waveform.ndim == 3
+        ), f"Expects waveform of shape (B, C, n_sample) got {waveform.shape}"
+        z = torch.zeros_like(waveform[:, :1])
+        return torch.cat((waveform, z), dim=1)
+
     @torch.no_grad()
     def output(
         self,
@@ -299,6 +306,9 @@ class VAPModel(pl.LightningModule):
         assert (
             waveform.ndim == 3
         ), f"Expects waveform of shape (B, C, n_sample) got {waveform.shape}"
+
+        if self.stereo and waveform.size(1) == 1:
+            waveform = self._pad_zero_channel(waveform)
 
         if va is not None:
             assert (

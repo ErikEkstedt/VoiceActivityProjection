@@ -8,7 +8,7 @@ import torchaudio
 import matplotlib.pyplot as plt
 import matplotlib as mpl
 
-mpl.use("agg")
+# mpl.use("agg")
 
 import vap.transforms as VT
 from vap.model import VAPModel
@@ -29,8 +29,99 @@ EXAMPLE_TO_SCP_WORD = {
 }
 
 
-def plot_phrases_evaluation(stats):
-    def draw_completion_scores(completion_scores, x, ax, label=False):
+def get_scp_end_time(sample):
+    target_word = EXAMPLE_TO_SCP_WORD[sample["example"]]
+    end_time = -1
+    for w, end in zip(sample["words"], sample["ends"]):
+        if w == target_word:
+            end_time = end
+            break
+    return end_time
+
+
+def get_region_shift_probs(
+    p_ns,
+    sample,
+    predictive_region: float = 0.2,
+    reactive_frames: int = 2,
+    completion_point: str = "scp",
+    frame_hz: int = 50,
+):
+    if completion_point.lower() == "scp":
+        completion_point_time = get_scp_end_time(sample)
+    else:  # simply the last word end time
+        completion_point_time = sample["ends"][-1]
+
+    last_frame = round(completion_point_time * frame_hz)
+    pre_frames = round(predictive_region * frame_hz)
+    predictive_start = last_frame - pre_frames
+
+    # In phrases dataset the current speaker is always A (=0)
+    # So the shift probability becomes the value for speaker B (=1)
+    hold = p_ns[0, :predictive_start, 1].mean()
+    predictive = p_ns[0, predictive_start : last_frame - reactive_frames, 1].mean()
+    reactive = p_ns[0, last_frame - reactive_frames : last_frame + 1, 1].mean()
+    return hold, predictive, reactive
+
+
+def create_dirs(ex, si, ge, fig_root, wav_root):
+    fig_dir = join(fig_root, ex, si, ge)
+    wav_dir = join(wav_root, ex, si, ge)
+    Path(fig_dir).mkdir(parents=True, exist_ok=True)
+    Path(wav_dir).mkdir(parents=True, exist_ok=True)
+    return fig_dir, wav_dir
+
+
+def save_fig_and_waveform(
+    sample, out, sample_name, fig_dir, wav_dir, vad_hz=50, sample_rate=16_000
+):
+    probs = {"p": out["p"]}
+    fig, _ = plot_phrases_sample(
+        sample, probs, frame_hz=vad_hz, sample_rate=sample_rate
+    )
+    fig.savefig(join(fig_dir, sample_name + ".png"))
+    torchaudio.save(
+        join(wav_dir, sample_name + ".wav"),
+        sample["waveform"],
+        sample_rate=sample_rate,
+    )
+
+
+class StatsPhraseEval(object):
+    REGIONS = ["hold", "predictive", "reactive"]
+
+    def __init__(
+        self,
+        permutations=[
+            "regular",
+            "flat_f0",
+            "only_f0",
+            "shift_f0",
+            "flat_intensity",
+            "duration_avg",
+        ],
+    ):
+        self.permutations = permutations
+        self.short_long = ["short", "long"]
+        self.points = ["scp", "eot"]
+
+        self.stats = {}
+        self.data = {}
+        for size in self.short_long:
+            self.data[size] = {}
+            for point in self.points:
+                self.data[size][point] = {}
+                for perm in self.permutations:
+                    self.data[size][point][perm] = {}
+                    for region in self.REGIONS:
+                        self.data[size][point][perm][region] = []
+
+    def __repr__(self):
+        s = self.__class__.__name__
+        s += str(self.data)
+        return s
+
+    def draw_completion_scores(self, completion_scores, x, ax, label=False):
         colors = {
             "regular": "k",
             "flat_f0": "g",
@@ -76,102 +167,128 @@ def plot_phrases_evaluation(stats):
                 zorder=zorder,
             )
 
-    fig, ax = plt.subplots(1, 1, figsize=(9, 6))
-    ax.set_xticks(list(range(9)))
-    ax.set_xticklabels(["Hold", "Predictive", "Reactive"] * 3, fontsize=14)
-    draw_completion_scores(stats["short"]["scp"], x=list(range(3)), ax=ax, label=True)
-    draw_completion_scores(stats["long"]["scp"], x=list(range(3, 6)), ax=ax)
-    # draw_completion_scores(stats["long"]["eot"], x=list(range(6, 9)), ax=ax)
-    xmin, xmax = ax.get_xlim()
-    ax.hlines(
-        y=0.5,
-        xmin=xmin,
-        xmax=xmax,
-        linewidth=2,
-        linestyle="dashed",
-        color="k",
-        zorder=0,
-    )
-    ax.vlines(
-        x=2.5,
-        ymin=0,
-        ymax=1,
-        linewidth=2,
-        color="k",
-        zorder=0,
-    )
-    ax.text(
-        s="Short phrases",
-        y=0.1,
-        x=1,
-        fontsize=16,
-        fontweight="bold",
-        horizontalalignment="center",
-    )
-    ax.text(
-        s="Long phrases",
-        y=0.1,
-        x=4,
-        fontsize=16,
-        fontweight="bold",
-        horizontalalignment="center",
-    )
-    ax.set_xlim([xmin, xmax])
-    ax.set_yticks([0, 0.25, 0.5, 0.75, 1])
-    ax.set_yticklabels([0, 25, 50, 75, 100])
-    ax.legend(fontsize=14)
-    ax.set_ylabel("Shift %", fontsize=14)
-    ax.set_ylim([0, 1])
-    plt.subplots_adjust(left=0.08, bottom=0.1, right=0.98, top=0.95)
-    return fig, ax
+    def plot_phrases_evaluation(self, stats=None, plot_long_eot=False):
+        if stats is None:
+            stats = self.stats
+
+        fig, ax = plt.subplots(1, 1, figsize=(9, 6))
+        ax.set_xticks(list(range(9)))
+        ax.set_xticklabels(["Hold", "Predictive", "Reactive"] * 3, fontsize=14)
+        self.draw_completion_scores(
+            stats["short"]["scp"], x=list(range(3)), ax=ax, label=True
+        )
+        self.draw_completion_scores(stats["long"]["scp"], x=list(range(3, 6)), ax=ax)
+        if plot_long_eot:
+            self.draw_completion_scores(
+                stats["long"]["eot"], x=list(range(6, 9)), ax=ax
+            )
+        xmin, xmax = ax.get_xlim()
+        ax.hlines(
+            y=0.5,
+            xmin=xmin,
+            xmax=xmax,
+            linewidth=2,
+            linestyle="dashed",
+            color="k",
+            zorder=0,
+        )
+        ax.vlines(
+            x=2.5,
+            ymin=0,
+            ymax=1,
+            linewidth=2,
+            color="k",
+            zorder=0,
+        )
+
+        if plot_long_eot:
+            ax.vlines(
+                x=5.5,
+                ymin=0,
+                ymax=1,
+                linewidth=1,
+                color="k",
+                linestyle="dashed",
+                zorder=0,
+            )
+        ax.text(
+            s="Short phrases\n@SCP",
+            y=0.8,
+            x=1,
+            fontsize=16,
+            fontweight="bold",
+            horizontalalignment="center",
+        )
+
+        if plot_long_eot:
+            ax.text(
+                s="Long phrases\n@SCP     @EOT",
+                y=0.3,
+                x=5.5,
+                fontsize=16,
+                fontweight="bold",
+                horizontalalignment="center",
+            )
+        else:
+            ax.text(
+                s="Long phrases\n@SCP",
+                y=0.3,
+                x=4,
+                fontsize=16,
+                fontweight="bold",
+                horizontalalignment="center",
+            )
+        ax.set_xlim([xmin, xmax])
+        ax.set_yticks([0, 0.25, 0.5, 0.75, 1])
+        ax.set_yticklabels([0, 25, 50, 75, 100])
+        if plot_long_eot:
+            ax.legend(fontsize=14, loc="upper center")
+        else:
+            ax.legend(fontsize=14)
+        ax.set_ylabel("Shift %", fontsize=14)
+        ax.set_ylim([0, 1])
+        plt.subplots_adjust(left=0.08, bottom=0.1, right=0.98, top=0.95)
+        return fig, ax
+
+    def update(self, p, size, point, permutation, region):
+        self.data[size][point][permutation][region].append(p)
+
+    def finalize(self):
+        # Condense the stats
+        for size in self.short_long:
+            self.stats[size] = {}
+            for point in self.points:
+                self.stats[size][point] = {}
+                for perm in self.permutations:
+                    self.stats[size][point][perm] = {}
+                    for region in self.REGIONS:
+                        self.stats[size][point][perm][region] = {}
+                        p_list = self.data[size][point][perm][region]
+                        if len(p_list) > 0:
+                            # torchify stats
+                            p_tensor = torch.stack(p_list)
+                            self.data[size][point][perm][region] = p_tensor
+                            self.stats[size][point][perm][region] = round(
+                                p_tensor.mean().item(), 3
+                            )
 
 
-def get_scp_end_time(sample):
-    target_word = EXAMPLE_TO_SCP_WORD[sample["example"]]
-    end_time = -1
-    for w, end in zip(sample["words"], sample["ends"]):
-        if w == target_word:
-            end_time = end
-            break
-    return end_time
-
-
-def get_region_shift_probs(
-    probs,
-    sample,
-    predictive_region: float = 0.2,
-    reactive_frames: int = 2,
-    completion_point: str = "scp",
-    frame_hz: int = 50,
-):
-    if completion_point.lower() == "scp":
-        completion_point_time = get_scp_end_time(sample)
-    else:  # simply the last word end time
-        completion_point_time = sample["ends"][-1]
-
-    last_frame = round(completion_point_time * frame_hz)
-    pre_frames = round(predictive_region * frame_hz)
-    predictive_start = last_frame - pre_frames
-
-    # In phrases dataset the current speaker is always A (=0)
-    # So the shift probability becomes the value for speaker B (=1)
-    hold = probs["p"][0, :predictive_start, 1].mean()
-    predictive = probs["p"][
-        0, predictive_start : last_frame - reactive_frames, 1
-    ].mean()
-    reactive = probs["p"][0, last_frame - reactive_frames : last_frame + 1, 1].mean()
-    return hold, predictive, reactive
-
-
-def evaluation_phrases(args):
-    # Load Model
+def main(args):
+    """
+    Evaluate model over phrases
+    """
+    ######################################################
+    # LOAD MODEL
+    ######################################################
     name = basename(args.checkpoint).replace(".ckpt", "")
     model = VAPModel.load_from_checkpoint(args.checkpoint)
     model = model.eval()
     if torch.cuda.is_available():
         model = model.to("cuda")
 
-    # Load Dataset
+    ######################################################
+    # LOAD DATASET
+    ######################################################
     is_mono = not model.stereo
     dset = PhraseDataset(
         phrase_path=args.phrases,
@@ -182,14 +299,9 @@ def evaluation_phrases(args):
         vad_history=is_mono,
     )
 
-    # Create savepaths
-    root = join(args.savepath, name)
-    fig_root = join(root, "figs")
-    wav_root = join(root, "audio")
-    Path(fig_root).mkdir(parents=True, exist_ok=True)
-    Path(wav_root).mkdir(parents=True, exist_ok=True)
-
-    # Transforms
+    ######################################################
+    # TRANSFORMS
+    ######################################################
     transforms = {
         "flat_f0": VT.FlatPitch(sample_rate=model.sample_rate),
         "only_f0": VT.LowPass(sample_rate=model.sample_rate),
@@ -197,158 +309,142 @@ def evaluation_phrases(args):
         "flat_intensity": VT.FlatIntensity(sample_rate=model.sample_rate),
         "duration_avg": None,
     }
+    stats = StatsPhraseEval(permutations=list(transforms.keys()) + ["regular"])
 
-    stats = {}
+    ######################################################
+    # Create savepaths
+    ######################################################
+    root = join(args.savepath, name)
+    fig_root = join(root, "figs")
+    wav_root = join(root, "audio")
+    Path(fig_root).mkdir(parents=True, exist_ok=True)
+    Path(wav_root).mkdir(parents=True, exist_ok=True)
+
     total = len(dset) * len(transforms)
     pbar = tqdm(range(total), desc="Phrases evaluation (slow b/c non-batch)")
     for sample in dset:
         ex, ge, si = sample["example"], sample["gender"], sample["size"]
-
         sample_name = f"{ex}_{ge}_{si}_{sample['tts']}"
-        fig_dir = join(fig_root, ex, si, ge)
-        wav_dir = join(wav_root, ex, si, ge)
-        Path(fig_dir).mkdir(parents=True, exist_ok=True)
-        Path(wav_dir).mkdir(parents=True, exist_ok=True)
+        fig_dir, wav_dir = create_dirs(ex, si, ge, fig_root, wav_root)
 
-        # Statistics
-        if si not in stats:
-            stats[si] = {}  # short, long
-
-        # Regular
+        ##################################################
+        # REGULAR = 'Un-perterbed'
         # Forward Pass, Figure and waveform save
-        _, _, probs, batch = model.output(sample)
-        fig, _ = plot_phrases_sample(
-            sample, probs, frame_hz=dset.vad_hz, sample_rate=dset.sample_rate
-        )
-        fig.savefig(join(fig_dir, sample_name + ".png"))
-        torchaudio.save(
-            join(wav_dir, name + ".wav"),
-            sample["waveform"],
-            sample_rate=model.sample_rate,
-        )
+        ##################################################
+        if model.stereo:
+            out = model.output(waveform=sample["waveform"].to(model.device))
+        else:
+            vah = sample.get("vad_history", None)
+            if vah is not None:
+                vah = vah.to(model.device)
+            out = model.output(
+                waveform=sample["waveform"],
+                va=sample["vad"],
+                va_history=vah,
+            )
+
+        ##################################################
+        # Save fig
+        ##################################################
+        # save_fig_and_waveform(
+        #     sample,
+        #     out,
+        #     sample_name,
+        #     fig_dir,
+        #     wav_dir,
+        #     vad_hz=model.frame_hz,
+        #     sample_rate=model.sample_rate,
+        # )
 
         p_hold, p_predictive, p_reactive = get_region_shift_probs(
-            probs,
-            sample,
+            p_ns=out["p"],
+            sample=sample,
             completion_point="scp",
             predictive_region=args.predictive_region,
         )
-
-        ##############################################
-        # Save shift probs
-        ##############################################
-        if "scp" not in stats[si]:
-            stats[si]["scp"] = {}
-
-        if "regular" not in stats[si]["scp"]:
-            stats[si]["scp"]["regular"] = {"hold": [], "reactive": [], "predictive": []}
-
-        stats[si]["scp"]["regular"]["hold"].append(p_hold)
-        stats[si]["scp"]["regular"]["predictive"].append(p_predictive)
-        stats[si]["scp"]["regular"]["reactive"].append(p_reactive)
-
-        if si == "long":
-            if "eot" not in stats[si]:
-                stats[si]["eot"] = {}
-
-            if "regular" not in stats[si]["eot"]:
-                stats[si]["eot"]["regular"] = {
-                    "hold": [],
-                    "reactive": [],
-                    "predictive": [],
-                }
-
-            p_hold, p_predictive, p_reactive = get_region_shift_probs(
-                probs,
-                sample,
+        stats.update(p_hold, si, "scp", "regular", "hold")
+        stats.update(p_predictive, si, "scp", "regular", "predictive")
+        stats.update(p_reactive, si, "scp", "regular", "reactive")
+        if si == "long":  # Only long requires EOT probs
+            p_eot_hold, p_eot_predictive, p_eot_reactive = get_region_shift_probs(
+                p_ns=out["p"],
+                sample=sample,
                 completion_point="eot",
                 predictive_region=args.predictive_region,
             )
-            stats[si]["eot"]["regular"]["hold"].append(p_hold)
-            stats[si]["eot"]["regular"]["predictive"].append(p_predictive)
-            stats[si]["eot"]["regular"]["reactive"].append(p_reactive)
+            stats.update(p_eot_hold, si, "eot", "regular", "hold")
+            stats.update(p_eot_predictive, si, "eot", "regular", "predictive")
+            stats.update(p_eot_reactive, si, "eot", "regular", "reactive")
 
-        # Average duration
         for permutation, transform in transforms.items():
             if permutation == "duration_avg":
                 batch = dset.sample_to_duration_sample(sample)
-                if is_mono:
-                    batch["waveform"] = batch["waveform"].unsqueeze(1)
+                batch["waveform"] = batch["waveform"].unsqueeze(1)
             else:
                 batch = deepcopy(sample)
                 if is_mono:
                     batch["waveform"] = batch["waveform"].unsqueeze(1)
                 batch["waveform"] = transform(batch["waveform"])  # , batch['vad'])
 
+            ##################################################
+            # REGULAR = 'Un-perterbed'
             # Forward Pass, Figure and waveform save
-            _, _, probs, batch = model.output(batch)
-            fig, _ = plot_phrases_sample(
-                batch, probs, frame_hz=dset.vad_hz, sample_rate=dset.sample_rate
-            )
-            fig.savefig(join(fig_dir, sample_name + f"_{permutation}.png"))
+            ##################################################
+            if model.stereo:
+                out = model.output(waveform=batch["waveform"].to(model.device))
+            else:
+                vah = batch.get("vad_history", None)
+                if vah is not None:
+                    vah = vah.to(model.device)
+                out = model.output(
+                    waveform=batch["waveform"],
+                    va=batch["vad"],
+                    va_history=vah,
+                )
+            ##################################################
+            # Save fig
+            ##################################################
+            # save_fig_and_waveform(
+            #     sample,
+            #     out,
+            #     sample_name,
+            #     fig_dir,
+            #     wav_dir,
+            #     vad_hz=model.frame_hz,
+            #     sample_rate=model.sample_rate,
+            # )
 
-            # save waveform
-            torchaudio.save(
-                join(wav_dir, name + f"_{permutation}.wav"),
-                batch["waveform"][0],
-                sample_rate=model.sample_rate,
-            )
-
-            if permutation not in stats[si]:
-                stats[si]["scp"][permutation] = {
-                    "hold": [],
-                    "reactive": [],
-                    "predictive": [],
-                }
             p_hold, p_predictive, p_reactive = get_region_shift_probs(
-                probs,
+                out["p"],
                 batch,
                 completion_point="scp",
                 predictive_region=args.predictive_region,
             )
+            stats.update(p_hold, si, "scp", permutation, "hold")
+            stats.update(p_predictive, si, "scp", permutation, "predictive")
+            stats.update(p_reactive, si, "scp", permutation, "reactive")
 
             ##############################################
             # Save shift probs
             ##############################################
-            stats[si]["scp"][permutation]["hold"].append(p_hold)
-            stats[si]["scp"][permutation]["predictive"].append(p_predictive)
-            stats[si]["scp"][permutation]["reactive"].append(p_reactive)
             if si == "long":
-                if permutation not in stats[si]["eot"]:
-                    stats[si]["eot"][permutation] = {
-                        "hold": [],
-                        "reactive": [],
-                        "predictive": [],
-                    }
-                p_hold, p_predictive, p_reactive = get_region_shift_probs(
-                    probs,
+                p_eot_hold, p_eot_predictive, p_eot_reactive = get_region_shift_probs(
+                    out["p"],
                     batch,
                     completion_point="eot",
                     predictive_region=args.predictive_region,
                 )
-                stats[si]["eot"][permutation]["hold"].append(p_hold)
-                stats[si]["eot"][permutation]["predictive"].append(p_predictive)
-                stats[si]["eot"][permutation]["reactive"].append(p_reactive)
-
+                stats.update(p_eot_hold, si, "eot", permutation, "hold")
+                stats.update(p_eot_predictive, si, "eot", permutation, "predictive")
+                stats.update(p_eot_reactive, si, "eot", permutation, "reactive")
             pbar.update()
         plt.close("all")  # Close all plots
 
-    # Condense the stats
-    for short_long, completion_scores in stats.items():
-        for completion_point, perm_scores in completion_scores.items():
-            for perm, score_dict in perm_scores.items():
-                stats[short_long][completion_point][perm]["hold"] = round(
-                    torch.stack(score_dict["hold"]).mean().item(), 3
-                )
-                stats[short_long][completion_point][perm]["predictive"] = round(
-                    torch.stack(score_dict["predictive"]).mean().item(), 3
-                )
-                stats[short_long][completion_point][perm]["reactive"] = round(
-                    torch.stack(score_dict["reactive"]).mean().item(), 3
-                )
+    stats.finalize()
 
-    fig, _ = plot_phrases_evaluation(stats)
+    fig, _ = stats.plot_phrases_evaluation(plot_long_eot=True)
     fig.savefig(join(root, "plot_phrases_evaluation.png"))
+    plt.show()
     return stats
 
 
@@ -375,4 +471,4 @@ if __name__ == "__main__":
         help="Path to results directory",
     )
     args = parser.parse_args()
-    stats = evaluation_phrases(args)
+    stats = main(args)

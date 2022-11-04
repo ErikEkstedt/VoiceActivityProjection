@@ -157,7 +157,6 @@ class PhraseDataset(Dataset):
         """ """
         # dict_keys(['text', 'audio_path', 'gender', 'words', 'starts', 'size', 'tts', 'name', 'vad'])
         sample = self.data[example][long_short][gender][id]
-        sample["vad_list"] = sample.pop("vad")
         sample["dataset"] = "phrases"
         sample["example"] = example
 
@@ -178,6 +177,9 @@ class PhraseDataset(Dataset):
             sample_rate=self.sample_rate,
             mono=self.audio_mono,
         )
+
+        if sample["waveform"].ndim == 2:
+            sample["waveform"] = sample["waveform"].unsqueeze(1)
 
         # VAD-frame of relevant part
         if self.vad:
