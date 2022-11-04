@@ -95,14 +95,15 @@ class PhraseDataset(Dataset):
         """
         Load duration average waveform and duration average textgrids (word timings)
         """
+        new_sample = {"example": sample["example"]}
         # change audio_path
         tg_path = self.audio_path_text_grid_path(sample["audio_path"])
 
-        sample["audio_path"] = sample["audio_path"].replace(
+        new_sample["audio_path"] = sample["audio_path"].replace(
             "/audio/", "/duration_audio/"
         )
-        sample["waveform"], _ = load_waveform(
-            sample["audio_path"],
+        new_sample["waveform"], _ = load_waveform(
+            new_sample["audio_path"],
             sample_rate=self.sample_rate,
             mono=self.audio_mono,
         )
@@ -110,24 +111,24 @@ class PhraseDataset(Dataset):
         # change tg_path
         tg_path = tg_path.replace("/alignment/", "/duration_alignment/")
         tg = self.read_text_grid(tg_path)
-        sample["phones"] = tg["phones"]
-        sample["starts"], sample["ends"], sample["words"] = [], [], []
+        new_sample["phones"] = tg["phones"]
+        new_sample["starts"], new_sample["ends"], new_sample["words"] = [], [], []
         vad_list = [[], []]
         for start, end, word in tg["words"]:
-            sample["starts"].append(start)
-            sample["ends"].append(end)
-            sample["words"].append(word)
+            new_sample["starts"].append(start)
+            new_sample["ends"].append(end)
+            new_sample["words"].append(word)
             vad_list[0].append([start, end])
 
-        sample["vad_list"] = vad_list
-        sample = self.get_vad(sample)
-        return sample
+        new_sample["vad"] = vad_list
+        new_sample = self.get_vad(new_sample)
+        return new_sample
 
     def get_vad(self, sample):
         duration = get_audio_info(sample["audio_path"])["duration"]
         end_frame = time_to_frames(duration, self.vad_hop_time)
         all_vad_frames = vad_list_to_onehot(
-            sample["vad_list"],
+            sample["vad"],
             hop_time=self.vad_hop_time,
             duration=duration,
             channel_last=True,

@@ -3,7 +3,7 @@ import torchaudio.transforms as AT
 import numpy as np
 import matplotlib as mpl
 import matplotlib.pyplot as plt
-from typing import Optional, Union, List, Tuple
+from typing import Optional, Union, List, Tuple, Iterable
 
 from vap.audio import log_mel_spectrogram
 from vap.utils import read_json
@@ -170,6 +170,7 @@ def plot_next_speaker_probs(
 
     if p_ns.ndim == 2:
         p_ns = p_ns[:, 0]  # choose first speaker (they always sum to 1)
+    p_ns = p_ns.cpu()
 
     x = torch.arange(len(p_ns))
     ax.fill_between(
@@ -306,6 +307,7 @@ def plot_evaluation_scores(
     return fig, ax, scores
 
 
+###################################################################
 def plot_words(
     words,
     word_starts: List[float],
@@ -369,21 +371,26 @@ def plot_words(
 
 
 def plot_sample_waveform(
-    sample, ax: mpl.axes.Axes, downsample: int = 10, sample_rate: int = 16000
+    waveform,
+    ax: mpl.axes.Axes,
+    words: Optional[List[str]] = None,
+    starts: Optional[List[float]] = None,
+    ends: Optional[List[float]] = None,
+    downsample: int = 10,
+    sample_rate: int = 16000,
 ) -> mpl.axes.Axes:
-
-    x = sample["waveform"].squeeze()[..., ::downsample]
+    x = waveform[..., ::downsample].cpu()
     ax.plot(x, color="lightblue", zorder=0)  # , alpha=0.2)
     ax.set_xlim([0, len(x)])
     ax.set_xticks([])
     ax.set_ylim([-1, 1])
     ax.set_yticks([])
     ax.set_ylabel("waveform", fontsize=14)
-    if "words" in sample:
+    if words is not None and starts is not None:
         ax = plot_words(
-            sample["words"],
-            word_starts=sample["starts"],
-            word_ends=sample.get("ends", None),
+            words,
+            word_starts=starts,
+            word_ends=ends,
             ax=ax,
             fontsize=14,
             linewidth=2,
@@ -393,16 +400,21 @@ def plot_sample_waveform(
 
 
 def plot_sample_mel_spec(
-    sample, ax: mpl.axes.Axes, frame_hz: int = 50
+    waveform,
+    ax: mpl.axes.Axes,
+    words: Optional[List[str]] = None,
+    starts: Optional[List[float]] = None,
+    ends: Optional[List[float]] = None,
+    frame_hz: int = 50,
 ) -> mpl.axes.Axes:
-    ax = plot_mel_spec(sample["waveform"].squeeze(), ax=ax, cmap="magma", no_ticks=True)
+    ax = plot_mel_spec(waveform.squeeze().cpu(), ax=ax, cmap="magma", no_ticks=True)
     ax.yaxis.tick_right()
     ax.set_ylabel("Mel (Hz)", fontsize=14)
-    if "words" in sample:
+    if words is not None and starts is not None:
         ax = plot_words(
-            sample["words"],
-            word_starts=sample["starts"],
-            word_ends=sample.get("ends", None),
+            words,
+            word_starts=starts,
+            word_ends=ends,
             ax=ax,
             fontsize=14,
             frame_hz=frame_hz,
@@ -412,9 +424,9 @@ def plot_sample_mel_spec(
 
 
 def plot_sample_f0(
-    sample, ax: mpl.axes.Axes, sample_rate: int = 16000
+    waveform, ax: mpl.axes.Axes, sample_rate: int = 16000
 ) -> mpl.axes.Axes:
-    f0 = VF.pitch_praat(sample["waveform"].squeeze(), sample_rate=sample_rate)
+    f0 = VF.pitch_praat(waveform.cpu(), sample_rate=sample_rate)
     f0[f0 == 0] = torch.nan
     ax.plot(f0, "o", markersize=3, color="b")
     ymin, ymax = ax.get_ylim()
@@ -433,9 +445,16 @@ def plot_sample_f0(
 def plot_phrases_sample(sample, probs, frame_hz: int = 50, sample_rate: int = 16000):
     # Calculate axs
     fig, ax = plt.subplots(4, 1, figsize=(9, 6))
-    ax[0] = plot_sample_waveform(sample, ax=ax[0], sample_rate=sample_rate)
-    ax[1] = plot_sample_mel_spec(sample, ax=ax[1], frame_hz=frame_hz)
-    ax[2] = plot_sample_f0(sample, ax=ax[2])
+    ax[0] = plot_sample_waveform(
+        sample["waveform"][0, 0].cpu(),
+        ax=ax[0],
+        words=sample.get("words", None),
+        starts=sample.get("starts", None),
+        ends=sample.get("ends", None),
+        sample_rate=sample_rate,
+    )
+    ax[1] = plot_sample_mel_spec(sample["waveform"][:, 0], ax=ax[1], frame_hz=frame_hz)
+    ax[2] = plot_sample_f0(sample["waveform"][0, 0], ax=ax[2])
     ax[3] = plot_next_speaker_probs(p_ns=probs["p"][0], ax=ax[3])  # , p_bc=p_bc)
     if sample.get("ends", None) is not None:
         end_frame = sample["ends"][-1] * frame_hz
