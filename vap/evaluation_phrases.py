@@ -31,7 +31,7 @@ EXAMPLE_TO_SCP_WORD = {
 
 
 class StatsPhraseEval(object):
-    REGIONS = ["hold", "predictive", "reactive"]
+    REGIONS = ["hold", "predictive", "reactive", "post"]
 
     def __init__(
         self,
@@ -230,6 +230,7 @@ def get_region_shift_probs(
     p_ns,
     sample,
     predictive_region: float = 0.2,
+    post_region: float = 0.2,
     reactive_frames: int = 2,
     completion_point: str = "scp",
     frame_hz: int = 50,
@@ -241,6 +242,7 @@ def get_region_shift_probs(
 
     last_frame = round(completion_point_time * frame_hz)
     pre_frames = round(predictive_region * frame_hz)
+    post_frames = round(post_region * frame_hz)
     predictive_start = last_frame - pre_frames
 
     # In phrases dataset the current speaker is always A (=0)
@@ -248,7 +250,8 @@ def get_region_shift_probs(
     hold = p_ns[0, :predictive_start, 1].mean()
     predictive = p_ns[0, predictive_start : last_frame - reactive_frames, 1].mean()
     reactive = p_ns[0, last_frame - reactive_frames : last_frame + 1, 1].mean()
-    return hold, predictive, reactive
+    post = p_ns[0, last_frame + 1 : last_frame + 1 + post_frames, 1].mean()
+    return hold, predictive, reactive, post
 
 
 def create_dirs(ex, si, ge, fig_root, wav_root):
@@ -348,7 +351,7 @@ def evaluation_phrases(
                 sample_rate=model.sample_rate,
             )
 
-        p_hold, p_predictive, p_reactive = get_region_shift_probs(
+        p_hold, p_predictive, p_reactive, p_post = get_region_shift_probs(
             p_ns=out["p"],
             sample=sample,
             completion_point="scp",
@@ -357,8 +360,16 @@ def evaluation_phrases(
         stats.update(p_hold, si, "scp", "regular", "hold")
         stats.update(p_predictive, si, "scp", "regular", "predictive")
         stats.update(p_reactive, si, "scp", "regular", "reactive")
+        if si == "short":
+            stats.update(p_post, si, "scp", "regular", "post")
+
         if si == "long":  # Only long requires EOT probs
-            p_eot_hold, p_eot_predictive, p_eot_reactive = get_region_shift_probs(
+            (
+                p_eot_hold,
+                p_eot_predictive,
+                p_eot_reactive,
+                p_eot_post,
+            ) = get_region_shift_probs(
                 p_ns=out["p"],
                 sample=sample,
                 completion_point="eot",
@@ -367,6 +378,7 @@ def evaluation_phrases(
             stats.update(p_eot_hold, si, "eot", "regular", "hold")
             stats.update(p_eot_predictive, si, "eot", "regular", "predictive")
             stats.update(p_eot_reactive, si, "eot", "regular", "reactive")
+            stats.update(p_eot_post, si, "eot", "regular", "post")
 
         for permutation, transform in transforms.items():
             if permutation == "duration_avg":
@@ -413,7 +425,7 @@ def evaluation_phrases(
                     sample_rate=model.sample_rate,
                 )
 
-            p_hold, p_predictive, p_reactive = get_region_shift_probs(
+            p_hold, p_predictive, p_reactive, p_post = get_region_shift_probs(
                 out["p"],
                 batch,
                 completion_point="scp",
@@ -423,11 +435,19 @@ def evaluation_phrases(
             stats.update(p_predictive, si, "scp", permutation, "predictive")
             stats.update(p_reactive, si, "scp", permutation, "reactive")
 
+            if si == "short":
+                stats.update(p_post, si, "scp", permutation, "post")
+
             ##############################################
             # Save shift probs
             ##############################################
             if si == "long":
-                p_eot_hold, p_eot_predictive, p_eot_reactive = get_region_shift_probs(
+                (
+                    p_eot_hold,
+                    p_eot_predictive,
+                    p_eot_reactive,
+                    p_eot_post,
+                ) = get_region_shift_probs(
                     out["p"],
                     batch,
                     completion_point="eot",
@@ -436,6 +456,7 @@ def evaluation_phrases(
                 stats.update(p_eot_hold, si, "eot", permutation, "hold")
                 stats.update(p_eot_predictive, si, "eot", permutation, "predictive")
                 stats.update(p_eot_reactive, si, "eot", permutation, "reactive")
+                stats.update(p_eot_post, si, "eot", permutation, "post")
             pbar.update()
 
     stats.finalize()
@@ -517,6 +538,7 @@ if __name__ == "__main__":
         save=args.save_figs_wav,
         savepath=args.savepath,
     )
+
     if not args.save_figs_wav:
         fig.savefig(name + ".png")
         print("Saved global stats figure -> ", name + ".png")
