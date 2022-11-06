@@ -1,9 +1,12 @@
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
+from torchmetrics.classification import Accuracy
 from torchmetrics.classification.f_beta import F1Score
 from torchmetrics.classification.precision_recall_curve import PrecisionRecallCurve
 import pytorch_lightning as pl
+import wandb
+
 from einops.layers.torch import Rearrange
 from typing import Optional, Dict
 
@@ -249,10 +252,35 @@ class VAPModel(pl.LightningModule):
         self.save_hyperparameters()
 
         # Metrics
-        self.val_hs_metric = F1Score(num_classes=2, average="weighted", multiclass=True)
-        self.val_ls_metric = F1Score(num_classes=2, average="weighted", multiclass=True)
-        self.val_sp_metric = F1Score(num_classes=2, average="weighted", multiclass=True)
-        self.val_bp_metric = F1Score(num_classes=2, average="weighted", multiclass=True)
+        metrics = self.get_metrics()
+        self.val_hs_f1 = metrics["f1"]["hs"]
+        self.val_ls_f1 = metrics["f1"]["ls"]
+        self.val_sp_f1 = metrics["f1"]["sp"]
+        self.val_bp_f1 = metrics["f1"]["bp"]
+        self.val_hs_acc = metrics["acc"]["hs"]
+        self.val_ls_acc = metrics["acc"]["ls"]
+        self.val_sp_acc = metrics["acc"]["sp"]
+        self.val_bp_acc = metrics["acc"]["bp"]
+
+    def get_metrics(self):
+        metrics = {"acc": {}, "f1": {}}
+        metrics["f1"]["hs"] = F1Score(
+            num_classes=2, average="weighted", multiclass=True
+        )
+        metrics["f1"]["ls"] = F1Score(
+            num_classes=2, average="weighted", multiclass=True
+        )
+        metrics["f1"]["sp"] = F1Score(
+            num_classes=2, average="weighted", multiclass=True
+        )
+        metrics["f1"]["bp"] = F1Score(
+            num_classes=2, average="weighted", multiclass=True
+        )
+        metrics["acc"]["hs"] = Accuracy(num_classes=2, average="none", multiclass=True)
+        metrics["acc"]["ls"] = Accuracy(num_classes=2, average="none", multiclass=True)
+        metrics["acc"]["sp"] = Accuracy(num_classes=2, average="none", multiclass=True)
+        metrics["acc"]["bp"] = Accuracy(num_classes=2, average="none", multiclass=True)
+        return metrics
 
     @property
     def run_name(self):
@@ -452,52 +480,92 @@ class VAPModel(pl.LightningModule):
         )
 
         if preds["hs"] is not None:
-            self.val_hs_metric(preds=preds["hs"], target=targets["hs"])
+            self.val_hs_f1.update(preds=preds["hs"], target=targets["hs"])
+            self.val_hs_acc.update(preds=preds["hs"], target=targets["hs"])
 
         if preds["ls"] is not None:
-            self.val_ls_metric(preds=preds["ls"], target=targets["ls"])
+            self.val_ls_f1.update(preds=preds["ls"], target=targets["ls"])
+            self.val_ls_acc.update(preds=preds["ls"], target=targets["ls"])
 
         if preds["pred_shift"] is not None:
-            self.val_sp_metric(preds=preds["pred_shift"], target=targets["pred_shift"])
+            self.val_sp_f1.update(
+                preds=preds["pred_shift"], target=targets["pred_shift"]
+            )
+            self.val_sp_acc.update(
+                preds=preds["pred_shift"], target=targets["pred_shift"]
+            )
 
         if preds["pred_backchannel"] is not None:
-            self.val_bp_metric(
+            self.val_bp_f1.update(
+                preds=preds["pred_backchannel"], target=targets["pred_backchannel"]
+            )
+            self.val_bp_acc.update(
                 preds=preds["pred_backchannel"], target=targets["pred_backchannel"]
             )
 
+    def validation_epoch_end(self, *_):
+        """
+        Metrics for validation epoch
+
+        See:
+            https://torchmetrics.readthedocs.io/en/stable/pages/lightning.html#logging-torchmetrics
+        """
+        # F1-Score  (single value and can be logged directly)
+        hs_f1 = self.val_hs_f1.compute()
+        ls_f1 = self.val_ls_f1.compute()
+        sp_f1 = self.val_sp_f1.compute()
+        bp_f1 = self.val_bp_f1.compute()
+
+        # Accuracy
+        h, shi = self.val_hs_acc.compute()
+        l, sho = self.val_ls_acc.compute()
+        spn, spp = self.val_sp_acc.compute()
+        bpn, bpp = self.val_bp_acc.compute()
+
         # Log
-        self.log("val_f1_hs", self.val_hs_metric, on_step=False, on_epoch=True)
-        self.log("val_f1_ls", self.val_ls_metric, on_step=False, on_epoch=True)
-        self.log("val_f1_pred_sh", self.val_sp_metric, on_step=False, on_epoch=True)
-        self.log("val_f1_pred_bc", self.val_bp_metric, on_step=False, on_epoch=True)
+        self.log(
+            "val_hs", {"hold_acc": h, "shift_acc": shi, "f1": hs_f1}, sync_dist=True
+        )
+        self.log("val_ls", {"long": l, "short": sho, "f1": ls_f1}, sync_dist=True)
+        self.log(
+            "val_pred_sh", {"hold": spn, "shift": spp, "f1": sp_f1}, sync_dist=True
+        )
+        self.log("val_pred_bc", {"non": bpn, "bc": bpp, "f1": bp_f1}, sync_dist=True)
+
+        # Reset
+        self.val_hs_f1.reset()
+        self.val_ls_f1.reset()
+        self.val_sp_f1.reset()
+        self.val_bp_f1.reset()
+        self.val_hs_acc.reset()
+        self.val_ls_acc.reset()
+        self.val_sp_acc.reset()
+        self.val_bp_acc.reset()
 
     def test_step(self, batch, batch_idx, **kwargs):
-        """validation step"""
+        """Test step"""
 
-        if not hasattr(self, "test_hs_metric"):
+        if not hasattr(self, "test_hs_f1"):
             # Metrics
-            self.test_hs_metric = F1Score(
-                num_classes=2, average="weighted", multiclass=True
-            )
-            self.test_ls_metric = F1Score(
-                num_classes=2, average="weighted", multiclass=True
-            )
-            self.test_sp_metric = F1Score(
-                num_classes=2, average="weighted", multiclass=True
-            )
-            self.test_bp_metric = F1Score(
-                num_classes=2, average="weighted", multiclass=True
-            )
+            metrics = self.get_metrics()
+            self.test_hs_f1 = metrics["f1"]["hs"]
+            self.test_ls_f1 = metrics["f1"]["ls"]
+            self.test_sp_f1 = metrics["f1"]["sp"]
+            self.test_bp_f1 = metrics["f1"]["bp"]
+            self.test_hs_acc = metrics["acc"]["hs"]
+            self.test_ls_acc = metrics["acc"]["ls"]
+            self.test_sp_acc = metrics["acc"]["sp"]
+            self.test_bp_acc = metrics["acc"]["bp"]
 
         # Regular forward pass
         out = self.shared_step(batch)
         batch_size = batch["vad"].shape[0]
 
         # log validation loss
-        self.log("val_loss", out["loss"], batch_size=batch_size, sync_dist=True)
+        self.log("test_loss", out["loss"], batch_size=batch_size, sync_dist=True)
         if "loss_va" in out:
             self.log(
-                "val_loss_va", out["loss_va"], batch_size=batch_size, sync_dist=True
+                "test_loss_va", out["loss_va"], batch_size=batch_size, sync_dist=True
             )
 
         # Event Metrics
@@ -507,24 +575,57 @@ class VAPModel(pl.LightningModule):
         )
 
         if preds["hs"] is not None:
-            self.test_hs_metric(preds=preds["hs"], target=targets["hs"])
+            self.test_hs_f1(preds=preds["hs"], target=targets["hs"])
+            self.test_hs_acc(preds=preds["hs"], target=targets["hs"])
 
         if preds["ls"] is not None:
-            self.test_ls_metric(preds=preds["ls"], target=targets["ls"])
+            self.test_ls_f1(preds=preds["ls"], target=targets["ls"])
+            self.test_ls_acc(preds=preds["ls"], target=targets["ls"])
 
         if preds["pred_shift"] is not None:
-            self.test_sp_metric(preds=preds["pred_shift"], target=targets["pred_shift"])
+            self.test_sp_f1(preds=preds["pred_shift"], target=targets["pred_shift"])
+            self.test_sp_acc(preds=preds["pred_shift"], target=targets["pred_shift"])
 
         if preds["pred_backchannel"] is not None:
-            self.test_bp_metric(
+            self.test_bp_f1(
+                preds=preds["pred_backchannel"], target=targets["pred_backchannel"]
+            )
+            self.test_bp_acc(
                 preds=preds["pred_backchannel"], target=targets["pred_backchannel"]
             )
 
+    def test_epoch_end(self, *_):
+        # F1-Score  (single value and can be logged directly)
+        hs_f1 = self.test_hs_f1.compute()
+        ls_f1 = self.test_ls_f1.compute()
+        sp_f1 = self.test_sp_f1.compute()
+        bp_f1 = self.test_bp_f1.compute()
+
+        # Accuracy
+        h, shi = self.test_hs_acc.compute()
+        l, sho = self.test_ls_acc.compute()
+        spn, spp = self.test_sp_acc.compute()
+        bpn, bpp = self.test_bp_acc.compute()
+
         # Log
-        self.log("test_f1_hs", self.test_hs_metric, on_step=False, on_epoch=True)
-        self.log("test_f1_ls", self.test_ls_metric, on_step=False, on_epoch=True)
-        self.log("test_f1_pred_sh", self.test_sp_metric, on_step=False, on_epoch=True)
-        self.log("test_f1_pred_bc", self.test_bp_metric, on_step=False, on_epoch=True)
+        self.log(
+            "test_hs", {"hold_acc": h, "shift_acc": shi, "f1": hs_f1}, sync_dist=True
+        )
+        self.log("test_ls", {"long": l, "short": sho, "f1": ls_f1}, sync_dist=True)
+        self.log(
+            "test_pred_sh", {"hold": spn, "shift": spp, "f1": sp_f1}, sync_dist=True
+        )
+        self.log("test_pred_bc", {"non": bpn, "bc": bpp, "f1": bp_f1}, sync_dist=True)
+
+        # Reset
+        self.test_hs_f1.reset()
+        self.test_ls_f1.reset()
+        self.test_sp_f1.reset()
+        self.test_bp_f1.reset()
+        self.test_hs_acc.reset()
+        self.test_ls_acc.reset()
+        self.test_sp_acc.reset()
+        self.test_bp_acc.reset()
 
 
 if __name__ == "__main__":

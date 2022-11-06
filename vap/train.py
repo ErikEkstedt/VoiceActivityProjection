@@ -13,7 +13,7 @@ from pytorch_lightning.callbacks import (
 from pytorch_lightning.loggers.wandb import WandbLogger
 from pytorch_lightning.strategies.ddp import DDPStrategy
 
-from vap.callbacks import WandbArtifactCallback
+from vap.callbacks import WandbArtifactCallback, PhrasesCallback
 from vap.model import VAPModel
 from vap.utils import everything_deterministic
 from datasets_turntaking import DialogAudioDM
@@ -92,6 +92,7 @@ def train(cfg: DictConfig) -> None:
             ),
             LearningRateMonitor(),
             WandbArtifactCallback(),
+            PhrasesCallback(model),
         ]
 
         if cfg_dict["optimizer"].get("swa_enable", False):
