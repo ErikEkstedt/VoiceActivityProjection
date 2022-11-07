@@ -1,4 +1,6 @@
 import streamlit as st
+from argparse import ArgumentParser
+import os
 
 import torch
 from vap.model import VAPModel
@@ -9,11 +11,24 @@ from vap.phrases.dataset import PhraseDataset
 everything_deterministic()
 torch.manual_seed(0)
 
-CHECKPOINT = "example/VAP_50Hz_ad20s_134-epoch13-val_2.49.ckpt"
+parser = ArgumentParser()
+parser.add_argument(
+    "-c",
+    "--checkpoint",
+    type=str,
+    default="example/VAP_ges0x55b_50Hz_ad20s_134-epoch4-val_2.70.ckpt",
+)
+try:
+    args = parser.parse_args()
+except SystemExit as e:
+    # This exception will be raised if --help or invalid command line arguments
+    # are used. Currently streamlit prevents the program from exiting normally
+    # so we have to do a hard exit.
+    os._exit(e.code)
 
 
 @st.cache
-def load_model(checkpoint=CHECKPOINT):
+def load_model(checkpoint):
     model = VAPModel.load_from_checkpoint(checkpoint)
     model = model.eval()
     return model
@@ -43,7 +58,7 @@ def get_figure(experiment, longshort, gender, idx):
 
 if __name__ == "__main__":
     if "model" not in st.session_state:
-        model = load_model()
+        model = load_model(args.checkpoint)
         if torch.cuda.is_available():
             model = model.to("cuda")
         st.session_state.model = model

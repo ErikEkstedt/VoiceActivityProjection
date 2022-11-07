@@ -66,6 +66,7 @@ if __name__ == "__main__":
         sample_rate=model.sample_rate,
         frame_hz=model.frame_hz,
         force_stereo=True,
+        noise_scale=0,
         device=model.device,
     )
     print("waveform: ", tuple(waveform.shape), waveform.device)

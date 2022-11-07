@@ -1,5 +1,6 @@
 import streamlit as st
 from argparse import ArgumentParser
+import os
 
 import torch
 from vap.model import VAPModel
@@ -7,9 +8,21 @@ from vap.utils import everything_deterministic, batch_to_device
 from vap.plot_utils import plot_stereo
 from datasets_turntaking import DialogAudioDM
 
-# CHECKPOINT = "example/VAP_50Hz_ad20s_134-epoch13-val_2.49.ckpt"
-# CHECKPOINT = "example/VAP_50Hz_ad20s_118_old-epoch41-val_2.43.ckpt"
-CHECKPOINT = "example/VAP_50Hz_ad20s_118-epoch19-val_2.47.ckpt"
+parser = ArgumentParser()
+parser.add_argument(
+    "-c",
+    "--checkpoint",
+    type=str,
+    default="example/VAP_ges0x55b_50Hz_ad20s_134-epoch4-val_2.70.ckpt",
+)
+try:
+    args = parser.parse_args()
+except SystemExit as e:
+    # This exception will be raised if --help or invalid command line arguments
+    # are used. Currently streamlit prevents the program from exiting normally
+    # so we have to do a hard exit.
+    os._exit(e.code)
+
 
 # Reproducability
 everything_deterministic()
@@ -17,7 +30,7 @@ torch.manual_seed(0)
 
 
 @st.cache
-def load_model(checkpoint=CHECKPOINT):
+def load_model(checkpoint):
     model = VAPModel.load_from_checkpoint(checkpoint)
     model = model.eval()
     return model
@@ -27,8 +40,9 @@ def load_model(checkpoint=CHECKPOINT):
 def load_dset(conf):
     dm = DialogAudioDM(
         datasets=["switchboard"],
-        audio_duration=10,
+        audio_duration=20,
         audio_overlap=2,
+        type="events",
         vad_history=conf["model"]["va_cond"]["history"],
         audio_mono=False,
         batch_size=1,
@@ -48,7 +62,6 @@ def get_figure(idx=0):
     # get sample
     batch = dset[idx]
     batch = batch_to_device(batch, model.device)
-    print(batch.keys())
 
     out = model.output(waveform=batch["waveform"])  # , max_time=30)
     # print(out.keys())
@@ -79,7 +92,8 @@ def get_figure(idx=0):
 if __name__ == "__main__":
 
     if "model" not in st.session_state:
-        model = load_model()
+        print("ARGUMENT: ", args)
+        model = load_model(args.checkpoint)
         if torch.cuda.is_available():
             model = model.to("cuda")
         st.session_state.model = model
