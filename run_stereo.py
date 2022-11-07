@@ -92,7 +92,7 @@ if __name__ == "__main__":
     }
 
     if args.full:
-        output["probs"] = out["propbs"][0].cpu()
+        output["probs"] = out["probs"][0].cpu().tolist()
 
     write_json(output, name + ".json")
     print(f"Saved output as {name}.json")
