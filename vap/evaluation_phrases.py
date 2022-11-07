@@ -263,9 +263,19 @@ def create_dirs(ex, si, ge, fig_root, wav_root):
 
 
 def save_fig_and_waveform(
-    sample, out, sample_name, fig_dir, wav_dir, vad_hz=50, sample_rate=16_000
+    sample,
+    out,
+    sample_name,
+    fig_dir,
+    wav_dir,
+    vad_hz=50,
+    sample_rate=16_000,
+    agg_probs=False,
 ):
-    probs = {"p": out["p"]}
+    if agg_probs:
+        probs = {"p": out["p_all"]}
+    else:
+        probs = {"p": out["p"]}
     fig, _ = plot_phrases_sample(
         sample, probs, frame_hz=vad_hz, sample_rate=sample_rate
     )
@@ -284,6 +294,7 @@ def evaluation_phrases(
     dset,
     transforms,
     name=None,
+    agg_probs=False,
     predictive_region=0.2,
     save=False,
     savepath="runs_evaluation",
@@ -298,6 +309,8 @@ def evaluation_phrases(
     ######################################################
     if save:
         assert name is not None, "`name` is required if save"
+        if agg_probs:
+            name += "_agg_probs"
         root = join(savepath, name)
         fig_root = join(root, "figs")
         wav_root = join(root, "audio")
@@ -349,10 +362,14 @@ def evaluation_phrases(
                 wav_dir,
                 vad_hz=model.frame_hz,
                 sample_rate=model.sample_rate,
+                agg_probs=agg_probs,
             )
 
+        p_ns = out["p"]
+        if agg_probs:
+            p_ns = out["p_all"]
         p_hold, p_predictive, p_reactive, p_post = get_region_shift_probs(
-            p_ns=out["p"],
+            p_ns=p_ns,
             sample=sample,
             completion_point="scp",
             predictive_region=predictive_region,
@@ -370,7 +387,7 @@ def evaluation_phrases(
                 p_eot_reactive,
                 p_eot_post,
             ) = get_region_shift_probs(
-                p_ns=out["p"],
+                p_ns=p_ns,
                 sample=sample,
                 completion_point="eot",
                 predictive_region=predictive_region,
@@ -423,10 +440,14 @@ def evaluation_phrases(
                     wav_dir,
                     vad_hz=model.frame_hz,
                     sample_rate=model.sample_rate,
+                    agg_probs=agg_probs,
                 )
 
+            p_ns = out["p"]
+            if agg_probs:
+                p_ns = out["p_all"]
             p_hold, p_predictive, p_reactive, p_post = get_region_shift_probs(
-                out["p"],
+                p_ns,
                 batch,
                 completion_point="scp",
                 predictive_region=predictive_region,
@@ -448,7 +469,7 @@ def evaluation_phrases(
                     p_eot_reactive,
                     p_eot_post,
                 ) = get_region_shift_probs(
-                    out["p"],
+                    p_ns,
                     batch,
                     completion_point="eot",
                     predictive_region=predictive_region,
@@ -484,6 +505,11 @@ if __name__ == "__main__":
         help="Path to results directory",
     )
     parser.add_argument(
+        "--agg_probs",
+        action="store_true",
+        help="Use aggregate probs instead of zero-shot",
+    )
+    parser.add_argument(
         "--savepath",
         type=str,
         default="runs_evaluation/phrases",
@@ -500,6 +526,8 @@ if __name__ == "__main__":
     # LOAD MODEL
     ######################################################
     name = basename(args.checkpoint).replace(".ckpt", "")
+    if args.agg_probs:
+        name += "_agg-probs"
     model = VAPModel.load_from_checkpoint(args.checkpoint)
     model = model.eval()
     if torch.cuda.is_available():
@@ -534,6 +562,7 @@ if __name__ == "__main__":
         dset=dset,
         transforms=transforms,
         name=name,
+        agg_probs=args.agg_probs,
         predictive_region=args.predictive_region,
         save=args.save_figs_wav,
         savepath=args.savepath,

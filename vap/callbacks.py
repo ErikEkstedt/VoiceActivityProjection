@@ -41,18 +41,37 @@ class PhrasesCallback(pl.Callback):
     def on_validation_epoch_start(self, trainer, pl_module, *args, **kwargs):
         print("DEVICE: ", pl_module.device)
         stats, fig = evaluation_phrases(
-            model=pl_module, dset=self.dset, transforms=self.transforms, save=False
+            model=pl_module,
+            dset=self.dset,
+            transforms=self.transforms,
+            save=False,
+            agg_probs=False,
         )
-
         eot_short = stats.stats["short"]["scp"]["regular"]
         eot_long = stats.stats["long"]["eot"]["regular"]
-
         pl_module.log("phrases_short", eot_short, sync_dist=True)
         pl_module.log("phrases_long", eot_long, sync_dist=True)
-
         pl_module.logger.experiment.log(
             data={
                 "phrases": wandb.Image(fig),
+                "global_step": trainer.global_step,
+            },
+        )
+
+        stats, fig = evaluation_phrases(
+            model=pl_module,
+            dset=self.dset,
+            transforms=self.transforms,
+            save=False,
+            agg_probs=True,
+        )
+        eot_short = stats.stats["short"]["scp"]["regular"]
+        eot_long = stats.stats["long"]["eot"]["regular"]
+        pl_module.log("phrases_short_agg", eot_short, sync_dist=True)
+        pl_module.log("phrases_long_agg", eot_long, sync_dist=True)
+        pl_module.logger.experiment.log(
+            data={
+                "phrases_agg": wandb.Image(fig),
                 "global_step": trainer.global_step,
             },
         )
