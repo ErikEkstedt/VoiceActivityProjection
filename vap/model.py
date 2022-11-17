@@ -7,6 +7,8 @@ from torchmetrics.classification.precision_recall_curve import PrecisionRecallCu
 import pytorch_lightning as pl
 import wandb
 
+from os.path import exists
+
 from einops.layers.torch import Rearrange
 from typing import Optional, Dict
 
@@ -55,10 +57,15 @@ class VAPHead(nn.Module):
                 self.n_classes = 2 ** self.total_bins
                 self.projection_head = nn.Linear(input_dim, self.n_classes)
                 self.output_dim = self.n_classes
+
                 if bias_w_distribution:
-                    self.projection_head.bias.data = torch.load(
-                        "example/label_probs.pt"
-                    ).log()
+                    probs_bias_path = "example/label_probs.pt"
+                    if exists(probs_bias_path):
+                        self.projection_head.bias.data = torch.load(
+                            probs_bias_path
+                        ).log()
+                    else:
+                        print(f"Can't find {probs_bias_path} -> Regular initialization")
 
     def __repr__(self):
         s = "VAPHead\n"
@@ -321,6 +328,28 @@ class VAPModel(pl.LightningModule):
         ), f"Expects waveform of shape (B, C, n_sample) got {waveform.shape}"
         z = torch.zeros_like(waveform[:, :1])
         return torch.cat((waveform, z), dim=1)
+
+    def probs(self, waveform, now_lims=[0, 1], future_lims=[2, 3]):
+        out = self(waveform)
+        probs = out["logits"].softmax(dim=-1)
+
+        # first two bins
+        p_now = self.VAP.probs_next_speaker_aggregate(
+            probs, from_bin=now_lims[0], to_bin=now_lims[-1]
+        )
+        p_future = self.VAP.probs_next_speaker_aggregate(
+            probs, from_bin=future_lims[0], to_bin=future_lims[1]
+        )
+        p_bc = self.VAP.probs_backchannel(probs)
+
+        vad = torch.cat((out["v1"], out["v2"]), dim=-1).sigmoid()
+        return {
+            "probs": probs,
+            "vad": vad,
+            "p_bc": p_bc,
+            "p_now": p_now,
+            "p_future": p_future,
+        }
 
     @torch.no_grad()
     def output(
