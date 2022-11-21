@@ -44,6 +44,78 @@ def load_sample(
     return waveform, vad
 
 
+def find_island_idx_len(x):
+    """
+    Finds patches of the same value.
+
+    starts_idx, duration, values = find_island_idx_len(x)
+
+    e.g:
+        ends = starts_idx + duration
+
+        s_n = starts_idx[values==n]
+        ends_n = s_n + duration[values==n]  # find all patches with N value
+
+    """
+    assert x.ndim == 1
+    n = len(x)
+    y = x[1:] != x[:-1]  # pairwise unequal (string safe)
+    i = torch.cat(
+        (torch.where(y)[0], torch.tensor(n - 1, device=x.device).unsqueeze(0))
+    ).long()
+    it = torch.cat((torch.tensor(-1, device=x.device).unsqueeze(0), i))
+    dur = it[1:] - it[:-1]
+    idx = torch.cumsum(
+        torch.cat((torch.tensor([0], device=x.device, dtype=torch.long), dur)), dim=0
+    )[
+        :-1
+    ]  # positions
+    return idx, dur, x[i]
+
+
+def vad_output_to_vad_list(
+    vad: torch.Tensor,
+    frame_hz: int,
+    vad_thresh: float = 0.5,
+    ipu_thresh_time: float = 0.1,
+):
+    assert (
+        vad.ndim == 3
+    ), f"Expects vad with batch-dim of shape (B, n_frames, 2) but got {vad.shape}"
+
+    # Threshold if probabilities (sigmoided logits)
+    v = (vad >= vad_thresh).float()
+
+    batch_vad_list = []
+    for b in range(vad.shape[0]):
+        vad_list = []
+        for ch in range(2):
+            idx, dur, val = find_island_idx_len(v[b, :, ch])
+            active = idx[val == 1]
+            active_dur = dur[val == 1]
+            start_times = active / frame_hz
+            dur_times = active_dur / frame_hz
+            end_times = start_times + dur_times
+            start_times = start_times.tolist()
+            end_times = end_times.tolist()
+            ch_vad_list = []
+            if len(start_times) == 0:
+                vad_list.append(ch_vad_list)
+                continue
+            s, last_end = round(start_times[0], 2), round(end_times[0], 2)
+            ch_vad_list.append([s, last_end])
+            for s, e in zip(start_times[1:], end_times[1:]):
+                s, e = round(s, 2), round(e, 2)
+                if s - last_end < ipu_thresh_time:
+                    ch_vad_list[-1][-1] = e
+                else:
+                    ch_vad_list.append([s, e])
+                last_end = e
+            vad_list.append(ch_vad_list)
+        batch_vad_list.append(vad_list)
+    return batch_vad_list
+
+
 def repo_root():
     """
     Returns the absolute path to the git repository
