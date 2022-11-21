@@ -406,19 +406,31 @@ class GPTStereo(GPT):
         self, x1: torch.Tensor, x2: torch.Tensor, attention: bool = False
     ) -> Dict[str, torch.Tensor]:
 
-        attn_lists = []
+        self_attn_a = []
+        self_attn_b = []
+        cross_attn_a = []
+        cross_attn_b = []
         for layer in self.layers:
             x1, x2, attn_list = layer(x1=x1, x2=x2)
+            # attn_list = [sa1w, ca1w, sa2w, ca2w]
             if attention:
-                attn_lists.append(attn_list)
+                self_attn_a.append(attn_list[0])
+                cross_attn_a.append(attn_list[1])
+                self_attn_b.append(attn_list[2])
+                cross_attn_b.append(attn_list[3])
 
         x = self.combinator(x1, x2)
 
         ret = {"x": x, "x1": x1, "x2": x2}
 
         if attention:
-            ret["attn_list"] = attn_lists
-
+            # B, num_layers, num_heads, N, N
+            self_attn_a = torch.stack(self_attn_a, dim=1)  # stack on layer dim
+            self_attn_b = torch.stack(self_attn_b, dim=1)  # stack on layer dim
+            cross_attn_a = torch.stack(cross_attn_a, dim=1)  # stack on layer dim
+            cross_attn_b = torch.stack(cross_attn_b, dim=1)  # stack on layer dim
+            ret["self_attn"] = torch.stack([self_attn_a, self_attn_b], dim=1)
+            ret["cross_attn"] = torch.stack([cross_attn_a, cross_attn_b], dim=1)
         return ret
 
 

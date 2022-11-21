@@ -165,6 +165,7 @@ class ProjectionModel(nn.Module):
         waveform: torch.Tensor,
         va: Optional[torch.Tensor] = None,
         va_history: Optional[torch.Tensor] = None,
+        attention: bool = False,
     ) -> Dict[str, torch.Tensor]:
 
         ret = {}  # return dict
@@ -178,9 +179,11 @@ class ProjectionModel(nn.Module):
             x1 = self.projection(x1)
             x2 = self.projection(x2)
             # Autoregressive
-            x1 = self.ar_channel(x1)["x"]
-            x2 = self.ar_channel(x2)["x"]
-            out = self.ar(x1, x2)
+            o1 = self.ar_channel(x1, attention=attention)  # ["x"]
+            o2 = self.ar_channel(x2, attention=attention)  # ["x"]
+
+            x1, x2 = o1["x"], o2["x"]
+            out = self.ar(x1, x2, attention=attention)
 
             # Vad Objective
             ret["v1"] = self.va_classifier(out["x1"])
@@ -188,6 +191,11 @@ class ProjectionModel(nn.Module):
 
             # projection
             z = out["x"]
+
+            if attention:
+                ret["self_attn"] = torch.stack([o1["attn"], o2["attn"]], dim=1)
+                ret["cross_attn"] = out["cross_attn"]
+                ret["cross_self_attn"] = out["self_attn"]
         else:
             assert va is not None, "Requires voice-activity input but va=None"
             z = self.encoder(waveform)
@@ -202,7 +210,10 @@ class ProjectionModel(nn.Module):
             # Add vad-conditioning to audio features
             z = z + vc
             # Autoregressive
-            z = self.ar(z)["x"]
+            out = self.ar(z)
+            z = out["x"]
+            if attention:
+                ret["self_attn"] = out["attn"]
         ret["logits"] = self.vap_head(z)
         return ret
 
