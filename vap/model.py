@@ -329,9 +329,22 @@ class VAPModel(pl.LightningModule):
         z = torch.zeros_like(waveform[:, :1])
         return torch.cat((waveform, z), dim=1)
 
+    @torch.no_grad()
     def probs(self, waveform, now_lims=[0, 1], future_lims=[2, 3]):
         out = self(waveform)
         probs = out["logits"].softmax(dim=-1)
+
+        # Calculate entropy over each projection-window prediction (i.e. over
+        # frames/time) If we have C=256 possible states the maximum bit entropy
+        # is 8 (2^8 = 256) this means that the model have a one in 256 chance
+        # to randomly be right. The model can't do better than to uniformly
+        # guess each state, it has learned (less than) nothing. We want the
+        # model to have low entropy over the course of a dialog, "thinks it
+        # understands how the dialog is going", it's a measure of how close the
+        # information in the unseen data is to the knowledge encoded in the
+        # training data.
+        h = -probs * probs.log2()  # Entropy
+        H = h.sum(dim=-1)  # average entropy per frame
 
         # first two bins
         p_now = self.VAP.probs_next_speaker_aggregate(
@@ -349,6 +362,7 @@ class VAPModel(pl.LightningModule):
             "p_bc": p_bc,
             "p_now": p_now,
             "p_future": p_future,
+            "H": H,
         }
 
     @torch.no_grad()
