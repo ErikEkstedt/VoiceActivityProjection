@@ -190,6 +190,24 @@ def read_json(path, encoding="utf8"):
     return data
 
 
+def write_txt(txt, name):
+    """
+    Argument:
+        txt:    list of strings
+        name:   filename
+    """
+    with open(name, "w") as f:
+        f.write("\n".join(txt))
+
+
+def read_txt(path, encoding="utf-8"):
+    data = []
+    with open(path, "r", encoding=encoding) as f:
+        for line in f.readlines():
+            data.append(line.strip())
+    return data
+
+
 def vad_list_to_onehot(
     vad_list: List[Tuple[float, float]],
     hop_time: float,
@@ -241,14 +259,6 @@ def load_vad_list(
     )
 
     return all_vad_frames
-
-
-def read_txt(path, encoding="utf-8"):
-    data = []
-    with open(path, "r", encoding=encoding) as f:
-        for line in f.readlines():
-            data.append(line.strip())
-    return data
 
 
 def batch_to_device(batch, device="cuda"):
