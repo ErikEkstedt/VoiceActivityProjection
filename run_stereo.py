@@ -1,4 +1,5 @@
 import torch
+import torchaudio
 from argparse import ArgumentParser
 from os.path import basename
 from tqdm import tqdm
@@ -60,6 +61,11 @@ def get_args():
         "--plot", action="store_true", help="Visualize output (matplotlib)"
     )
     parser.add_argument("--full", action="store_true", help="Save all information")
+    parser.add_argument(
+        "--save_audio",
+        action="store_true",
+        help="copy the audio",
+    )
     ###########################################################
     # Chunk times
     ###########################################################
@@ -256,8 +262,13 @@ if __name__ == "__main__":
 
     data = tensor_dict_to_json(out)
     write_json(data, savepath)
-    print("wavpath: ", args.wav)
-    print("Save output -> ", savepath)
+    print("wavefile: ", args.wav)
+    print("Saved output -> ", savepath)
+
+    if args.save_audio:
+        wpath = savepath.replace(".json", ".wav")
+        torchaudio.save(wpath, waveform[0].cpu(), sample_rate=model.sample_rate)
+        print("Saved audio -> ", wpath)
 
     ###########################################################
     # Plot
