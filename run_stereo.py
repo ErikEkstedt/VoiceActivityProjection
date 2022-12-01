@@ -10,6 +10,8 @@ from vap.utils import (
     batch_to_device,
     everything_deterministic,
     vad_output_to_vad_list,
+    tensor_dict_to_json,
+    write_json,
 )
 from vap.plot_utils import plot_stereo
 
@@ -62,6 +64,21 @@ def get_args():
     # Chunk times
     ###########################################################
     parser.add_argument(
+        "--context_time",
+        type=float,
+        default=20,
+        help="Process the audio in chunks (longer > 164s on 24Gb GPU audio)",
+    )
+    parser.add_argument(
+        "--step_time",
+        type=float,
+        default=5,
+        help="Increment to process in a step",
+    )
+    ###########################################################
+    # Chunk times
+    ###########################################################
+    parser.add_argument(
         "--chunk",
         action="store_true",
         help="Process the audio in chunks (longer > 164s on 24Gb GPU audio)",
@@ -80,6 +97,98 @@ def get_args():
     )
     args = parser.parse_args()
     return args
+
+
+def step_extraction(
+    waveform, model, context_time=20, step_time=5, vad_thresh=0.5, ipu_time=0.1
+):
+    chunk_time = context_time + step_time
+
+    # context_samples = int(context_time * model.sample_rate)
+    step_samples = int(step_time * model.sample_rate)
+    chunk_samples = int(chunk_time * model.sample_rate)
+
+    # context_frames = int(context_time * model.frame_hz)
+    chunk_frames = int(chunk_time * model.frame_hz)
+    step_frames = int(step_time * model.frame_hz)
+
+    n_samples = waveform.shape[-1]
+    duration = round(n_samples / model.sample_rate, 2)
+
+    # Fold the waveform to get total chunks
+    folds = waveform.unfold(
+        dimension=-1, size=chunk_samples, step=step_samples
+    ).permute(2, 0, 1, 3)
+
+    expected_frames = round(duration * model.frame_hz)
+    n_folds = int((n_samples - chunk_samples) / step_samples + 1.0)
+    total = (n_folds - 1) * step_samples + chunk_samples
+
+    # First chunk
+    # Use all extracted data. Does not overlap with anything prior.
+    out = model.probs(folds[0])
+    # OUT:
+    # {
+    #   "probs": probs,
+    #   "vad": vad,
+    #   "p_bc": p_bc,
+    #   "p_now": p_now,
+    #   "p_future": p_future,
+    #   "H": H,
+    # }
+
+    # Iterate over all other folds
+    # and add simply the new processed step
+    for w in tqdm(
+        folds[1:], desc=f"Context: {args.context_time}s, step: {args.step_time}"
+    ):
+        o = model.probs(w)
+        out["vad"] = torch.cat([out["vad"], o["vad"][:, -step_frames:]], dim=1)
+        out["p_now"] = torch.cat([out["p_now"], o["p_now"][:, -step_frames:]], dim=1)
+        out["p_future"] = torch.cat(
+            [out["p_future"], o["p_future"][:, -step_frames:]], dim=1
+        )
+        out["p_bc"] = torch.cat([out["p_bc"], o["p_bc"][:, -step_frames:]], dim=1)
+        out["probs"] = torch.cat([out["probs"], o["probs"][:, -step_frames:]], dim=1)
+        out["H"] = torch.cat([out["H"], o["H"][:, -step_frames:]], dim=1)
+        # out["p_zero_shot"] = torch.cat([out["p_zero_shot"], o["p_zero_shot"][:, -step_frames:]], dim=1)
+
+    processed_frames = out["p_now"].shape[1]
+
+    ###################################################################
+    # Handle LAST SEGMENT (not included in `unfold`)
+    ###################################################################
+    if expected_frames != processed_frames:
+        omitted_frames = expected_frames - processed_frames
+
+        omitted_samples = model.sample_rate * omitted_frames / model.frame_hz
+        print(f"Expected frames {expected_frames} != {processed_frames}")
+        print(f"omitted frames: {omitted_frames}")
+        print(f"omitted samples: {omitted_samples}")
+        print(f"chunk_samples: {chunk_samples}")
+
+        w = waveform[..., -chunk_samples:]
+        o = model.probs(w)
+        out["vad"] = torch.cat([out["vad"], o["vad"][:, -omitted_frames:]], dim=1)
+        out["p_now"] = torch.cat([out["p_now"], o["p_now"][:, -omitted_frames:]], dim=1)
+        out["p_future"] = torch.cat(
+            [out["p_future"], o["p_future"][:, -omitted_frames:]], dim=1
+        )
+        out["p_bc"] = torch.cat([out["p_bc"], o["p_bc"][:, -omitted_frames:]], dim=1)
+        out["probs"] = torch.cat([out["probs"], o["probs"][:, -omitted_frames:]], dim=1)
+        out["H"] = torch.cat([out["H"], o["H"][:, -omitted_frames:]], dim=1)
+
+    ###################################################################
+    # Extract Vad-list over entire vad
+    ###################################################################
+    out["vad_list"] = vad_output_to_vad_list(
+        out["vad"],
+        frame_hz=model.frame_hz,
+        vad_thresh=vad_thresh,
+        ipu_thresh_time=ipu_time,
+    )
+    out = batch_to_device(out, "cpu")  # to cpu for plot/save
+    return out
 
 
 if __name__ == "__main__":
@@ -105,129 +214,50 @@ if __name__ == "__main__":
         noise_scale=0,
         device=model.device,
     )
-
-    duration = waveform.shape[-1] / model.sample_rate
+    duration = round(waveform.shape[-1] / model.sample_rate, 2)
 
     # Maximum known duration with a 24Gb 'NVIDIA GeForce RTX 3090' is 164s
+    if duration > 160:
+        print(
+            f"WARNING: Can't fit {duration} > 160s on 24Gb 'NVIDIA GeForce RTX 3090' GPU"
+        )
+        print("WARNING: Change code if this is not what you want.")
+        args.chunk = True
 
     ###########################################################
     # Model Forward
     ###########################################################
     if args.chunk:
-
-        n_samples = waveform.shape[-1]
-        chunk_sample = int(model.sample_rate * args.chunk_time)
-        chunk_overlap_sample = int(model.sample_rate * args.chunk_overlap_time)
-        chunk_step_sample = chunk_sample - chunk_overlap_sample
-        chunk_frames = int(model.frame_hz * args.chunk_time)
-        chunk_overlap_frames = int(model.frame_hz * args.chunk_overlap_time)
-        chunk_step_frames = chunk_frames - chunk_overlap_frames
-        # print("n_samples: ", n_samples)
-        # print("chunk_sample: ", chunk_sample)
-        # print("chunk_overlap_sample: ", chunk_overlap_sample)
-        # print("chunk_step_sample: ", chunk_step_sample)
-        # print("chunk_frames: ", chunk_frames)
-        # print("chunk_overlap_frames: ", chunk_overlap_frames)
-        # print("chunk_step_frames: ", chunk_step_frames)
-
-        folds = waveform.unfold(
-            dimension=-1, size=chunk_sample, step=chunk_step_sample
-        ).permute(2, 0, 1, 3)
-        # print("folds: ", tuple(folds.shape))
-
-        # 8209
-
-        # first segment contains the longest possible context
-        out = model.output(folds[0])
-        out.pop("logits")
-        out.pop("shift")
-        out.pop("hold")
-        out.pop("long")
-        out.pop("short")
-        out.pop("pred_shift")
-        out.pop("pred_shift_neg")
-        out.pop("pred_backchannel")
-        out.pop("pred_backchannel_neg")
-        out.pop("vad_list")
-        for w in tqdm(folds[1:], desc=f"Processing {args.chunk_time} chunks"):
-            # print("w: ", tuple(w.shape))
-            o = model.output(w)
-            # Concatenate
-            out["vad"] = torch.cat(
-                [out["vad"], o["vad"][:, chunk_overlap_frames:]], dim=1
-            )
-            out["p"] = torch.cat([out["p"], o["p"][:, chunk_overlap_frames:]], dim=1)
-            out["p_all"] = torch.cat(
-                [out["p_all"], o["p_all"][:, chunk_overlap_frames:]], dim=1
-            )
-            out["p_bc"] = torch.cat(
-                [out["p_bc"], o["p_bc"][:, chunk_overlap_frames:]], dim=1
-            )
-            out["probs"] = torch.cat(
-                [out["probs"], o["probs"][:, chunk_overlap_frames:]], dim=1
-            )
-        ###################################################################
-        # Handle LAST SEGMENT (not included in `unfold`)
-        ###################################################################
-        n_folds = int((n_samples - chunk_sample) / chunk_step_sample + 1.0)
-        total = (n_folds - 1) * chunk_step_sample + chunk_sample
-        omitted = n_samples - total
-        omitted_frames = int(omitted * model.frame_hz / model.sample_rate)
-        assert folds.shape[0] == n_folds, "Fold calculation inaccurate"
-        assert (
-            omitted < chunk_sample
-        ), f"`omitted` is greater than chunk_sample: {omitted} >  {chunk_sample}"
-        assert (
-            omitted_frames < chunk_frames
-        ), f"`omitted_frames` is greater than chunk_frame: {omitted_frames} >  {chunk_frames}"
-        ###################################################################
-        # Last forward
-        ###################################################################
-        w = waveform[..., -chunk_sample:]
-        o = model.output(w)
-        # Concatenate
-        out["vad"] = torch.cat([out["vad"], o["vad"][:, -omitted_frames:]], dim=1)
-        out["p"] = torch.cat([out["p"], o["p"][:, -omitted_frames:]], dim=1)
-        out["p_all"] = torch.cat([out["p_all"], o["p_all"][:, -omitted_frames:]], dim=1)
-        out["p_bc"] = torch.cat([out["p_bc"], o["p_bc"][:, -omitted_frames:]], dim=1)
-        out["probs"] = torch.cat([out["probs"], o["probs"][:, -omitted_frames:]], dim=1)
-        ###################################################################
-        # Extract Vad-list over entire vad
-        ###################################################################
-        out["vad_list"] = vad_output_to_vad_list(
-            out["vad"],
-            frame_hz=model.frame_hz,
-            vad_thresh=args.vad_thresh,
-            ipu_thresh_time=args.ipu_thresh_time,
+        out = step_extraction(
+            waveform,
+            model,  # , context_time=args.context_time, step_time=args.step_time
         )
-        out = batch_to_device(out, "cpu")  # to cpu for plot/save
-        # for k, v in out.items():
-        #     if isinstance(v, torch.Tensor):
-        #         print(f"{k}: {tuple(v.shape)}")
-        #     else:
-        #         print(f"{k}: {v}")
     else:
-        out = model.output(
-            waveform=waveform,
-            vad_thresh=args.vad_thresh,
-            ipu_thresh_time=args.ipu_thresh_time,
-        )
+        out = model.probs(waveform=waveform)
         out = batch_to_device(out, "cpu")  # to cpu for plot/save
 
     ###########################################################
-    # Save Model Output
+    # Print shapes
+    ###########################################################
+    for k, v in out.items():
+        if isinstance(v, torch.Tensor):
+            print(f"{k}: ", tuple(v.shape))
+
+    ###########################################################
+    # Save Output
     ###########################################################
 
+    savepath = args.filename
     if args.filename is None:
-        savepath = basename(args.wav).replace(".wav", "")
-    else:
-        savepath = args.filename.replace(".json", "")
-    model.save_output(
-        out,
-        savepath=f"{savepath}.json",
-        checkpoint=basename(args.checkpoint),
-        full=args.full,
-    )
+        savepath = basename(args.wav).replace(".wav", ".json")
+
+    if not savepath.endswith(".json"):
+        savepath += ".json"
+
+    data = tensor_dict_to_json(out)
+    write_json(data, savepath)
+    print("wavpath: ", args.wav)
+    print("Save output -> ", savepath)
 
     ###########################################################
     # Plot
