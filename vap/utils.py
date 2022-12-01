@@ -251,6 +251,16 @@ def read_txt(path, encoding="utf-8"):
     return data
 
 
+def write_txt(txt, name):
+    """
+    Argument:
+        txt:    list of strings
+        name:   filename
+    """
+    with open(name, "w") as f:
+        f.write("\n".join(txt))
+
+
 def batch_to_device(batch, device="cuda"):
     new_batch = {}
     for k, v in batch.items():
