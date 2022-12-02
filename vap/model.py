@@ -14,8 +14,7 @@ from typing import Optional, Dict
 
 from vap.encoder import Encoder
 from vap.transformer import GPT, GPTStereo
-from vap.utils import everything_deterministic
-
+from vap.utils import everything_deterministic, vad_output_to_vad_list, batch_to_device
 from vap_turn_taking.vap_new import VAP
 from vap_turn_taking.events import TurnTakingEventsNew
 
@@ -30,6 +29,119 @@ def loss_fn_va(v1: torch.Tensor, v2: torch.Tensor, va: torch.Tensor) -> torch.Te
     l1 = F.binary_cross_entropy_with_logits(v1, v1_label)
     l2 = F.binary_cross_entropy_with_logits(v2, v2_label)
     return (l1 + l2) / 2
+
+
+def step_extraction(
+    waveform,
+    model,
+    context_time=20,
+    step_time=5,
+    vad_thresh=0.5,
+    ipu_time=0.1,
+    pbar=True,
+    verbose=False,
+):
+    """
+
+    Takes a waveform, the model, and extracts probability output in chunks with
+    a specific context and step time. Concatenates the output accordingly and returns full waveform output.
+
+    """
+
+    n_samples = waveform.shape[-1]
+    duration = round(n_samples / model.sample_rate, 2)
+
+    chunk_time = context_time + step_time
+
+    # Samples
+    # context_samples = int(context_time * model.sample_rate)
+    step_samples = int(step_time * model.sample_rate)
+    chunk_samples = int(chunk_time * model.sample_rate)
+    # Frames
+    # context_frames = int(context_time * model.frame_hz)
+    chunk_frames = int(chunk_time * model.frame_hz)
+    step_frames = int(step_time * model.frame_hz)
+
+    # Fold the waveform to get total chunks
+    folds = waveform.unfold(
+        dimension=-1, size=chunk_samples, step=step_samples
+    ).permute(2, 0, 1, 3)
+
+    expected_frames = round(duration * model.frame_hz)
+    n_folds = int((n_samples - chunk_samples) / step_samples + 1.0)
+    total = (n_folds - 1) * step_samples + chunk_samples
+
+    # First chunk
+    # Use all extracted data. Does not overlap with anything prior.
+    out = model.probs(folds[0].to(model.device))
+    # OUT:
+    # {
+    #   "probs": probs,
+    #   "vad": vad,
+    #   "p_bc": p_bc,
+    #   "p_now": p_now,
+    #   "p_future": p_future,
+    #   "H": H,
+    # }
+
+    if pbar:
+        from tqdm import tqdm
+
+        pbar = tqdm(folds[1:], desc=f"Context: {context_time}s, step: {step_time}")
+    else:
+        pbar = folds[1:]
+    # Iterate over all other folds
+    # and add simply the new processed step
+    for w in pbar:
+        o = model.probs(w.to(model.device))
+        out["vad"] = torch.cat([out["vad"], o["vad"][:, -step_frames:]], dim=1)
+        out["p_now"] = torch.cat([out["p_now"], o["p_now"][:, -step_frames:]], dim=1)
+        out["p_future"] = torch.cat(
+            [out["p_future"], o["p_future"][:, -step_frames:]], dim=1
+        )
+        out["p_bc"] = torch.cat([out["p_bc"], o["p_bc"][:, -step_frames:]], dim=1)
+        out["probs"] = torch.cat([out["probs"], o["probs"][:, -step_frames:]], dim=1)
+        out["H"] = torch.cat([out["H"], o["H"][:, -step_frames:]], dim=1)
+        # out["p_zero_shot"] = torch.cat([out["p_zero_shot"], o["p_zero_shot"][:, -step_frames:]], dim=1)
+
+    processed_frames = out["p_now"].shape[1]
+
+    ###################################################################
+    # Handle LAST SEGMENT (not included in `unfold`)
+    ###################################################################
+    if expected_frames != processed_frames:
+        omitted_frames = expected_frames - processed_frames
+
+        omitted_samples = model.sample_rate * omitted_frames / model.frame_hz
+
+        if verbose:
+            print(f"Expected frames {expected_frames} != {processed_frames}")
+            print(f"omitted frames: {omitted_frames}")
+            print(f"omitted samples: {omitted_samples}")
+            print(f"chunk_samples: {chunk_samples}")
+
+        w = waveform[..., -chunk_samples:]
+        o = model.probs(w.to(model.device))
+        out["vad"] = torch.cat([out["vad"], o["vad"][:, -omitted_frames:]], dim=1)
+        out["p_now"] = torch.cat([out["p_now"], o["p_now"][:, -omitted_frames:]], dim=1)
+        out["p_future"] = torch.cat(
+            [out["p_future"], o["p_future"][:, -omitted_frames:]], dim=1
+        )
+        out["p_bc"] = torch.cat([out["p_bc"], o["p_bc"][:, -omitted_frames:]], dim=1)
+        out["probs"] = torch.cat([out["probs"], o["probs"][:, -omitted_frames:]], dim=1)
+        out["H"] = torch.cat([out["H"], o["H"][:, -omitted_frames:]], dim=1)
+
+    ###################################################################
+    # Extract Vad-list over entire vad
+    ###################################################################
+    out["vad_list"] = vad_output_to_vad_list(
+        out["vad"],
+        frame_hz=model.frame_hz,
+        vad_thresh=vad_thresh,
+        ipu_thresh_time=ipu_time,
+    )
+    out = batch_to_device(out, "cpu")  # to cpu for plot/save
+    return out
 
 
 class VAPHead(nn.Module):
@@ -686,7 +798,7 @@ if __name__ == "__main__":
 
     from os import cpu_count
     from datasets_turntaking import DialogAudioDM
-    from vap.utils import load_hydra_conf, batch_to_device
+    from vap.utils import load_hydra_conf
 
     conf = load_hydra_conf()
     config_name = "model/vap_50hz"  # "model/vap_50hz_stereo"

@@ -13,7 +13,7 @@ def load_sample(
     vad_list_path: Optional[str] = None,
     sample_rate: int = 16000,
     frame_hz=50,
-    noise_scale: float = 0.005,
+    noise_scale: float = 0.0,
     force_stereo: bool = True,
     device: Optional[str] = None,
 ):
