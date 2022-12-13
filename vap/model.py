@@ -395,21 +395,29 @@ class VAPModel(pl.LightningModule):
     def get_metrics(self):
         metrics = {"acc": {}, "f1": {}}
         metrics["f1"]["hs"] = F1Score(
-            num_classes=2, average="weighted", multiclass=True
+            task="multiclass", num_classes=2, average="weighted", multiclass=True
         )
         metrics["f1"]["ls"] = F1Score(
-            num_classes=2, average="weighted", multiclass=True
+            task="multiclass", num_classes=2, average="weighted", multiclass=True
         )
         metrics["f1"]["sp"] = F1Score(
-            num_classes=2, average="weighted", multiclass=True
+            task="multiclass", num_classes=2, average="weighted", multiclass=True
         )
         metrics["f1"]["bp"] = F1Score(
-            num_classes=2, average="weighted", multiclass=True
+            task="multiclass", num_classes=2, average="weighted", multiclass=True
         )
-        metrics["acc"]["hs"] = Accuracy(num_classes=2, average="none", multiclass=True)
-        metrics["acc"]["ls"] = Accuracy(num_classes=2, average="none", multiclass=True)
-        metrics["acc"]["sp"] = Accuracy(num_classes=2, average="none", multiclass=True)
-        metrics["acc"]["bp"] = Accuracy(num_classes=2, average="none", multiclass=True)
+        metrics["acc"]["hs"] = Accuracy(
+            task="multiclass", num_classes=2, average="none", multiclass=True
+        )
+        metrics["acc"]["ls"] = Accuracy(
+            task="multiclass", num_classes=2, average="none", multiclass=True
+        )
+        metrics["acc"]["sp"] = Accuracy(
+            task="multiclass", num_classes=2, average="none", multiclass=True
+        )
+        metrics["acc"]["bp"] = Accuracy(
+            task="multiclass", num_classes=2, average="none", multiclass=True
+        )
         return metrics
 
     @property
