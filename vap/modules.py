@@ -6,49 +6,19 @@ from einops.layers.torch import Rearrange
 from typing import Dict, Optional, Tuple
 
 
-def prepare_causal_mask(T, device="cpu"):
-    mask = torch.tril(torch.ones((T, T), device=device)).view(1, 1, T, T)
-    mask.requires_grad_(False)
-    return mask
-
-
-def get_slopes(n):
-    """
-    * aLiBi slopes for heads.
-    * m in Figure 3.
-    * Source:
-        - https://github.com/ofirpress/attention_with_linear_biases/blob/5b327adc6d131e28b40ba58906b30bb469483519/fairseq/models/transformer.py#L742
-
-    Comments:
-
-    In the paper, we only train models that have 2^a heads for some a. This function has
-    some good properties that only occur when the input is a power of 2.
-    To maintain that even closest_power_of_2 = 2**math.floor(math.log2(n))
-    when the number of heads is not a power of 2, we use this workaround.
-    """
-
-    def get_slopes_power_of_2(n):
-        start = 2 ** (-(2 ** -(math.log2(n) - 3)))
-        ratio = start
-        return [start * ratio ** i for i in range(n)]
-
-    # In the paper, we only train models that have 2^a heads for some a. This function has
-    # some good properties that only occur when the input is a power of 2. To maintain that even
-    # when the number of heads is not a power of 2, we use this workaround.
-    if math.log2(n).is_integer():
-        slopes = get_slopes_power_of_2(n)
-    else:
-        closest_power_of_2 = 2 ** math.floor(math.log2(n))
-        slopes = (
-            get_slopes_power_of_2(closest_power_of_2)
-            + get_slopes(2 * closest_power_of_2)[0::2][: n - closest_power_of_2]
-        )
-    return slopes
-
-
-def get_relative_bias_matrix(n, num_heads, device="cpu"):
-    """Relative Bias matrix for aLiBi embeddings"""
-    return torch.arange(n, device=device).view(1, 1, -1).expand(1, num_heads, -1)
+def ffn_block(
+    din: int,
+    dff: int,
+    activation: str = "GELU",
+    dropout: float = 0.0,
+    bias: bool = False,
+) -> nn.Sequential:
+    return nn.Sequential(
+        nn.Linear(din, dff, bias=bias),
+        getattr(nn, activation)(),
+        nn.Dropout(p=dropout),
+        nn.Linear(dff, din, bias=bias),
+    )
 
 
 class MultiHeadAttention(nn.Module):
@@ -92,10 +62,16 @@ class MultiHeadAttention(nn.Module):
         """
         return torch.einsum("bhid,bhjd->bhij", q, k)
 
+    @staticmethod
+    def prepare_causal_mask(T, device="cpu"):
+        mask = torch.tril(torch.ones((T, T), device=device)).view(1, 1, T, T)
+        mask.requires_grad_(False)
+        return mask
+
     def mask_scores(self, qk: torch.Tensor, mask=None):
         T = qk.size(-1)
         if mask is None:
-            mask = prepare_causal_mask(T, device=qk.device)
+            mask = MultiHeadAttention.prepare_causal_mask(T, device=qk.device)
         qk = qk.masked_fill(mask == 0, float("-inf"))
         return qk
 
@@ -133,18 +109,59 @@ class MultiHeadAttention(nn.Module):
 class MultiHeadAttentionAlibi(MultiHeadAttention):
     def __init__(self, dim: int, num_heads: int, dropout: float, bias: bool = False):
         super().__init__(dim, num_heads, dropout, bias)
-        self.m = torch.tensor(get_slopes(num_heads))
+        self.m = torch.tensor(MultiHeadAttentionAlibi.get_slopes(num_heads))
         self.m.requires_grad_(False)
         self.mask = None
 
+    @staticmethod
+    def get_slopes(n):
+        """
+        * aLiBi slopes for heads.
+        * m in Figure 3.
+        * Source:
+            - https://github.com/ofirpress/attention_with_linear_biases/blob/5b327adc6d131e28b40ba58906b30bb469483519/fairseq/models/transformer.py#L742
+
+        Comments:
+
+        In the paper, we only train models that have 2^a heads for some a. This function has
+        some good properties that only occur when the input is a power of 2.
+        To maintain that even closest_power_of_2 = 2**math.floor(math.log2(n))
+        when the number of heads is not a power of 2, we use this workaround.
+        """
+
+        def get_slopes_power_of_2(n):
+            start = 2 ** (-(2 ** -(math.log2(n) - 3)))
+            ratio = start
+            return [start * ratio ** i for i in range(n)]
+
+        # In the paper, we only train models that have 2^a heads for some a. This function has
+        # some good properties that only occur when the input is a power of 2. To maintain that even
+        # when the number of heads is not a power of 2, we use this workaround.
+        if math.log2(n).is_integer():
+            slopes = get_slopes_power_of_2(n)
+        else:
+            closest_power_of_2 = 2 ** math.floor(math.log2(n))
+            slopes = (
+                get_slopes_power_of_2(closest_power_of_2)
+                + get_slopes(2 * closest_power_of_2)[0::2][: n - closest_power_of_2]
+            )
+        return slopes
+
+    @staticmethod
+    def get_relative_bias_matrix(n, num_heads, device="cpu"):
+        """Relative Bias matrix for aLiBi embeddings"""
+        return torch.arange(n, device=device).view(1, 1, -1).expand(1, num_heads, -1)
+
     def get_alibi_mask(self, T: int, device="cpu"):
-        rel_bias_mat = get_relative_bias_matrix(T, self.num_heads, device)
+        rel_bias_mat = MultiHeadAttentionAlibi.get_relative_bias_matrix(
+            T, self.num_heads, device
+        )
         alibi = rel_bias_mat * self.m.unsqueeze(0).unsqueeze(-1).to(device)
 
         # Causal mask (standard GPT pask)
         # lower triangle = 1
         # upper triangle = 0
-        mask = prepare_causal_mask(T, device)  # (1, 1, T, T)
+        mask = MultiHeadAttention.prepare_causal_mask(T, device)  # (1, 1, T, T)
         # Repeat to get a mask for each head
         mask = mask.repeat(1, self.num_heads, 1, 1)  # (1, num_heads, T, T)
         # fill "future" information with negative infinity
@@ -169,21 +186,6 @@ class MultiHeadAttentionAlibi(MultiHeadAttention):
         # mentioned in the original representation
         qk = qk + mask.to(qk.device)
         return qk
-
-
-def ffn_block(
-    din: int,
-    dff: int,
-    activation: str = "GELU",
-    dropout: float = 0.0,
-    bias: bool = False,
-) -> nn.Sequential:
-    return nn.Sequential(
-        nn.Linear(din, dff, bias=bias),
-        getattr(nn, activation)(),
-        nn.Dropout(p=dropout),
-        nn.Linear(dff, din, bias=bias),
-    )
 
 
 class TransformerLayer(nn.Module):
@@ -342,47 +344,6 @@ class GPT(nn.Module):
         return ret
 
 
-class Combinator(nn.Module):
-    """
-    Combines the "ego-centric" representations from identical 'towers'
-    processing channel 0 and 1. The towers are identical (shared weights)
-    and therefore channel agnostic, e.g. they don't know if they process information
-    from the view of speaker A or B.
-
-    Here we have specific layers associated with each channel to join the representations
-    into a single coherent space with channel information included.
-    """
-
-    def __init__(self, dim: int, activation: str = "GELU"):
-        super().__init__()
-        self.dim = dim
-
-        # Channel information
-        self.h0_a = nn.Linear(dim, dim, bias=False)  # Channel 0
-        self.h0_b = nn.Linear(dim, dim, bias=False)  # Channel 1
-        self.ln = nn.LayerNorm(self.dim)
-
-        # Activation
-        self.activation = getattr(nn, activation)()
-
-    def forward(self, x1: torch.Tensor, x2: torch.Tensor) -> torch.Tensor:
-        """
-        Combines the hidden states from identical 'towers' which have processed
-        each channel from an 'ego-centric' view. However, the towers are channel agnostic
-        by default (shared weights) so in this step we process the information from channel 0, 1
-        separately into a joint representation.
-
-        The final representation will (see GPTStereo -> ProjectionModel) go into a final linear
-        layer to produce logits.
-        """
-
-        # Channel specific information
-        ha = self.activation(self.ln(self.h0_a(x1)))
-        hb = self.activation(self.ln(self.h0_b(x2)))
-        h = ha + hb  # combine estimations from both parties
-        return h
-
-
 class GPTStereo(GPT):
     def _build_layers(self):
         layers = []
@@ -432,6 +393,47 @@ class GPTStereo(GPT):
             ret["self_attn"] = torch.stack([self_attn_a, self_attn_b], dim=1)
             ret["cross_attn"] = torch.stack([cross_attn_a, cross_attn_b], dim=1)
         return ret
+
+
+class Combinator(nn.Module):
+    """
+    Combines the "ego-centric" representations from identical 'towers'
+    processing channel 0 and 1. The towers are identical (shared weights)
+    and therefore channel agnostic, e.g. they don't know if they process information
+    from the view of speaker A or B.
+
+    Here we have specific layers associated with each channel to join the representations
+    into a single coherent space with channel information included.
+    """
+
+    def __init__(self, dim: int, activation: str = "GELU"):
+        super().__init__()
+        self.dim = dim
+
+        # Channel information
+        self.h0_a = nn.Linear(dim, dim, bias=False)  # Channel 0
+        self.h0_b = nn.Linear(dim, dim, bias=False)  # Channel 1
+        self.ln = nn.LayerNorm(self.dim)
+
+        # Activation
+        self.activation = getattr(nn, activation)()
+
+    def forward(self, x1: torch.Tensor, x2: torch.Tensor) -> torch.Tensor:
+        """
+        Combines the hidden states from identical 'towers' which have processed
+        each channel from an 'ego-centric' view. However, the towers are channel agnostic
+        by default (shared weights) so in this step we process the information from channel 0, 1
+        separately into a joint representation.
+
+        The final representation will (see GPTStereo -> ProjectionModel) go into a final linear
+        layer to produce logits.
+        """
+
+        # Channel specific information
+        ha = self.activation(self.ln(self.h0_a(x1)))
+        hb = self.activation(self.ln(self.h0_b(x2)))
+        h = ha + hb  # combine estimations from both parties
+        return h
 
 
 def test_gpt():

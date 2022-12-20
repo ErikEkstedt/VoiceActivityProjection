@@ -2,7 +2,7 @@ import torch
 import torch.nn as nn
 from typing import Optional
 
-import vap.functional as VF
+import vap.phrases.functional as VF
 
 
 def _check_waveform_and_vad_shape(

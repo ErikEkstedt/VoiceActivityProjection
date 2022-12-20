@@ -1,6 +1,6 @@
 import torch
 import torchaudio.functional as AF
-from typing import Union, Optional, Tuple
+from typing import Union, Tuple
 
 try:
     import parselmouth
@@ -10,7 +10,6 @@ except ImportError:
         "Missing dependency 'praat-parselmouth'. Please install ('pip install praat-parselmouth') if you require praat-based augmentations."
     )
 
-from vap.encoder_components import CConv1d
 
 """
 * Praat: https://www.fon.hum.uva.nl/praat/

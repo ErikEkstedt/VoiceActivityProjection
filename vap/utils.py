@@ -1,4 +1,5 @@
 import torch
+from torch import Tensor
 import json
 from os.path import dirname
 
@@ -44,7 +45,9 @@ def load_sample(
     return waveform, vad
 
 
-def find_island_idx_len(x):
+def find_island_idx_len(
+    x: Tensor,
+) -> Tuple[Tensor, Tensor, Tensor]:
     """
     Finds patches of the same value.
 
@@ -74,7 +77,7 @@ def find_island_idx_len(x):
 
 
 def vad_output_to_vad_list(
-    vad: torch.Tensor,
+    vad: Tensor,
     frame_hz: int,
     vad_thresh: float = 0.5,
     ipu_thresh_time: float = 0.1,
@@ -213,7 +216,7 @@ def vad_list_to_onehot(
     hop_time: float,
     duration: float,
     channel_last: bool = False,
-) -> torch.Tensor:
+) -> Tensor:
     n_frames = time_to_frames(duration, hop_time) + 1
 
     if isinstance(vad_list[0][0], list):
@@ -238,7 +241,7 @@ def vad_list_to_onehot(
 
 def load_vad_list(
     path: str, frame_hz: int = 50, duration: Optional[float] = None
-) -> torch.Tensor:
+) -> Tensor:
     vad_hop_time = 1.0 / frame_hz
     vad_list = read_json(path)
 
@@ -264,7 +267,7 @@ def load_vad_list(
 def batch_to_device(batch, device="cuda"):
     new_batch = {}
     for k, v in batch.items():
-        if isinstance(v, torch.Tensor):
+        if isinstance(v, Tensor):
             new_batch[k] = v.to(device)
         else:
             new_batch[k] = v
@@ -274,7 +277,7 @@ def batch_to_device(batch, device="cuda"):
 def tensor_dict_to_json(d):
     new_d = {}
     for k, v in d.items():
-        if isinstance(v, torch.Tensor):
+        if isinstance(v, Tensor):
             v = v.tolist()
         elif isinstance(v, dict):
             v = tensor_dict_to_json(v)

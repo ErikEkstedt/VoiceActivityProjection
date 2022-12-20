@@ -5,6 +5,7 @@ import torch.nn.functional as F
 from einops.layers.torch import Rearrange
 from os.path import exists, join, dirname
 from os import makedirs
+from typing import List
 
 from vap.utils import repo_root
 
@@ -477,8 +478,15 @@ class CConv1d(nn.Conv1d):
         return super().forward(self.pad(input))
 
 
-def get_cnn_layer(dim, kernel, stride, dilation, activation):
-    layers = [Rearrange("b t d -> b d t")]
+def get_cnn_layer(
+    dim: int,
+    kernel: List[int] = [5],
+    stride: List[int] = [2],
+    dilation: List[int] = [1],
+    activation: str = "GELU",
+):
+    layers = []
+    layers.append(Rearrange("b t d -> b d t"))
     for k, s, d in zip(kernel, stride, dilation):
         layers.append(CConv1d(dim, dim, kernel_size=k, stride=s, dilation=d))
         layers.append(LayerNorm(dim))

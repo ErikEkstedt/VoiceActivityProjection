@@ -1,12 +1,10 @@
 import torch
 import torch.nn as nn
-import torch.nn.functional as F
 import einops
-
 from vap.encoder_components import load_CPC, get_cnn_layer
 
 
-class Encoder(nn.Module):
+class EncoderCPC(nn.Module):
     """
     Encoder: waveform -> h
     pretrained: default='cpc'
@@ -15,7 +13,7 @@ class Encoder(nn.Module):
     check paper (branch) version to see other encoders...
     """
 
-    def __init__(self, freeze=True, downsample=None):
+    def __init__(self, freeze=True):
         super().__init__()
         self.sample_rate = 16000
         self.encoder = load_CPC()
@@ -23,28 +21,14 @@ class Encoder(nn.Module):
         self.dim = self.output_dim
 
         self.downsample_ratio = 160
-        if downsample is not None:
-            self.downsample = get_cnn_layer(
-                dim=self.output_dim,
-                kernel=downsample["kernel"],
-                stride=downsample["stride"],
-                dilation=downsample["dilation"],
-                activation=downsample["activation"],
-            )
-            if downsample["stride"] == [2]:
-                if downsample["kernel"] == [5]:
-                    self.downsample_ratio = 320
-                else:
-                    self.downsample_ratio = None
-            elif downsample["stride"] == [5]:
-                if downsample["kernel"] == [11]:
-                    self.downsample_ratio = 800
-                else:
-                    self.downsample_ratio = None
-            else:
-                self.downsample_ratio = None
-        else:
-            self.downsample = nn.Identity()
+        self.downsample = get_cnn_layer(
+            dim=self.output_dim,
+            kernel=[5],
+            stride=[2],
+            dilation=[1],
+            activation="GELU",
+        )
+        self.downsample_ratio = 320
 
         if freeze:
             self.freeze()
