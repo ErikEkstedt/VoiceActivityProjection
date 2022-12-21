@@ -1,15 +1,72 @@
 import torch
-import torchaudio.transforms as AT
 import numpy as np
 import matplotlib as mpl
 import matplotlib.pyplot as plt
-from typing import Optional, Union, List, Tuple, Iterable
+from typing import Optional, Union, List, Tuple
 
 from vap.audio import log_mel_spectrogram
 from vap.utils import read_json
-import vap.functional as VF
+import vap.phrases.functional as VF
 
 
+def plot_mel_spectrogram(
+    y, ax, sample_rate=16_000, hop_time=0.02, frame_time=0.05, n_mels=80
+):
+    duration = y.shape[-1] / sample_rate
+    xmin, xmax = 0, duration
+    ymin, ymax = 0, 80
+
+    hop_length = round(sample_rate * hop_time)
+    frame_length = round(sample_rate * frame_time)
+    spec = log_mel_spectrogram(
+        y,
+        n_mels=n_mels,
+        n_fft=frame_length,
+        hop_length=hop_length,
+        sample_rate=sample_rate,
+    )
+    ax[0].imshow(
+        spec[0],
+        interpolation="none",
+        aspect="auto",
+        origin="lower",
+        extent=[xmin, xmax, ymin, ymax],
+    )
+    ax[0].set_yticks([])
+    if len(ax) > 1:
+        ax[1].imshow(
+            spec[1],
+            interpolation="none",
+            aspect="auto",
+            origin="lower",
+            extent=[xmin, xmax, ymin, ymax],
+        )
+        ax[1].set_yticks([])
+
+
+def plot_vad(x, vad, ax, ypad=0, label=None):
+    assert vad.ndim == 1, f"Expects (N_FRAMES, ) got {vad.shape}"
+    ymin, ymax = ax.get_ylim()
+    scale = ymax - ymin - ypad
+    ax.plot(x, ymin + vad.cpu() * scale, color="w", label=label)
+
+
+def plot_event(ev, ax, color="r", frame_hz=50):
+    for e in ev:
+        start, end, ch = e
+        start /= frame_hz
+        end /= frame_hz
+        ymin, ymax = ax[ch].get_ylim()
+        ax[ch].fill_betweenx(
+            y=[ymin + 1, ymax - 1],
+            x1=[start, start],
+            x2=[end, end],
+            color=color,
+            alpha=0.4,
+        )
+
+
+##################################################################
 def to_mono(waveform: torch.Tensor) -> torch.Tensor:
     if waveform.ndim == 3:
         return waveform.mean(-2, keepdim=True)

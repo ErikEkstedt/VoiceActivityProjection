@@ -1,6 +1,10 @@
-from omegaconf import DictConfig, OmegaConf
+# from omegaconf import DictConfig, OmegaConf
+# import hydra
+from argparse import ArgumentParser
 from os import environ
-import hydra
+from typing import Dict
+from dataclasses import dataclass
+
 import wandb
 import torch
 import pytorch_lightning as pl
@@ -11,71 +15,302 @@ from pytorch_lightning.callbacks import (
 )
 from pytorch_lightning.loggers.wandb import WandbLogger
 from pytorch_lightning.strategies.ddp import DDPStrategy
+from torchmetrics.classification import Accuracy, F1Score
 
 from datasets_turntaking import DialogAudioDM
-
 from vap.callbacks import PhrasesCallback
-from vap.events import TurnTakingEvents
-from vap.model import VapGPT
+from vap.events import TurnTakingEvents, EventConfig
+from vap.zero_shot import ZeroShot
+from vap.model import VapGPT, VapConfig, load_older_state_dict
+
+
+@dataclass
+class OptConfig:
+    learning_rate: float = 3.63e-4
+    find_learning_rate: bool = False
+    betas = [0.9, 0.999]
+    weight_decay: float = 0.001
+    lr_scheduler_interval: str = "step"
+    lr_scheduler_freq: int = 100
+    lr_scheduler_tmax: int = 2500
+    lr_scheduler_patience: int = 2
+    lr_scheduler_factor: float = 0.5
+
+    # early stopping
+    early_stopping: bool = True
+    patience: int = 10
+    monitor: str = "val_loss"
+    mode: str = "min"
+
+    @staticmethod
+    def add_argparse_args(parser):
+        for k, v in OptConfig.__dataclass_fields__.items():
+            parser.add_argument(f"--opt_{k}", type=v.type, default=v.default)
+        return parser
+
+    @staticmethod
+    def args_to_conf(args):
+        return OptConfig(
+            **{
+                k.replace("opt_", ""): v
+                for k, v in vars(args).items()
+                if k.startswith("opt_")
+            }
+        )
+
+
+@dataclass
+class DataConfig:
+    datasets = ["switchboard", "fisher"]
+    type: str = "events"
+    audio_duration: float = 20
+    audio_normalize: bool = False
+    audio_overlap: float = 2
+    flip_channels: bool = True
+    flip_probability: float = 0.5
+    mask_vad: bool = True
+    mask_vad_probability: float = 0.5
+    batch_size: int = 16
+    num_workers: int = 24
+
+    @staticmethod
+    def add_argparse_args(parser):
+        for k, v in DataConfig.__dataclass_fields__.items():
+            parser.add_argument(f"--data_{k}", type=v.type, default=v.default)
+        return parser
+
+    @staticmethod
+    def args_to_conf(args):
+        return DataConfig(
+            **{
+                k.replace("data_", ""): v
+                for k, v in vars(args).items()
+                if k.startswith("data_")
+            }
+        )
+
+
+def get_args():
+    parser = ArgumentParser("VoiceActivityProjection")
+    parser.add_argument("--debug", action="store_true")
+    parser.add_argument("--seed", type=int, default=1)
+    parser.add_argument("--wandb_project", type=str, default="VapGPT")
+    parser = pl.Trainer.add_argparse_args(parser)
+    parser = OptConfig.add_argparse_args(parser)
+    parser = DataConfig.add_argparse_args(parser)
+    parser, fields_added = VapConfig.add_argparse_args(parser)
+    parser, fields_added = EventConfig.add_argparse_args(parser, fields_added)
+
+    args = parser.parse_args()
+    return args, {
+        "model": VapConfig.args_to_conf(args),
+        "event": EventConfig.args_to_conf(args),
+        "opt": OptConfig.args_to_conf(args),
+        "data": DataConfig.args_to_conf(args),
+    }
+
+
+def get_run_name(configs) -> str:
+    s = "VapGPT"
+    s += f"_{configs['model'].frame_hz}Hz"
+    s += f"_ad{configs['data'].audio_duration}s"
+    s += f"_{configs['model'].channel_layers}"
+    s += str(configs["model"].cross_layers)
+    s += str(configs["model"].num_heads)
+    return s
+
+
+def train() -> None:
+    args, configs = get_args()
+
+    cfg_dict = vars(args)
+
+    # Remove all non trainer args
+    for k, _ in list(cfg_dict.items()):
+        if (
+            k.startswith("data_")
+            or k.startswith("vap_")
+            or k.startswith("opt_")
+            or k.startswith("event_")
+        ):
+            cfg_dict.pop(k)
+
+    pl.seed_everything(cfg_dict["seed"])
+    local_rank = environ.get("LOCAL_RANK", 0)
+
+    model = VAPModel(
+        configs["model"], opt_conf=configs["opt"], event_conf=configs["event"]
+    )
+
+    name = get_run_name(configs)
+
+    dconf = configs["data"]
+    dm = DialogAudioDM(
+        datasets=dconf.datasets,
+        type=dconf.type,
+        audio_duration=dconf.audio_duration,
+        audio_normalize=dconf.audio_normalize,
+        audio_overlap=dconf.audio_overlap,
+        flip_channels=dconf.flip_channels,
+        flip_probability=dconf.flip_probability,
+        mask_vad=dconf.mask_vad,
+        mask_vad_probability=dconf.mask_vad_probability,
+        batch_size=dconf.batch_size,
+        num_workers=dconf.num_workers,
+    )
+    dm.prepare_data()
+
+    if cfg_dict["debug"]:
+        environ["WANDB_MODE"] = "offline"
+        print("#" * 40)
+        print("DEBUG -> OFFLINE MODE")
+        print("#" * 40)
+
+    if cfg_dict["fast_dev_run"]:
+        print("NAME: " + name)
+        print("-" * 40)
+        print(dm)
+        trainer = pl.Trainer(**cfg_dict)
+        trainer.fit(model, datamodule=dm)
+    else:
+        oconf = configs["opt"]
+
+        # Callbacks & Logger
+        logger = None
+        callbacks = [
+            ModelCheckpoint(
+                mode=oconf.mode,
+                monitor=oconf.monitor,
+                auto_insert_metric_name=False,
+                filename=name + "-epoch{epoch}-val_{val_loss:.2f}",
+            ),
+            EarlyStopping(
+                monitor=oconf.monitor,
+                mode=oconf.mode,
+                patience=oconf.patience,
+                strict=True,  # crash if "monitor" is not found in val metrics
+                verbose=False,
+            ),
+            # PhrasesCallback(model),
+        ]
+
+        if not cfg_dict["debug"]:
+            logger = WandbLogger(
+                project=cfg_dict["wandb_project"],
+                name=name,
+                log_model=False,
+                save_dir="runs",
+            )
+            callbacks.append(LearningRateMonitor())
+
+        if local_rank == 0:
+            print("#" * 40)
+            print(f"Early stopping (patience={oconf.patience})")
+            print("#" * 40)
+
+        # Find Best Learning Rate
+        if oconf.find_learning_rate:
+            trainer = pl.Trainer(accelerator="gpu", devices=-1)
+            lr_finder = trainer.tuner.lr_find(model, dm)
+            model.learning_rate = lr_finder.suggestion()
+        print("Learning Rate: ", model.opt_conf.learning_rate)
+        print("#" * 40)
+
+        # Actual Training
+
+        if torch.cuda.is_available():
+            cfg_dict["accelerator"] = "gpu"
+
+        for n in ["logger", "strategy", "debug", "seed", "wandb_project"]:
+            cfg_dict.pop(n)
+        trainer = pl.Trainer(
+            logger=logger,
+            callbacks=callbacks,
+            strategy=DDPStrategy(find_unused_parameters=False),
+            **cfg_dict,
+        )
+        trainer.fit(model, datamodule=dm)
 
 
 # Used in training (LightningModule) but not required for inference
 class VAPModel(VapGPT, pl.LightningModule):
-    def __init__(self, conf, event_conf):
+    def __init__(self, conf, opt_conf=None, event_conf=None):
         super().__init__(conf)
+
+        self.opt_conf = opt_conf
+        self.event_conf = event_conf
 
         # Training params
         self.save_hyperparameters()
 
         # Metrics
-        self.event_extractor = TurnTakingEvents(event_conf)
-        self.val_metrics = self.get_metrics()
+        self.event_extractor = None
+        if event_conf is not None:
+            self.zero_shot = ZeroShot(bin_times=conf.bin_times, frame_hz=conf.frame_hz)
+            self.event_extractor = TurnTakingEvents(event_conf)
 
     def get_metrics(self):
         metrics = {"acc": {}, "f1": {}}
-        metrics["f1"]["hs"] = F1Score(
-            task="multiclass", num_classes=2, average="weighted", multiclass=True
-        )
-        metrics["f1"]["ls"] = F1Score(
-            task="multiclass", num_classes=2, average="weighted", multiclass=True
-        )
-        metrics["f1"]["sp"] = F1Score(
-            task="multiclass", num_classes=2, average="weighted", multiclass=True
-        )
-        metrics["f1"]["bp"] = F1Score(
-            task="multiclass", num_classes=2, average="weighted", multiclass=True
-        )
+
         metrics["acc"]["hs"] = Accuracy(
-            task="multiclass", num_classes=2, average="none", multiclass=True
-        )
+            task="multiclass", num_classes=2, multiclass=True, average="none"
+        ).to(self.device)
         metrics["acc"]["ls"] = Accuracy(
-            task="multiclass", num_classes=2, average="none", multiclass=True
-        )
+            task="multiclass", num_classes=2, multiclass=True, average="none"
+        ).to(self.device)
         metrics["acc"]["sp"] = Accuracy(
-            task="multiclass", num_classes=2, average="none", multiclass=True
-        )
+            task="multiclass", num_classes=2, multiclass=True, average="none"
+        ).to(self.device)
         metrics["acc"]["bp"] = Accuracy(
-            task="multiclass", num_classes=2, average="none", multiclass=True
-        )
+            task="multiclass", num_classes=2, multiclass=True, average="none"
+        ).to(self.device)
+
+        metrics["f1"]["hs"] = F1Score(
+            task="multiclass",
+            num_classes=2,
+            multiclass=True,
+            average="weighted",
+        ).to(self.device)
+        metrics["f1"]["ls"] = F1Score(
+            task="multiclass",
+            num_classes=2,
+            multiclass=True,
+            average="weighted",
+        ).to(self.device)
+        metrics["f1"]["sp"] = F1Score(
+            task="multiclass",
+            num_classes=2,
+            multiclass=True,
+            average="weighted",
+        ).to(self.device)
+        metrics["f1"]["bp"] = F1Score(
+            task="multiclass",
+            num_classes=2,
+            multiclass=True,
+            average="weighted",
+        ).to(self.device)
+
         return metrics
 
     def metrics_step(self, preds, targets, split="val"):
         m = self.val_metrics if split == "val" else self.test_metrics
 
+        # The metrics don't work if the predictions are not rounded
+        # I don't know why...
         if preds["hs"] is not None:
-            m["f1"]["hs"].update(preds=preds["hs"], target=targets["hs"])
-            m["acc"]["hs"].update(preds=preds["hs"], target=targets["hs"])
+            m["f1"]["hs"].update(preds=preds["hs"].round(), target=targets["hs"])
+            m["acc"]["hs"].update(preds=preds["hs"].round(), target=targets["hs"])
 
         if preds["ls"] is not None:
-            m["f1"]["ls"].update(preds=preds["ls"], target=targets["ls"])
-            m["acc"]["ls"].update(preds=preds["ls"], target=targets["ls"])
+            m["f1"]["ls"].update(preds=preds["ls"].round(), target=targets["ls"])
+            m["acc"]["ls"].update(preds=preds["ls"].round(), target=targets["ls"])
 
         if preds["pred_shift"] is not None:
             m["f1"]["sp"].update(
-                preds=preds["pred_shift"], target=targets["pred_shift"]
+                preds=preds["pred_shift"].round(), target=targets["pred_shift"]
             )
             m["acc"]["sp"].update(
-                preds=preds["pred_shift"], target=targets["pred_shift"]
+                preds=preds["pred_shift"].round(), target=targets["pred_shift"]
             )
 
         if preds["pred_backchannel"] is not None:
@@ -87,7 +322,10 @@ class VAPModel(VapGPT, pl.LightningModule):
             )
 
     def metrics_epoch(self, split="val"):
-        m = self.val_metrics if split == "val" else self.test_metrics
+        if split == "val":
+            m = self.val_metrics
+        else:
+            m = self.test_metrics
 
         f1 = {}
         for name, metric in m["f1"].items():
@@ -98,40 +336,18 @@ class VAPModel(VapGPT, pl.LightningModule):
         acc = {}
         for name, metric in m["acc"].items():
             a, b = metric.compute()
-            f1[name] = {"a": a, "b": b}
+            acc[name] = [a, b]
             metric.reset()
 
-        # Log
         self.log(
             f"{split}_hs",
-            {"hold_acc": acc["hs"][0], "shift_acc": acc["hs"][0], "f1": f1["hs"]},
+            {"shift_acc": acc["hs"][1], "f1w": f1["hs"]},
+            prog_bar=True,
             sync_dist=True,
         )
-        self.log(
-            f"{split}_ls",
-            {"long": acc["ls"][0], "short": acc["ls"][1], "f1": f1["ls"]},
-            sync_dist=True,
-        )
-        self.log(
-            f"{split}_pred_sh",
-            {"hold": acc["sp"][0], "shift": acc["sp"][1], "f1": f1["sp"]},
-            sync_dist=True,
-        )
-        self.log(
-            f"{split}_pred_bc",
-            {"non": acc["bp"][0], "bc": acc["bp"][1], "f1": f1["bp"]},
-            sync_dist=True,
-        )
-
-    @property
-    def run_name(self):
-        s = "VAP"
-        s += f"_{self.conf.frame_hz}Hz"
-        s += f"_ad{self.conf.audio_duration}s"
-        s += f"_{self.conf.channel_layers}"
-        s += str(self.conf.cross_layers)
-        s += str(self.conf.num_heads)
-        return s
+        self.log(f"{split}_pred_sh", {"shift": acc["sp"][1]}, sync_dist=True)
+        self.log(f"{split}_ls", {"short": acc["ls"][1]}, sync_dist=True)
+        self.log(f"{split}_pred_bc", {"bc_pred": acc["bp"][1]}, sync_dist=True)
 
     def shared_step(
         self, batch: Dict, reduction: str = "mean"
@@ -155,16 +371,16 @@ class VAPModel(VapGPT, pl.LightningModule):
     def configure_optimizers(self) -> Dict:
         opt = torch.optim.AdamW(
             self.parameters(),
-            lr=self.conf.opt_lr,
-            betas=self.conf.opt_betas,
-            weight_decay=self.conf.opt_weight_decay,
+            lr=self.opt_conf.learning_rate,
+            betas=self.opt_conf.betas,
+            weight_decay=self.opt_conf.weight_decay,
         )
         lr_scheduler = {
             "scheduler": torch.optim.lr_scheduler.ReduceLROnPlateau(
                 opt,
                 mode="min",
-                factor=self.conf.opt_lr_scheduler_factor,
-                patience=self.conf.opt_lr_scheduler_patience,
+                factor=self.opt_conf.lr_scheduler_factor,
+                patience=self.opt_conf.lr_scheduler_patience,
             ),
             "monitor": "val_loss",
         }
@@ -174,139 +390,67 @@ class VAPModel(VapGPT, pl.LightningModule):
         out = self.shared_step(batch)
         batch_size = batch["waveform"].shape[0]
         self.log("loss", out["vap_loss"], batch_size=batch_size, sync_dist=True)
-        self.log("loss_va", out["loss_va"], batch_size=batch_size, sync_dist=True)
+        self.log("loss_va", out["vad_loss"], batch_size=batch_size, sync_dist=True)
         loss = out["vap_loss"] + out["vad_loss"]
         return {"loss": loss}
 
     def validation_step(self, batch, batch_idx, **kwargs):
         """validation step"""
+        if not hasattr(self, "val_metrics"):
+            self.val_metrics = self.get_metrics()
         out = self.shared_step(batch)
         batch_size = batch["waveform"].shape[0]
         self.log("val_loss", out["vap_loss"], batch_size=batch_size, sync_dist=True)
-        self.log("val_loss_va", out["loss_va"], batch_size=batch_size, sync_dist=True)
+        self.log("val_loss_va", out["vad_loss"], batch_size=batch_size, sync_dist=True)
 
         # Event Metrics
         if self.event_extractor is not None:
             events = self.event_extractor(batch["vad"])
-            preds, targets = self.VAP.extract_prediction_and_targets(
-                p=out["p"], p_bc=out["p_bc"], events=events
+            # probs = self.zero_shot.get_probs(out["logits"], batch["vad"])
+            # preds, targets = self.zero_shot.extract_prediction_and_targets(
+            #     p=probs["p"], p_bc=probs["p_bc"], events=events
+            # )
+            probs = self.objective.get_probs(out["logits"])
+            preds, targets = self.objective.extract_prediction_and_targets(
+                p_now=probs["p_now"], p_fut=probs["p_future"], events=events
             )
             self.metrics_step(preds, targets, split="val")
 
     def validation_epoch_end(self, *_):
-        self.metrics_epoch("val")
+        if hasattr(self, "val_metrics"):
+            self.metrics_epoch("val")
 
     def test_step(self, batch, batch_idx, **kwargs):
-        """Test step"""
-
+        """validation step"""
         if not hasattr(self, "test_metrics"):
-            self.text_metrics = self.get_metrics()
+            self.test_metrics = self.get_metrics()
+
+            for name, events in self.test_metrics.items():
+                for event, metric in events.items():
+                    strname = f"test_{name}_{event}"
+                    self.register_module(strname, metric)
 
         out = self.shared_step(batch)
         batch_size = batch["waveform"].shape[0]
         self.log("test_loss", out["vap_loss"], batch_size=batch_size, sync_dist=True)
-        self.log("test_loss_va", out["loss_va"], batch_size=batch_size, sync_dist=True)
+        self.log("test_loss_va", out["vad_loss"], batch_size=batch_size, sync_dist=True)
 
         # Event Metrics
         if self.event_extractor is not None:
             events = self.event_extractor(batch["vad"])
-            preds, targets = self.VAP.extract_prediction_and_targets(
-                p=out["p"], p_bc=out["p_bc"], events=events
+            # probs = self.zero_shot.get_probs(out["logits"], batch["vad"])
+            # preds, targets = self.zero_shot.extract_prediction_and_targets(
+            #     p=probs["p"], p_bc=probs["p_bc"], events=events
+            # )
+            probs = self.objective.get_probs(out["logits"])
+            preds, targets = self.objective.extract_prediction_and_targets(
+                p_now=probs["p_now"], p_fut=probs["p_future"], events=events
             )
             self.metrics_step(preds, targets, split="test")
 
     def test_epoch_end(self, *_):
-        self.metrics_epoch("test")
-
-
-def print_training(cfg_dict):
-    if cfg_dict["verbose"]:
-        print("Model Conf")
-        for k, v in cfg_dict["model"].items():
-            print(f"{k}: {v}")
-        print("#" * 60)
-
-    if cfg_dict["verbose"]:
-        print("DataModule")
-        for k, v in cfg_dict["data"].items():
-            print(f"{k}: {v}")
-        print("#" * 60)
-
-
-@hydra.main(version_base=None, config_path="conf", config_name="config")
-def train(cfg: DictConfig) -> None:
-    cfg_dict = OmegaConf.to_object(cfg)
-    cfg_dict = dict(cfg_dict)
-
-    pl.seed_everything(cfg_dict["seed"])
-    local_rank = environ.get("LOCAL_RANK", 0)
-
-    model = VAPModel(cfg_dict)
-    dm = DialogAudioDM(audio_mono=not model.stereo, **cfg_dict["data"])
-    dm.prepare_data()
-
-    if "debug" in cfg_dict:
-        environ["WANDB_MODE"] = "offline"
-        print("DEBUG -> OFFLINE MODE")
-
-    if cfg_dict["trainer"]["fast_dev_run"]:
-        if not torch.cuda.is_available():
-            cfg_dict["trainer"].pop("accelerator")
-            cfg_dict["trainer"].pop("devices")
-        print("NAME: " + model.run_name)
-        print("-" * 40)
-        print(dm)
-        print(cfg_dict["model"])
-        trainer = pl.Trainer(**cfg_dict["trainer"])
-        trainer.fit(model, datamodule=dm)
-    else:
-        # Callbacks & Logger
-        logger = WandbLogger(
-            project=cfg_dict["wandb"]["project"],
-            name=model.run_name,
-            log_model=False,
-            save_dir="runs",
-        )
-
-        if local_rank == 0:
-            print("#" * 40)
-            print(f"Early stopping (patience={cfg_dict['early_stopping']['patience']})")
-            print("#" * 40)
-
-        callbacks = [
-            ModelCheckpoint(
-                mode=cfg_dict["checkpoint"]["mode"],
-                monitor=cfg_dict["checkpoint"]["monitor"],
-                auto_insert_metric_name=False,
-                filename=model.run_name + "-epoch{epoch}-val_{val_loss:.2f}",
-            ),
-            EarlyStopping(
-                monitor=cfg_dict["early_stopping"]["monitor"],
-                mode=cfg_dict["early_stopping"]["mode"],
-                patience=cfg_dict["early_stopping"]["patience"],
-                strict=True,  # crash if "monitor" is not found in val metrics
-                verbose=False,
-            ),
-            LearningRateMonitor(),
-            PhrasesCallback(model),
-        ]
-
-        # Find Best Learning Rate
-        if cfg_dict["optimizer"].get("find_learning_rate", False):
-            trainer = pl.Trainer(accelerator="gpu", devices=-1)
-            lr_finder = trainer.tuner.lr_find(model, dm)
-            model.learning_rate = lr_finder.suggestion()
-        print("Learning Rate: ", model.learning_rate)
-        print("#" * 40)
-
-        # Actual Training
-        trainer = pl.Trainer(
-            logger=logger,
-            callbacks=callbacks,
-            strategy=DDPStrategy(find_unused_parameters=False),
-            **cfg_dict["trainer"],
-        )
-        trainer.fit(model, datamodule=dm)
+        if hasattr(self, "test_metrics"):
+            self.metrics_epoch("test")
 
 
 if __name__ == "__main__":

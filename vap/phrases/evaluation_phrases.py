@@ -11,8 +11,7 @@ import matplotlib as mpl
 
 mpl.use("agg")
 
-import vap.transforms as VT
-from vap.model import VAPModel
+import vap.phrases.transforms as VT
 from vap.phrases.dataset import PhraseDataset
 from vap.plot_utils import plot_phrases_sample
 
@@ -490,6 +489,10 @@ def evaluation_phrases(
 
 
 if __name__ == "__main__":
+    # WARNING: this should break
+    # TODO: new model structure evaluation
+    from vap.model import VAPModel
+
     parser = ArgumentParser()
     parser.add_argument("--checkpoint", type=str, help="Model checkpoint path")
     parser.add_argument(

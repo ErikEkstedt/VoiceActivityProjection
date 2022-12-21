@@ -1,10 +1,9 @@
 import pytorch_lightning as pl
 import wandb
 
-from vap.evaluation_phrases import evaluation_phrases
+from vap.phrases.evaluation_phrases import evaluation_phrases
 from vap.phrases.dataset import PhraseDataset
-
-import vap.transforms as VT
+import vap.phrases.transforms as VT
 
 
 # TODO: batches without transforms

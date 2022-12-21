@@ -45,6 +45,12 @@ def load_sample(
     return waveform, vad
 
 
+def add_zero_channel(w: Tensor) -> Tensor:
+    """Add silent channel as speaker 'B'"""
+    z = torch.zeros_like(w)
+    return torch.cat((w, z), dim=-2)
+
+
 def find_island_idx_len(
     x: Tensor,
 ) -> Tuple[Tensor, Tensor, Tensor]:
@@ -229,7 +235,10 @@ def vad_list_to_onehot(
     else:
         vad_tensor = torch.zeros((1, n_frames))
         for v in vad_list:
-            s = time_to_frames(v[0], hop_time)
+            try:
+                s = time_to_frames(v[0], hop_time)
+            except:
+                print(v.shape, v.type)
             e = time_to_frames(v[1], hop_time)
             vad_tensor[:, s:e] = 1.0
 

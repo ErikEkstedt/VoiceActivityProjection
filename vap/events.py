@@ -44,6 +44,23 @@ class EventConfig:
     long_onset_region_time: float = 0.2
     long_onset_condition_time: float = 1.0
 
+    @staticmethod
+    def add_argparse_args(parser, fields_added=[]):
+        for k, v in EventConfig.__dataclass_fields__.items():
+            parser.add_argument(f"--event_{k}", type=v.type, default=v.default)
+            fields_added.append(k)
+        return parser, fields_added
+
+    @staticmethod
+    def args_to_conf(args):
+        return EventConfig(
+            **{
+                k.replace("event_", ""): v
+                for k, v in vars(args).items()
+                if k.startswith("event_")
+            }
+        )
+
 
 def time_to_frames(time: float, frame_hz: int) -> int:
     frame = int(time * frame_hz)
@@ -461,7 +478,7 @@ def get_negative_sample_regions(
     return neg_regions
 
 
-class HoldShiftNew:
+class HoldShift:
     def __init__(
         self,
         pre_cond_time: float,
@@ -565,7 +582,7 @@ class HoldShiftNew:
         }
 
 
-class BackchannelNew:
+class Backchannel:
     def __init__(
         self,
         pre_cond_time: float,
@@ -690,20 +707,22 @@ class BackchannelNew:
 
 
 class TurnTakingEvents:
-    def __init__(self, conf: EventConfig):
+    def __init__(self, conf: Optional[EventConfig] = None):
+        if conf is None:
+            conf = EventConfig()
         self.conf = conf
         # Memory to add extra event in upcomming batches
         # if there is a discrepancy between
         # `pred_shift` & `pred_shift_neg` and
         # `pred_bc` & `pred_bc_neg` and
         self.add_extra = {"shift": 0, "pred_shift": 0, "pred_backchannel": 0}
-        self.min_silence_time = 1
+        self.min_silence_time = conf.metric_time + conf.metric_pad_time
 
         assert (
             conf.min_context_time < conf.max_time
         ), "`minimum_context_time` must be lower than `max_time`"
 
-        self.HS = HoldShiftNew(
+        self.HS = HoldShift(
             pre_cond_time=conf.sh_pre_cond_time,
             post_cond_time=conf.sh_post_cond_time,
             prediction_region_time=conf.prediction_region_time,
@@ -716,7 +735,7 @@ class TurnTakingEvents:
             frame_hz=conf.frame_hz,
         )
 
-        self.BC = BackchannelNew(
+        self.BC = Backchannel(
             pre_cond_time=conf.bc_pre_cond_time,
             post_cond_time=conf.bc_post_cond_time,
             prediction_region_time=conf.prediction_region_time,
@@ -820,6 +839,50 @@ class TurnTakingEvents:
 
 
 if __name__ == "__main__":
+    from datasets_turntaking import DialogAudioDM
+    from vap.plot_utils import plot_mel_spectrogram, plot_vad
+    from vap.objective import ObjectiveVAP
+    import matplotlib.pyplot as plt
 
-    conf = EventConfig()
+    dm = DialogAudioDM(
+        datasets=["switchboard"],  # , "fisher"],
+        audio_duration=20,
+        batch_size=2,
+        num_workers=1,
+        flip_channels=True,
+        flip_probability=0.5,
+        mask_vad=True,
+        mask_vad_probability=1.0,
+    )
+    dm.prepare_data()
+    dm.setup()
+
+    conf = EventConfig(
+        metric_time=0.05,
+        equal_hold_shift=False,
+        sh_pre_cond_time=0.5,
+        sh_post_cond_time=0.5,
+    )
     eventer = TurnTakingEvents(conf)
+    ob = ObjectiveVAP()
+
+    for batch in dm.val_dataloader():
+        events = eventer(batch["vad"][:, :-100])
+        labels, ds_labels = ob.get_labels(batch["vad"], ds_label=True)
+        for b in range(2):
+            x = torch.arange(batch["vad"].shape[1] - 100) / 50
+            plt.close("all")
+            fig, ax = plt.subplots(3, 1, sharex=True, figsize=(12, 4))
+            plot_mel_spectrogram(y=batch["waveform"][b], ax=ax)
+            plot_vad(x, batch["vad"][b, :-100, 0], ax=ax[0], ypad=5)
+            plot_vad(x, batch["vad"][b, :-100, 1], ax=ax[1], ypad=5)
+            plot_event(events["shift"][b], ax=ax, color="g")
+            plot_event(events["hold"][b], ax=ax, color="b")
+            plot_event(events["short"][b], ax=ax)
+            ax[-1].plot(x, ds_labels[b], linewidth=2)
+            ax[-1].set_ylim([0, 2])
+            # ax[c].axvline(s/50, color='g', linewidth=2)
+            # ax[c].axvline(e/50, color='r', linewidth=2)
+            plt.tight_layout()
+            plt.show()
+            # plt.pause(0.1)

@@ -4,8 +4,7 @@ from os.path import exists
 from typing import Any, Dict, List, Tuple
 
 from vap.audio import time_to_frames, load_waveform, get_audio_info
-from vap.utils import read_json
-from vap_turn_taking.utils import vad_list_to_onehot, get_activity_history
+from vap.utils import read_json, add_zero_channel, vad_list_to_onehot
 
 try:
     from textgrids import TextGrid
@@ -16,7 +15,7 @@ except ModuleNotFoundError:
 class PhraseDataset(Dataset):
     def __init__(
         self,
-        phrase_path: str,
+        phrase_path: str = "dataset_phrases/phrases.json",
         # AUDIO #################################
         sample_rate: int = 16000,
         audio_mono: bool = True,
@@ -25,8 +24,9 @@ class PhraseDataset(Dataset):
         vad: bool = True,
         vad_hz: int = 50,
         vad_horizon: int = 2,
-        vad_history: bool = True,
+        vad_history: bool = False,
         vad_history_times: List[int] = [60, 30, 10, 5],
+        stereo=True,
     ):
         super().__init__()
         self.data = read_json(phrase_path)
@@ -36,6 +36,7 @@ class PhraseDataset(Dataset):
         self.sample_rate = sample_rate
         self.audio_mono = audio_mono
         self.audio_duration = audio_duration
+        self.stereo = stereo
 
         # VAD parameters
         self.vad = vad  # use vad or not
@@ -190,7 +191,11 @@ class PhraseDataset(Dataset):
 
     def __getitem__(self, idx: int) -> Dict[str, Any]:
         example, long_short, gender, nidx = self.indices[idx]
-        return self.get_sample(example, long_short, gender, nidx)
+        d = self.get_sample(example, long_short, gender, nidx)
+
+        if self.stereo:
+            d["waveform"] = add_zero_channel(d["waveform"])
+        return d
 
 
 if __name__ == "__main__":
