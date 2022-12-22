@@ -5,6 +5,7 @@ import pandas as pd
 
 import torch
 import pytorch_lightning as pl
+from pytorch_lightning.strategies.ddp import DDPStrategy
 
 from datasets_turntaking import DialogAudioDM
 from vap.callbacks import SymmetricSpeakersCallback
@@ -244,26 +245,25 @@ def evaluate() -> None:
     #########################################################
     # Load model
     #########################################################
-    # model = VAPModel.load_from_checkpoint(args.checkpoint)
-    print("#####################################")
-    print("#####################################")
-    print("WARNING LOAD HARDCODED CHECKPOINT")
-    print("#####################################")
-    print("#####################################")
-    model = VAPModel(configs["model"], event_conf=configs["event"])
-    sd = load_older_state_dict()
-    model.load_state_dict(sd, strict=False)
+    model = VAPModel.load_from_checkpoint(args.checkpoint)
+    # print("#####################################")
+    # print("#####################################")
+    # print("WARNING LOAD HARDCODED CHECKPOINT")
+    # print("#####################################")
+    # print("#####################################")
+    # model = VAPModel(configs["model"], event_conf=configs["event"])
+    # sd = load_older_state_dict()
+    # model.load_state_dict(sd, strict=False)
     # model = model.eval()
-    if torch.cuda.is_available():
-        model = model.to("cuda")
+    # if torch.cuda.is_available():
+    #     model = model.to("cuda")
 
     #########################################################
     # Load data
     #########################################################
     dconf = configs["data"]
     dm = DialogAudioDM(
-        # datasets=dconf.datasets,
-        datasets=["switchboard", "fisher"],
+        datasets=dconf.datasets,
         type=dconf.type,
         audio_duration=dconf.audio_duration,
         audio_normalize=dconf.audio_normalize,
@@ -272,9 +272,8 @@ def evaluate() -> None:
         flip_probability=dconf.flip_probability,
         mask_vad=dconf.mask_vad,
         mask_vad_probability=dconf.mask_vad_probability,
-        # batch_size=dconf.batch_size,
-        batch_size=4,
-        num_workers=4,
+        batch_size=dconf.batch_size,
+        num_workers=dconf.num_workers,
     )
     dm.prepare_data()
     dm.setup()
@@ -298,14 +297,13 @@ def evaluate() -> None:
     for pop in ["checkpoint", "seed", "gpus"]:
         cfg_dict.pop(pop)
     cfg_dict["accelerator"] = "gpu"
+    cfg_dict["devices"] = 1
     cfg_dict["deterministic"] = True
+    cfg_dict["strategy"] = DDPStrategy(find_unused_parameters=False)
     trainer = pl.Trainer(
-        callbacks=[SymmetricSpeakersCallback(), PhrasesCallback()],
-        **cfg_dict,
+        callbacks=[SymmetricSpeakersCallback(), PhrasesCallback()], **cfg_dict
     )
-    print("precision: ", trainer.precision)
-    # result = trainer.test(model, dataloaders=dm.val_dataloader())[0]
-    result = trainer.validate(model, dataloaders=dm.val_dataloader())[0]
+    result = trainer.test(model, dataloaders=dm.val_dataloader())[0]
 
     # fixup results
     flat = {}
@@ -316,9 +314,16 @@ def evaluate() -> None:
                 flat[f"{new_name}_{kk}"] = vv.cpu().item()
         else:
             flat[new_name] = v
-
     df = pd.DataFrame([flat])
-    filepath = join(savepath, "score.csv")
+
+    name = "score"
+    if cfg_dict["precision"] == 16:
+        name += "_fp16"
+    if cfg_dict["limit_test_batches"] > 0:
+        nn = cfg_dict["limit_test_batches"] * dm.batch_size
+        name += f"_nb-{nn}"
+
+    filepath = join(savepath, name + ".csv")
     df.to_csv(filepath, index=False)
     print("Saved to -> ", filepath)
 

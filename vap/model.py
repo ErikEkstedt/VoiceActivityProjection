@@ -181,14 +181,6 @@ if __name__ == "__main__":
     from vap.events import TurnTakingEvents
     from vap.zero_shot import ZeroShot
 
-    conf = VapConfig()
-    model = VapGPT(conf)
-    sd = load_older_state_dict()
-    model.load_state_dict(sd, strict=False)
-    model.eval()
-    if torch.cuda.is_available():
-        model = model.to("cuda")
-
     dm = DialogAudioDM(
         datasets=["switchboard", "fisher"],
         audio_duration=20,
@@ -202,64 +194,73 @@ if __name__ == "__main__":
     dm.prepare_data()
     dm.setup()
 
+    conf = VapConfig()
+    model = VapGPT(conf)
+    sd = load_older_state_dict()
+    model.load_state_dict(sd, strict=False)
+    model.eval()
+    if torch.cuda.is_available():
+        model = model.to("cuda")
+    model = model.half()
+
     batch = next(iter(dm.val_dataloader()))
     batch = batch_to_device(batch, "cuda")
     with torch.no_grad():
-        labels = model.objective.get_labels(batch["vad"])
-        out = model(waveform=batch["waveform"])
+        labels = model.objective.get_labels(batch["vad"].half())
+        out = model(waveform=batch["waveform"].half())
         out["vap_loss"] = model.objective.loss_vap(out["logits"], labels)
         out["vad_loss"] = model.objective.loss_vad(out["vad"], batch["vad"])
     print("vap_oss: ", out["vap_loss"])
     print("vad_Loss: ", out["vad_loss"])
 
-    from vap.plot_utils import plot_mel_spectrogram, plot_vad, plot_event
-
-    eventer = TurnTakingEvents()
-    zs = ZeroShot()
-
-    threshold = 0.5
-
-    with torch.no_grad():
-        for batch in dm.val_dataloader():
-            out = model(batch["waveform"].to("cuda"))
-            labels, ds_labels = model.objective.get_labels(
-                batch["vad"].to("cuda"), ds_label=True
-            )
-            probs = zs.get_probs(out["logits"].cpu(), batch["vad"])
-            nmax = labels.shape[1]
-            events = eventer(batch["vad"][:, :nmax])
-            preds, targets = zs.extract_prediction_and_targets(
-                p=probs["p"], p_bc=probs["p_bc"], events=events
-            )
-            result = {}
-            for k, v in preds.items():
-                if v is not None:
-                    pred_class = v.round()
-                    correct = (pred_class == targets[k]).sum()
-                    acc = correct / targets[k].nelement()
-                    result[k] = acc
-                    # print(f"{k}: {acc}")
-            n_shift = sum([len(s) for s in events["shift"]])
-            if n_shift > 0:
-                print("hs: ", result["hs"])
-                # for k, v in result.items():
-                #     print(f"{k}: {v}")
-                # print('#'*40)
-
-        for b in range(2):
-            x = torch.arange(batch["vad"].shape[1] - 100) / 50
-            plt.close("all")
-            fig, ax = plt.subplots(3, 1, sharex=True, figsize=(12, 4))
-            plot_mel_spectrogram(y=batch["waveform"][b], ax=ax)
-            plot_vad(x, batch["vad"][b, :nmax, 0], ax=ax[0], ypad=5)
-            plot_vad(x, batch["vad"][b, :nmax, 1], ax=ax[1], ypad=5)
-            plot_event(events["shift"][b], ax=ax, color="g")
-            plot_event(events["hold"][b], ax=ax, color="b")
-            plot_event(events["short"][b], ax=ax)
-            ax[-1].plot(x, ds_labels[b], linewidth=2)
-            ax[-1].set_ylim([0, 2])
-            # ax[c].axvline(s/50, color='g', linewidth=2)
-            # ax[c].axvline(e/50, color='r', linewidth=2)
-            plt.tight_layout()
-            plt.show()
-            # plt.pause(0.1)
+    # from vap.plot_utils import plot_mel_spectrogram, plot_vad, plot_event
+    #
+    # eventer = TurnTakingEvents()
+    # zs = ZeroShot()
+    #
+    # threshold = 0.5
+    #
+    # with torch.no_grad():
+    #     for batch in dm.val_dataloader():
+    #         out = model(batch["waveform"].to("cuda"))
+    #         labels, ds_labels = model.objective.get_labels(
+    #             batch["vad"].to("cuda"), ds_label=True
+    #         )
+    #         probs = zs.get_probs(out["logits"].cpu(), batch["vad"])
+    #         nmax = labels.shape[1]
+    #         events = eventer(batch["vad"][:, :nmax])
+    #         preds, targets = zs.extract_prediction_and_targets(
+    #             p=probs["p"], p_bc=probs["p_bc"], events=events
+    #         )
+    #         result = {}
+    #         for k, v in preds.items():
+    #             if v is not None:
+    #                 pred_class = v.round()
+    #                 correct = (pred_class == targets[k]).sum()
+    #                 acc = correct / targets[k].nelement()
+    #                 result[k] = acc
+    #                 # print(f"{k}: {acc}")
+    #         n_shift = sum([len(s) for s in events["shift"]])
+    #         if n_shift > 0:
+    #             print("hs: ", result["hs"])
+    #             # for k, v in result.items():
+    #             #     print(f"{k}: {v}")
+    #             # print('#'*40)
+    #
+    #     for b in range(2):
+    #         x = torch.arange(batch["vad"].shape[1] - 100) / 50
+    #         plt.close("all")
+    #         fig, ax = plt.subplots(3, 1, sharex=True, figsize=(12, 4))
+    #         plot_mel_spectrogram(y=batch["waveform"][b], ax=ax)
+    #         plot_vad(x, batch["vad"][b, :nmax, 0], ax=ax[0], ypad=5)
+    #         plot_vad(x, batch["vad"][b, :nmax, 1], ax=ax[1], ypad=5)
+    #         plot_event(events["shift"][b], ax=ax, color="g")
+    #         plot_event(events["hold"][b], ax=ax, color="b")
+    #         plot_event(events["short"][b], ax=ax)
+    #         ax[-1].plot(x, ds_labels[b], linewidth=2)
+    #         ax[-1].set_ylim([0, 2])
+    #         # ax[c].axvline(s/50, color='g', linewidth=2)
+    #         # ax[c].axvline(e/50, color='r', linewidth=2)
+    #         plt.tight_layout()
+    #         plt.show()
+    #         # plt.pause(0.1)

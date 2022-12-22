@@ -208,7 +208,8 @@ class PhrasesCallback(pl.Callback):
             },
         }
 
-        for batch in tqdm(dloader, desc="Phrases"):
+        pbar = tqdm(dloader, desc="Phrases", leave=False)
+        for batch in pbar:
             batch = batch_to_device(batch, model.device)
             out = model(batch["waveform"])
             probs = model.objective.get_probs(out["logits"])
@@ -231,7 +232,7 @@ class PhrasesCallback(pl.Callback):
                         region_data[long_short][f"scp_{pp_name}"]["hold"].append(h)
                         region_data[long_short][f"scp_{pp_name}"]["pred"].append(p)
                         region_data[long_short][f"scp_{pp_name}"]["react"].append(r)
-
+        pbar.close()
         # Extract stats
         mstats = {}
         sstats = {}

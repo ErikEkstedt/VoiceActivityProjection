@@ -4,7 +4,7 @@ import torch.nn.functional as F
 from torch import Tensor
 from einops import rearrange
 
-from typing import Dict, List, Tuple
+from typing import Dict, List, Tuple, Union
 
 
 def bin_times_to_frames(bin_times: List[float], frame_hz: int) -> List[int]:
@@ -206,13 +206,16 @@ class ObjectiveVAP(nn.Module):
     def window_to_win_dialog_states(self, wins):
         return (wins.sum(-1) > 0).sum(-1)
 
-    def get_labels(self, va: Tensor, ds_label=False) -> Tuple[Tensor, Tensor]:
-        projection_windows = self.projection_window_extractor(va)
+    def get_labels(self, va: Tensor) -> Tensor:
+        projection_windows = self.projection_window_extractor(va).type(va.dtype)
         idx = self.codebook(projection_windows)
-        if ds_label:
-            ds = self.window_to_win_dialog_states(projection_windows)
-            return idx, ds
         return idx
+
+    def get_da_labels(self, va: Tensor) -> Tuple[Tensor, Tensor]:
+        projection_windows = self.projection_window_extractor(va).type(va.dtype)
+        idx = self.codebook(projection_windows)
+        ds = self.window_to_win_dialog_states(projection_windows)
+        return idx, ds
 
     def loss_vap(
         self, logits: Tensor, labels: Tensor, reduction: str = "mean"

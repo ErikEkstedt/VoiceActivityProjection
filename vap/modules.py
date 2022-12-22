@@ -63,15 +63,19 @@ class MultiHeadAttention(nn.Module):
         return torch.einsum("bhid,bhjd->bhij", q, k)
 
     @staticmethod
-    def prepare_causal_mask(T, device="cpu"):
-        mask = torch.tril(torch.ones((T, T), device=device)).view(1, 1, T, T)
+    def prepare_causal_mask(T, device="cpu", dtype=torch.float32):
+        mask = torch.tril(torch.ones((T, T), device=device, dtype=dtype)).view(
+            1, 1, T, T
+        )
         mask.requires_grad_(False)
         return mask
 
     def mask_scores(self, qk: torch.Tensor, mask=None):
         T = qk.size(-1)
         if mask is None:
-            mask = MultiHeadAttention.prepare_causal_mask(T, device=qk.device)
+            mask = MultiHeadAttention.prepare_causal_mask(
+                T, device=qk.device, dtype=qk.dtype
+            )
         qk = qk.masked_fill(mask == 0, float("-inf"))
         return qk
 
@@ -109,7 +113,11 @@ class MultiHeadAttention(nn.Module):
 class MultiHeadAttentionAlibi(MultiHeadAttention):
     def __init__(self, dim: int, num_heads: int, dropout: float, bias: bool = False):
         super().__init__(dim, num_heads, dropout, bias)
-        self.m = torch.tensor(MultiHeadAttentionAlibi.get_slopes(num_heads))
+        # self.m = torch.tensor(MultiHeadAttentionAlibi.get_slopes(num_heads))
+        self.register_parameter(
+            "m",
+            nn.Parameter(torch.tensor(MultiHeadAttentionAlibi.get_slopes(num_heads))),
+        )
         self.m.requires_grad_(False)
         self.mask = None
 
@@ -143,25 +151,31 @@ class MultiHeadAttentionAlibi(MultiHeadAttention):
             closest_power_of_2 = 2 ** math.floor(math.log2(n))
             slopes = (
                 get_slopes_power_of_2(closest_power_of_2)
-                + get_slopes(2 * closest_power_of_2)[0::2][: n - closest_power_of_2]
+                + MultiHeadAttentionAlibi.get_slopes(2 * closest_power_of_2)[0::2][
+                    : n - closest_power_of_2
+                ]
             )
         return slopes
 
     @staticmethod
-    def get_relative_bias_matrix(n, num_heads, device="cpu"):
+    def get_relative_bias_matrix(n, num_heads, device="cpu", dtype=torch.float32):
         """Relative Bias matrix for aLiBi embeddings"""
-        return torch.arange(n, device=device).view(1, 1, -1).expand(1, num_heads, -1)
+        return (
+            torch.arange(n, device=device, dtype=dtype)
+            .view(1, 1, -1)
+            .expand(1, num_heads, -1)
+        )
 
-    def get_alibi_mask(self, T: int, device="cpu"):
+    def get_alibi_mask(self, T: int, device="cpu", dtype=torch.float32):
         rel_bias_mat = MultiHeadAttentionAlibi.get_relative_bias_matrix(
-            T, self.num_heads, device
+            T, self.num_heads, device, dtype
         )
         alibi = rel_bias_mat * self.m.unsqueeze(0).unsqueeze(-1).to(device)
 
         # Causal mask (standard GPT pask)
         # lower triangle = 1
         # upper triangle = 0
-        mask = MultiHeadAttention.prepare_causal_mask(T, device)  # (1, 1, T, T)
+        mask = MultiHeadAttention.prepare_causal_mask(T, device, dtype)  # (1, 1, T, T)
         # Repeat to get a mask for each head
         mask = mask.repeat(1, self.num_heads, 1, 1)  # (1, num_heads, T, T)
         # fill "future" information with negative infinity
@@ -176,7 +190,7 @@ class MultiHeadAttentionAlibi(MultiHeadAttention):
         T = qk.size(-1)
         if mask is None:
             if self.mask is None or self.mask.shape[-1] < T:
-                mask = self.get_alibi_mask(T, device=qk.device)
+                mask = self.get_alibi_mask(T, device=qk.device, dtype=qk.dtype)
                 self.mask = mask
             else:
                 mask = self.mask[..., :T, :T]
@@ -373,15 +387,14 @@ class GPTStereo(GPT):
         cross_attn_b = []
         for layer in self.layers:
             x1, x2, attn_list = layer(x1=x1, x2=x2)
-            # attn_list = [sa1w, ca1w, sa2w, ca2w]
             if attention:
+                # [sa1w, ca1w, sa2w, ca2w] = attn_list
                 self_attn_a.append(attn_list[0])
                 cross_attn_a.append(attn_list[1])
                 self_attn_b.append(attn_list[2])
                 cross_attn_b.append(attn_list[3])
 
         x = self.combinator(x1, x2)
-
         ret = {"x": x, "x1": x1, "x2": x2}
 
         if attention:

@@ -18,10 +18,10 @@ from pytorch_lightning.strategies.ddp import DDPStrategy
 from torchmetrics.classification import Accuracy, F1Score
 
 from datasets_turntaking import DialogAudioDM
-from vap.callbacks import PhrasesCallback
+from vap.phrases.dataset import PhrasesCallback
 from vap.events import TurnTakingEvents, EventConfig
 from vap.zero_shot import ZeroShot
-from vap.model import VapGPT, VapConfig, load_older_state_dict
+from vap.model import VapGPT, VapConfig  # , load_older_state_dict
 
 
 @dataclass
@@ -102,9 +102,13 @@ def get_args():
     parser, fields_added = EventConfig.add_argparse_args(parser, fields_added)
     args = parser.parse_args()
 
-    cfg_dict = vars(args)
+    model_conf = VapConfig.args_to_conf(args)
+    opt_conf = OptConfig.args_to_conf(args)
+    data_conf = DataConfig.args_to_conf(args)
+    event_conf = EventConfig.args_to_conf(args)
 
     # Remove all non trainer args
+    cfg_dict = vars(args)
     for k, _ in list(cfg_dict.items()):
         if (
             k.startswith("data_")
@@ -117,10 +121,10 @@ def get_args():
     return {
         "args": args,
         "cfg_dict": cfg_dict,
-        "model": VapConfig.args_to_conf(args),
-        "event": EventConfig.args_to_conf(args),
-        "opt": OptConfig.args_to_conf(args),
-        "data": DataConfig.args_to_conf(args),
+        "model": model_conf,
+        "event": event_conf,
+        "opt": opt_conf,
+        "data": data_conf,
     }
 
 
@@ -135,7 +139,8 @@ def get_run_name(configs) -> str:
 
 
 def train() -> None:
-    args, configs = get_args()
+    configs = get_args()
+    cfg_dict = configs["cfg_dict"]
 
     pl.seed_everything(cfg_dict["seed"])
     local_rank = environ.get("LOCAL_RANK", 0)
@@ -164,14 +169,11 @@ def train() -> None:
 
     if cfg_dict["debug"]:
         environ["WANDB_MODE"] = "offline"
-        print("#" * 40)
         print("DEBUG -> OFFLINE MODE")
-        print("#" * 40)
 
+    print(dm)
     if cfg_dict["fast_dev_run"]:
         print("NAME: " + name)
-        print("-" * 40)
-        print(dm)
         trainer = pl.Trainer(**cfg_dict)
         trainer.fit(model, datamodule=dm)
     else:
@@ -193,7 +195,7 @@ def train() -> None:
                 strict=True,  # crash if "monitor" is not found in val metrics
                 verbose=False,
             ),
-            # PhrasesCallback(model),
+            PhrasesCallback(),
         ]
 
         if not cfg_dict["debug"]:
@@ -361,9 +363,6 @@ class VAPModel(VapGPT, pl.LightningModule):
         Returns:
             out:        dict, ['logits', 'vad', 'vap_loss', 'vad_loss']
         """
-
-        print("waveform: ", batch["waveform"].dtype)
-        print("vap_head: ", self.vap_head.weight.dtype)
         labels = self.objective.get_labels(batch["vad"])
         out = self(waveform=batch["waveform"])
         out["vap_loss"] = self.objective.loss_vap(
@@ -373,6 +372,7 @@ class VAPModel(VapGPT, pl.LightningModule):
         return out
 
     def configure_optimizers(self) -> Dict:
+        assert self.opt_conf is not None, f"configure_optimizers: No Opt conf!"
         opt = torch.optim.AdamW(
             self.parameters(),
             lr=self.opt_conf.learning_rate,
@@ -402,6 +402,7 @@ class VAPModel(VapGPT, pl.LightningModule):
         """validation step"""
         if not hasattr(self, "val_metrics"):
             self.val_metrics = self.get_metrics()
+
         out = self.shared_step(batch)
         batch_size = batch["waveform"].shape[0]
         self.log("val_loss", out["vap_loss"], batch_size=batch_size, sync_dist=True)
