@@ -100,9 +100,23 @@ def get_args():
     parser = DataConfig.add_argparse_args(parser)
     parser, fields_added = VapConfig.add_argparse_args(parser)
     parser, fields_added = EventConfig.add_argparse_args(parser, fields_added)
-
     args = parser.parse_args()
-    return args, {
+
+    cfg_dict = vars(args)
+
+    # Remove all non trainer args
+    for k, _ in list(cfg_dict.items()):
+        if (
+            k.startswith("data_")
+            or k.startswith("vap_")
+            or k.startswith("opt_")
+            or k.startswith("event_")
+        ):
+            cfg_dict.pop(k)
+
+    return {
+        "args": args,
+        "cfg_dict": cfg_dict,
         "model": VapConfig.args_to_conf(args),
         "event": EventConfig.args_to_conf(args),
         "opt": OptConfig.args_to_conf(args),
@@ -122,18 +136,6 @@ def get_run_name(configs) -> str:
 
 def train() -> None:
     args, configs = get_args()
-
-    cfg_dict = vars(args)
-
-    # Remove all non trainer args
-    for k, _ in list(cfg_dict.items()):
-        if (
-            k.startswith("data_")
-            or k.startswith("vap_")
-            or k.startswith("opt_")
-            or k.startswith("event_")
-        ):
-            cfg_dict.pop(k)
 
     pl.seed_everything(cfg_dict["seed"])
     local_rank = environ.get("LOCAL_RANK", 0)
@@ -360,6 +362,8 @@ class VAPModel(VapGPT, pl.LightningModule):
             out:        dict, ['logits', 'vad', 'vap_loss', 'vad_loss']
         """
 
+        print("waveform: ", batch["waveform"].dtype)
+        print("vap_head: ", self.vap_head.weight.dtype)
         labels = self.objective.get_labels(batch["vad"])
         out = self(waveform=batch["waveform"])
         out["vap_loss"] = self.objective.loss_vap(

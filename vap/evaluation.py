@@ -1,24 +1,21 @@
 from argparse import ArgumentParser
 from os.path import basename, join
 from pathlib import Path
-from pytorch_lightning import Trainer
-
 import pandas as pd
+
 import torch
-from torch.utils.data import DataLoader
+import pytorch_lightning as pl
 
 from datasets_turntaking import DialogAudioDM
 from vap.callbacks import SymmetricSpeakersCallback
-from vap.events import TurnTakingEvents, EventConfig
-from vap.model import VapGPT, VapConfig, load_older_state_dict
-from vap.zero_shot import ZeroShot
 from vap.train import VAPModel, DataConfig
-from vap.utils import (
-    everything_deterministic,
-    write_json,
-    read_json,
-    tensor_dict_to_json,
-)
+from vap.phrases.dataset import PhrasesCallback
+from vap.utils import everything_deterministic, write_json
+
+# Delete later prolly
+from vap.model import VapGPT, VapConfig, load_older_state_dict
+from vap.events import TurnTakingEvents, EventConfig
+from vap.zero_shot import ZeroShot
 
 
 everything_deterministic()
@@ -35,11 +32,27 @@ def get_args():
         type=str,
         default="example/VAP_3mmz3t0u_50Hz_ad20s_134-epoch9-val_2.56.ckpt",
     )
+    parser = pl.Trainer.add_argparse_args(parser)
     parser = DataConfig.add_argparse_args(parser)
     parser, fields_added = VapConfig.add_argparse_args(parser)
     parser, fields_added = EventConfig.add_argparse_args(parser, fields_added)
     args = parser.parse_args()
-    return args, {
+
+    cfg_dict = vars(args)
+
+    # Remove all non trainer args
+    for k, _ in list(cfg_dict.items()):
+        if (
+            k.startswith("data_")
+            or k.startswith("vap_")
+            or k.startswith("opt_")
+            or k.startswith("event_")
+        ):
+            cfg_dict.pop(k)
+
+    return {
+        "args": args,
+        "cfg_dict": cfg_dict,
         "model": VapConfig.args_to_conf(args),
         "event": EventConfig.args_to_conf(args),
         "data": DataConfig.args_to_conf(args),
@@ -220,131 +233,27 @@ def get_savepath(args, configs):
     return savepath
 
 
-def get_phrases_eval(model):
-    from vap.phrases.dataset import PhraseDataset
-    from vap.utils import batch_to_device
-    from tqdm import tqdm
-
-    def get_last_frame_active(vad, channel=0):
-        lasts = torch.zeros(vad.shape[0])
-        for b in range(vad.shape[0]):
-            w = torch.where(vad[b, :, channel] == 1)[0][-1]
-            lasts[b] = w
-        lasts -= 1
-        return lasts.long()
-
-    # TODO: make callback to get
-    #          H   P   R
-    # now:  0.96 0.81 0.29
-    # fut:  0.76 0.52 0.3
-
-    # TODO: better pad function
-    def collate_fn(batch):
-        waveform = []
-        vad = []
-        ns_max = -1
-        nf_max = -1
-        for b in batch:
-            waveform.append(b["waveform"])
-            vad.append(b["vad"])
-            if b["waveform"].shape[-1] > ns_max:
-                ns_max = b["waveform"].shape[-1]
-            if b["vad"].shape[-2] > nf_max:
-                nf_max = b["vad"].shape[-2]
-
-        w = torch.zeros((len(waveform), 2, ns_max))
-        for ii, ww in enumerate(waveform):
-            w[ii, :, : ww.shape[-1]] = ww[0]
-
-        v = torch.zeros((len(vad), nf_max, 2))
-        for ii, vv in enumerate(vad):
-            v[ii, : vv.shape[-2], :] = vv[0]
-
-        return {"waveform": w, "vad": v}
-
-    model.eval()
-    model.to("cuda")
-    dset = PhraseDataset()
-    dloader = DataLoader(
-        dset,
-        batch_size=4,
-        num_workers=4,
-        pin_memory=True,
-        shuffle=False,
-        collate_fn=collate_fn,
-    )
-    npad = 10
-    with torch.no_grad():
-        p_hold, p_pred, p_react = [], [], []
-        pf_hold, pf_pred, pf_react = [], [], []
-        pt_hold, pt_pred, pt_react = [], [], []
-        for batch in tqdm(dloader):
-            batch = batch_to_device(batch, model.device)
-            out = model.shared_step(batch)
-            probs = model.objective.get_probs(out["logits"])
-            last_ind = get_last_frame_active(batch["vad"])
-            for b in range(len(last_ind)):
-                beg_sil = last_ind[b]
-                ph = probs["p_now"][b, : beg_sil - npad, 0].mean().cpu()
-                pp = probs["p_now"][b, beg_sil - npad : beg_sil, 0].cpu()
-                pr = probs["p_now"][b, beg_sil : beg_sil + npad, 0].cpu()
-                pfh = probs["p_future"][b, : beg_sil - npad, 0].mean().cpu()
-                pfp = probs["p_future"][b, beg_sil - npad : beg_sil, 0].cpu()
-                pfr = probs["p_future"][b, beg_sil : beg_sil + npad, 0].cpu()
-                pth = probs["p_tot"][b, : beg_sil - npad, 0].mean().cpu()
-                ptp = probs["p_tot"][b, beg_sil - npad : beg_sil, 0].cpu()
-                ptr = probs["p_tot"][b, beg_sil : beg_sil + npad, 0].cpu()
-                p_hold.append(ph)
-                p_pred.append(pp)
-                p_react.append(pr)
-                pf_hold.append(pfh)
-                pf_pred.append(pfp)
-                pf_react.append(pfr)
-                pt_hold.append(pth)
-                pt_pred.append(ptp)
-                pt_react.append(ptr)
-    p_hold = torch.stack(p_hold)
-    p_pred = torch.stack(p_pred)
-    p_react = torch.stack(p_react)
-    pf_hold = torch.stack(pf_hold)
-    pf_pred = torch.stack(pf_pred)
-    pf_react = torch.stack(pf_react)
-    pt_hold = torch.stack(pt_hold)
-    pt_pred = torch.stack(pt_pred)
-    pt_react = torch.stack(pt_react)
-    phm = round(1 - p_hold.mean().cpu().item(), 2)
-    ppm = round(1 - p_pred.mean().cpu().item(), 2)
-    prm = round(1 - p_react.mean().cpu().item(), 2)
-    pfhm = round(1 - pf_hold.mean().cpu().item(), 2)
-    pfpm = round(1 - pf_pred.mean().cpu().item(), 2)
-    pfrm = round(1 - pf_react.mean().cpu().item(), 2)
-    pthm = round(1 - pt_hold.mean().cpu().item(), 2)
-    ptpm = round(1 - pt_pred.mean().cpu().item(), 2)
-    ptrm = round(1 - pt_react.mean().cpu().item(), 2)
-    print("         H   P   R")
-    print("now: ", phm, ppm, prm)
-    print("fut: ", pfhm, pfpm, pfrm)
-    print("tot: ", pthm, ptpm, ptrm)
-    return {
-        "now": [phm, ppm, prm],
-        "fut": [pfhm, pfpm, pfrm],
-        "tot": [pthm, ptpm, ptrm],
-    }
-
-
 def evaluate() -> None:
     """Evaluate model"""
 
-    args, configs = get_args()
+    configs = get_args()
+
+    args = configs["args"]
+    cfg_dict = configs["cfg_dict"]
     savepath = get_savepath(args, configs)
     #########################################################
     # Load model
     #########################################################
     # model = VAPModel.load_from_checkpoint(args.checkpoint)
+    print("#####################################")
+    print("#####################################")
+    print("WARNING LOAD HARDCODED CHECKPOINT")
+    print("#####################################")
+    print("#####################################")
     model = VAPModel(configs["model"], event_conf=configs["event"])
     sd = load_older_state_dict()
     model.load_state_dict(sd, strict=False)
-    model = model.eval()
+    # model = model.eval()
     if torch.cuda.is_available():
         model = model.to("cuda")
 
@@ -364,7 +273,7 @@ def evaluate() -> None:
         mask_vad=dconf.mask_vad,
         mask_vad_probability=dconf.mask_vad_probability,
         # batch_size=dconf.batch_size,
-        batch_size=16,
+        batch_size=4,
         num_workers=4,
     )
     dm.prepare_data()
@@ -386,65 +295,36 @@ def evaluate() -> None:
     #########################################################
     # Score
     #########################################################
-    trainer = Trainer(
-        gpus=-1,
-        deterministic=True,
-        callbacks=[SymmetricSpeakersCallback()],
-        precision=16,
+    for pop in ["checkpoint", "seed", "gpus"]:
+        cfg_dict.pop(pop)
+    cfg_dict["accelerator"] = "gpu"
+    cfg_dict["deterministic"] = True
+    trainer = pl.Trainer(
+        callbacks=[SymmetricSpeakersCallback(), PhrasesCallback()],
+        **cfg_dict,
     )
-    result = trainer.test(model, dataloaders=dm.val_dataloader())[0]
+    print("precision: ", trainer.precision)
+    # result = trainer.test(model, dataloaders=dm.val_dataloader())[0]
+    result = trainer.validate(model, dataloaders=dm.val_dataloader())[0]
+
+    # fixup results
     flat = {}
     for k, v in result.items():
+        new_name = k.replace("test_", "")
         if isinstance(v, dict):
             for kk, vv in v.items():
-                flat[f"{k.replace('test_', '')}_{kk}"] = vv.cpu().item()
+                flat[f"{new_name}_{kk}"] = vv.cpu().item()
+        else:
+            flat[new_name] = v
+
     df = pd.DataFrame([flat])
     filepath = join(savepath, "score.csv")
     df.to_csv(filepath, index=False)
-
-    ##################################
-    # Phrases
-    ##################################
-    phrases = get_phrases_eval(model)
-    for region, (h, p, r) in phrases.items():
-        df[f"{region}_hold"] = h
-        df[f"{region}_pred"] = p
-        df[f"{region}_reac"] = r
-
-    df.to_csv(filepath, index=False)
     print("Saved to -> ", filepath)
 
-    """Evaluation
-    Event Acc
-    - Shift-Acc, Pred-Shift-Acc
-
-    Phrases
-    --------
-    * Stats:    Hold, Pred, React
-        - now
-        - fut
-        - tot
-    * Acc
-        - Total
-        - Correct short
-        - Correct long
-    """
-
-    # dfz = pd.read_csv("test_score.csv")
-    # df = pd.read_csv("test_now_fut_score.csv")
-    # print("Probs")
-    # print(df)
-    # print("ZeroShot")
-    # print(dfz)
-
-    # from vap.utils import batch_to_device
-    # batch = next(iter(dm.val_dataloader()))
-    # batch = batch_to_device(batch, model.device)
-    # out = model(batch["waveform"])
-    # probs = model.objective.get_probs(out["logits"])
-
-    # d = dset[0]
-    # d["waveform"] = add_zero_channel(d["waveform"])
+    # df = pd.read_csv(
+    #     "runs_evaluation/VAP_3mmz3t0u_50Hz_ad20s_134-epoch9-val_2.56_switchboard_fisher/score.csv"
+    # )
 
     # # result = test(model, dm.test_dataloader(), online=False)[0]
     # metrics = model.test_metric.compute()

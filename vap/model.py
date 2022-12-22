@@ -4,7 +4,7 @@ import torch.nn.functional as F
 from torch import Tensor
 
 from dataclasses import dataclass
-from typing import Dict, Tuple, List
+from typing import Dict, Tuple, List, Optional
 
 from vap.encoder import EncoderCPC
 from vap.objective import ObjectiveVAP
@@ -68,8 +68,10 @@ class VapConfig:
 
 
 class VapGPT(nn.Module):
-    def __init__(self, conf: VapConfig):
+    def __init__(self, conf: Optional[VapConfig] = None):
         super().__init__()
+        if conf is None:
+            conf = VapConfig()
         self.conf = conf
         self.sample_rate = conf.sample_rate
         self.frame_hz = conf.frame_hz
