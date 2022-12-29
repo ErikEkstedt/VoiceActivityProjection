@@ -6,7 +6,6 @@ from os.path import dirname
 from typing import List, Optional, Tuple
 
 from vap.audio import time_to_frames, load_waveform
-from vap_turn_taking.utils import vad_list_to_onehot
 
 
 def load_sample(
@@ -80,6 +79,40 @@ def find_island_idx_len(
         :-1
     ]  # positions
     return idx, dur, x[i]
+
+
+def get_dialog_states(vad) -> torch.Tensor:
+    """Vad to the full state of a 2 person vad dialog
+    0: only speaker 0
+    1: none
+    2: both
+    3: only speaker 1
+    """
+    assert vad.ndim >= 1
+    return (2 * vad[..., 1] - vad[..., 0]).long() + 1
+
+
+def vad_list_to_onehot(vad_list, hop_time, duration, channel_last=False):
+    n_frames = time2frames(duration, hop_time) + 1
+
+    if isinstance(vad_list[0][0], list):
+        vad_tensor = torch.zeros((len(vad_list), n_frames))
+        for ch, ch_vad in enumerate(vad_list):
+            for v in ch_vad:
+                s = time2frames(v[0], hop_time)
+                e = time2frames(v[1], hop_time)
+                vad_tensor[ch, s:e] = 1.0
+    else:
+        vad_tensor = torch.zeros((1, n_frames))
+        for v in vad_list:
+            s = time2frames(v[0], hop_time)
+            e = time2frames(v[1], hop_time)
+            vad_tensor[:, s:e] = 1.0
+
+    if channel_last:
+        vad_tensor = vad_tensor.permute(1, 0)
+
+    return vad_tensor
 
 
 def vad_output_to_vad_list(

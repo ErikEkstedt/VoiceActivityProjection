@@ -8,8 +8,9 @@ import pytorch_lightning as pl
 from pytorch_lightning.strategies.ddp import DDPStrategy
 
 from datasets_turntaking import DialogAudioDM
+
 from vap.callbacks import SymmetricSpeakersCallback
-from vap.train import VAPModel, DataConfig
+from vap.train import VAPModel, DataConfig, OptConfig
 from vap.phrases.dataset import PhrasesCallback
 from vap.utils import everything_deterministic, write_json
 
@@ -242,6 +243,7 @@ def evaluate() -> None:
     args = configs["args"]
     cfg_dict = configs["cfg_dict"]
     savepath = get_savepath(args, configs)
+
     #########################################################
     # Load model
     #########################################################
@@ -319,7 +321,7 @@ def evaluate() -> None:
     name = "score"
     if cfg_dict["precision"] == 16:
         name += "_fp16"
-    if cfg_dict["limit_test_batches"] > 0:
+    if cfg_dict["limit_test_batches"] is not None:
         nn = cfg_dict["limit_test_batches"] * dm.batch_size
         name += f"_nb-{nn}"
 
