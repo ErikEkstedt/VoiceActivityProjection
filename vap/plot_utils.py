@@ -33,7 +33,7 @@ def plot_mel_spectrogram(
         extent=[xmin, xmax, ymin, ymax],
     )
     ax[0].set_yticks([])
-    if len(ax) > 1:
+    if len(ax) > 1 and spec.ndim == 3 and spec.shape[0] >= 2:
         ax[1].imshow(
             spec[1],
             interpolation="none",
