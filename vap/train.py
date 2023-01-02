@@ -17,7 +17,8 @@ from pytorch_lightning.loggers.wandb import WandbLogger
 from pytorch_lightning.strategies.ddp import DDPStrategy
 from torchmetrics.classification import Accuracy, F1Score
 
-from datasets_turntaking import DialogAudioDM
+# from datasets_turntaking import DialogAudioDM
+from vap_dataset.datamodule import VapDataModule
 from vap.phrases.dataset import PhrasesCallback
 from vap.events import TurnTakingEvents, EventConfig
 from vap.zero_shot import ZeroShot
@@ -61,17 +62,19 @@ class OptConfig:
 
 @dataclass
 class DataConfig:
-    datasets = ["switchboard", "fisher"]
-    type: str = "events"
-    audio_duration: float = 20
-    audio_normalize: bool = False
-    audio_overlap: float = 2
+
+    train_path: str = "../vap_dataset/data/sliding_train.csv"
+    val_path: str = "../vap_dataset/data/sliding_val.csv"
+    test_path: str = "../vap_dataset/data/sliding_test.csv"
     flip_channels: bool = True
     flip_probability: float = 0.5
     mask_vad: bool = True
     mask_vad_probability: float = 0.5
     batch_size: int = 16
     num_workers: int = 24
+
+    # not used for datamodule
+    audio_duration: float = 20
 
     @staticmethod
     def add_argparse_args(parser):
@@ -152,26 +155,20 @@ def train() -> None:
     name = get_run_name(configs)
 
     dconf = configs["data"]
-    dm = DialogAudioDM(
-        datasets=dconf.datasets,
-        type=dconf.type,
-        audio_duration=dconf.audio_duration,
-        audio_normalize=dconf.audio_normalize,
-        audio_overlap=dconf.audio_overlap,
-        flip_channels=dconf.flip_channels,
-        flip_probability=dconf.flip_probability,
-        mask_vad=dconf.mask_vad,
-        mask_vad_probability=dconf.mask_vad_probability,
+    dm = VapDataModule(
+        train_path=dconf.train_path,
+        val_path=dconf.val_path,
+        horizon=2,
         batch_size=dconf.batch_size,
         num_workers=dconf.num_workers,
     )
     dm.prepare_data()
+    print(dm)
 
     if cfg_dict["debug"]:
         environ["WANDB_MODE"] = "offline"
         print("DEBUG -> OFFLINE MODE")
 
-    print(dm)
     if cfg_dict["fast_dev_run"]:
         print("NAME: " + name)
         trainer = pl.Trainer(**cfg_dict)
