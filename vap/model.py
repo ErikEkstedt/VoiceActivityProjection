@@ -9,7 +9,7 @@ from typing import Dict, Tuple, List, Optional
 from vap.encoder import EncoderCPC
 from vap.objective import ObjectiveVAP
 from vap.modules import GPT, GPTStereo
-from vap.utils import everything_deterministic
+from vap.utils import everything_deterministic, find_island_idx_len
 
 
 everything_deterministic()
@@ -152,6 +152,48 @@ class VapGPT(nn.Module):
             "p_future": p_future,
             "H": H,
         }
+
+    @torch.no_grad()
+    def vad(
+        self,
+        waveform: Tensor,
+        vad_word_pad: float = 0.01,
+        min_segment: float = 0.01,
+        vad_cutoff: float = 0.5,
+    ) -> Tensor:
+        """
+        Extract (binary) Voice Activity Detection from model
+        """
+
+        vad_word_pad_frames = vad_word_pad * self.frame_hz
+        min_segment_frames = min_segment * self.frame_hz
+
+        vad = (self(waveform)["vad"].sigmoid() >= vad_cutoff).float()
+
+        for b in range(vad.shape[0]):
+            for ch in range(vad.shape[-1]):
+
+                # Remove too short segments
+                starts, dur, val = find_island_idx_len(vad[b, :, ch])
+                w = val == 1
+                ss = starts[w]
+                dd = dur[w]
+                for i in torch.where(dd <= min_segment_frames)[0]:
+                    s = ss[i]
+                    d = dd[i]
+                    vad[b, s : s + d, ch] = 0
+
+                # Fill short silences
+                starts, dur, val = find_island_idx_len(vad[b, :, ch])
+                w = val == 0
+                ss = starts[w]
+                dd = dur[w]
+                for i in torch.where(dd <= vad_word_pad_frames)[0]:
+                    s = ss[i]
+                    d = dd[i]
+                    vad[b, s : s + d, ch] = 1
+
+        return vad
 
     def forward(self, waveform: Tensor, attention: bool = False) -> Dict[str, Tensor]:
         x1, x2 = self.encode_audio(waveform)

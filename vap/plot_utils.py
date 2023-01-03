@@ -44,11 +44,11 @@ def plot_mel_spectrogram(
         ax[1].set_yticks([])
 
 
-def plot_vad(x, vad, ax, ypad=0, label=None):
+def plot_vad(x, vad, ax, ypad=0, color="w", label=None):
     assert vad.ndim == 1, f"Expects (N_FRAMES, ) got {vad.shape}"
     ymin, ymax = ax.get_ylim()
     scale = ymax - ymin - ypad
-    ax.plot(x, ymin + vad.cpu() * scale, color="w", label=label)
+    ax.plot(x, ymin + vad.cpu() * scale, color=color, label=label)
 
 
 def plot_event(ev, ax, color="r", frame_hz=50):
