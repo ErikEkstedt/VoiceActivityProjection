@@ -1,6 +1,7 @@
 import torch
+from torch import Tensor
 import torchaudio.functional as AF
-from typing import Union, Tuple
+from typing import Union, Tuple, Optional
 
 try:
     import parselmouth
@@ -286,12 +287,34 @@ def intensity_praat_flatten(
     return praat_to_torch(new_sound)
 
 
+def load_vad_list(
+    path: str, frame_hz: int = 50, duration: Optional[float] = None
+) -> Tensor:
+    vad_list = read_json(path)
+
+    last_vad = -1
+    for vad_channel in vad_list:
+        if len(vad_channel) > 0:
+            if vad_channel[-1][-1] > last_vad:
+                last_vad = vad_channel[-1][-1]
+
+    ##############################################
+    # VAD-frame of relevant part
+    ##############################################
+    all_vad_frames = vad_list_to_onehot(
+        vad_list,
+        frame_hz=frame_hz,
+        duration=duration if duration is not None else last_vad,
+    )
+
+    return all_vad_frames
+
+
 if __name__ == "__main__":
     import sounddevice as sd
     import matplotlib.pyplot as plt
     from vap.audio import load_waveform, get_audio_info
     from vap.plot_utils import plot_stereo_mel_spec
-    from vap.utils import load_vad_list
 
     wavpath = "example/student_long_female_en-US-Wavenet-G.wav"
     info = get_audio_info(wavpath)
@@ -326,7 +349,7 @@ if __name__ == "__main__":
     # x = pitch_praat_flatten(waveform)
     # x = pitch_praat_shift(waveform)
     # x = FlatIntensity(vad_hz=50)(waveform, vad=vad.unsqueeze(0))
-    x = IntensityNeutralizer(vad_hz=50)(waveform)
+    # x = IntensityNeutralizer(vad_hz=50)(waveform)
     print("x: ", tuple(x.shape))
 
     wi = intensity_praat(waveform, sample_rate, subtract_mean=True)

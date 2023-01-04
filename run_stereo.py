@@ -4,9 +4,8 @@ from argparse import ArgumentParser
 from os.path import basename
 import matplotlib.pyplot as plt
 
-from vap.model import VAPModel, step_extraction
+from vap.model import VapGPT
 from vap.utils import (
-    load_sample,
     batch_to_device,
     everything_deterministic,
     tensor_dict_to_json,
@@ -18,6 +17,43 @@ from vap.plot_utils import plot_stereo
 everything_deterministic()
 
 torch.manual_seed(0)
+
+
+# TODO: Fix this entire script to work with new model
+def load_sample(
+    path: str,
+    vad_list_path: Optional[str] = None,
+    sample_rate: int = 16000,
+    frame_hz=50,
+    noise_scale: float = 0.0,
+    force_stereo: bool = True,
+    device: Optional[str] = None,
+):
+    waveform, _ = load_waveform(path, sample_rate=sample_rate)
+
+    # Add channel with minimal noise as second channel
+    if force_stereo and waveform.ndim == 2 and waveform.shape[0] == 1:
+        z = torch.randn_like(waveform) * noise_scale
+        # waveform = torch.stack((waveform, z), dim=1)
+        waveform = torch.stack((waveform, z), dim=1)
+
+    if waveform.ndim == 2:
+        waveform = waveform.unsqueeze(0)
+
+    vad = None
+    if vad_list_path is not None:
+        vad_list = read_json(vad_list_path)
+        duration = waveform.shape[-1] / sample_rate
+        vad = vad_list_to_onehot(
+            vad_list, hop_time=int(1 / frame_hz), duration=duration
+        )
+
+    if device is not None:
+        waveform = waveform.to(device)
+        if vad is not None:
+            vad = vad.to(device)
+
+    return waveform, vad
 
 
 def get_args():

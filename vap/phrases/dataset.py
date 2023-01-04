@@ -342,7 +342,6 @@ class PhraseDataset(Dataset):
                 sample["vad_list"],
                 hop_time=self.vad_hop_time,
                 duration=with_silence,
-                channel_last=True,
             ).unsqueeze(0),
             "scp": time_to_frames(sample["scp"], hop_time=self.vad_hop_time),
             "end": time_to_frames(sample["ends"][-1], hop_time=self.vad_hop_time),
