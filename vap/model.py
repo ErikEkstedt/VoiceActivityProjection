@@ -9,7 +9,11 @@ from typing import Dict, Tuple, List, Optional
 from vap.encoder import EncoderCPC
 from vap.objective import ObjectiveVAP
 from vap.modules import GPT, GPTStereo
-from vap.utils import everything_deterministic, find_island_idx_len
+from vap.utils import (
+    everything_deterministic,
+    vad_fill_silences,
+    vad_omit_spikes,
+)
 
 
 everything_deterministic()
@@ -157,42 +161,22 @@ class VapGPT(nn.Module):
     def vad(
         self,
         waveform: Tensor,
-        vad_word_pad: float = 0.01,
-        min_segment: float = 0.01,
+        max_fill_silence_time: float = 0.02,
+        max_omit_spike_time: float = 0.02,
         vad_cutoff: float = 0.5,
     ) -> Tensor:
         """
         Extract (binary) Voice Activity Detection from model
         """
-
-        vad_word_pad_frames = vad_word_pad * self.frame_hz
-        min_segment_frames = min_segment * self.frame_hz
-
         vad = (self(waveform)["vad"].sigmoid() >= vad_cutoff).float()
-
         for b in range(vad.shape[0]):
-            for ch in range(vad.shape[-1]):
-
-                # Remove too short segments
-                starts, dur, val = find_island_idx_len(vad[b, :, ch])
-                w = val == 1
-                ss = starts[w]
-                dd = dur[w]
-                for i in torch.where(dd <= min_segment_frames)[0]:
-                    s = ss[i]
-                    d = dd[i]
-                    vad[b, s : s + d, ch] = 0
-
-                # Fill short silences
-                starts, dur, val = find_island_idx_len(vad[b, :, ch])
-                w = val == 0
-                ss = starts[w]
-                dd = dur[w]
-                for i in torch.where(dd <= vad_word_pad_frames)[0]:
-                    s = ss[i]
-                    d = dd[i]
-                    vad[b, s : s + d, ch] = 1
-
+            # TODO: which order is better?
+            vad[b] = vad_fill_silences(
+                vad[b], max_fill_time=max_fill_silence_time, frame_hz=self.frame_hz
+            )
+            vad[b] = vad_omit_spikes(
+                vad[b], max_omit_time=max_omit_spike_time, frame_hz=self.frame_hz
+            )
         return vad
 
     def forward(self, waveform: Tensor, attention: bool = False) -> Dict[str, Tensor]:
@@ -218,23 +202,32 @@ class VapGPT(nn.Module):
 
 
 if __name__ == "__main__":
-    from datasets_turntaking import DialogAudioDM
-    from vap.utils import batch_to_device
-    from vap.events import TurnTakingEvents
-    from vap.zero_shot import ZeroShot
 
-    dm = DialogAudioDM(
-        datasets=["switchboard", "fisher"],
-        audio_duration=20,
-        batch_size=2,
-        num_workers=1,
-        flip_channels=True,
-        flip_probability=0.5,
-        mask_vad=False,
-        mask_vad_probability=0.4,
+    from vap.audio import load_waveform
+    from vap.plot_utils import plot_mel_spectrogram, plot_vad
+    from vap.utils import (
+        vad_list_to_onehot,
+        vad_onehot_to_vad_list,
+        get_vad_list_subset,
     )
-    dm.prepare_data()
-    dm.setup()
+    import matplotlib.pyplot as plt
+    from vap_dataset.corpus import SwbReader
+
+    def plot_compare_vad(w, vad, vad2, frame_hz=50, figsize=(12, 8), plot=True):
+        fig, ax = plt.subplots(4, 1, figsize=figsize, sharex=True)
+
+        plot_mel_spectrogram(w, ax=[ax[0], ax[3]])
+        plot_mel_spectrogram(w, ax=[ax[1], ax[2]])
+
+        x = torch.arange(vad.shape[0]) / frame_hz
+        plot_vad(x, vad[:, 0] * 0.95, ax=ax[0])
+        plot_vad(x, vad[:, 1] * 0.95, ax=ax[3])
+        plot_vad(x, vad2[:, 0] * 0.95, ax=ax[1], color="r")
+        plot_vad(x, vad2[:, 1] * 0.95, ax=ax[2], color="r")
+
+        if plot:
+            plt.pause(0.1)
+        return fig, ax
 
     conf = VapConfig()
     model = VapGPT(conf)
@@ -243,66 +236,37 @@ if __name__ == "__main__":
     model.eval()
     if torch.cuda.is_available():
         model = model.to("cuda")
-    model = model.half()
 
-    batch = next(iter(dm.val_dataloader()))
-    batch = batch_to_device(batch, "cuda")
-    with torch.no_grad():
-        labels = model.objective.get_labels(batch["vad"].half())
-        out = model(waveform=batch["waveform"].half())
-        out["vap_loss"] = model.objective.loss_vap(out["logits"], labels)
-        out["vad_loss"] = model.objective.loss_vad(out["vad"], batch["vad"])
-    print("vap_oss: ", out["vap_loss"])
-    print("vad_Loss: ", out["vad_loss"])
+    reader = SwbReader()
+    d = reader[0]
+    vad_list = d["vad_list"]
 
-    # from vap.plot_utils import plot_mel_spectrogram, plot_vad, plot_event
-    #
-    # eventer = TurnTakingEvents()
-    # zs = ZeroShot()
-    #
-    # threshold = 0.5
-    #
-    # with torch.no_grad():
-    #     for batch in dm.val_dataloader():
-    #         out = model(batch["waveform"].to("cuda"))
-    #         labels, ds_labels = model.objective.get_labels(
-    #             batch["vad"].to("cuda"), ds_label=True
-    #         )
-    #         probs = zs.get_probs(out["logits"].cpu(), batch["vad"])
-    #         nmax = labels.shape[1]
-    #         events = eventer(batch["vad"][:, :nmax])
-    #         preds, targets = zs.extract_prediction_and_targets(
-    #             p=probs["p"], p_bc=probs["p_bc"], events=events
-    #         )
-    #         result = {}
-    #         for k, v in preds.items():
-    #             if v is not None:
-    #                 pred_class = v.round()
-    #                 correct = (pred_class == targets[k]).sum()
-    #                 acc = correct / targets[k].nelement()
-    #                 result[k] = acc
-    #                 # print(f"{k}: {acc}")
-    #         n_shift = sum([len(s) for s in events["shift"]])
-    #         if n_shift > 0:
-    #             print("hs: ", result["hs"])
-    #             # for k, v in result.items():
-    #             #     print(f"{k}: {v}")
-    #             # print('#'*40)
-    #
-    #     for b in range(2):
-    #         x = torch.arange(batch["vad"].shape[1] - 100) / 50
-    #         plt.close("all")
-    #         fig, ax = plt.subplots(3, 1, sharex=True, figsize=(12, 4))
-    #         plot_mel_spectrogram(y=batch["waveform"][b], ax=ax)
-    #         plot_vad(x, batch["vad"][b, :nmax, 0], ax=ax[0], ypad=5)
-    #         plot_vad(x, batch["vad"][b, :nmax, 1], ax=ax[1], ypad=5)
-    #         plot_event(events["shift"][b], ax=ax, color="g")
-    #         plot_event(events["hold"][b], ax=ax, color="b")
-    #         plot_event(events["short"][b], ax=ax)
-    #         ax[-1].plot(x, ds_labels[b], linewidth=2)
-    #         ax[-1].set_ylim([0, 2])
-    #         # ax[c].axvline(s/50, color='g', linewidth=2)
-    #         # ax[c].axvline(e/50, color='r', linewidth=2)
-    #         plt.tight_layout()
-    #         plt.show()
-    #         # plt.pause(0.1)
+    waveform, sr = load_waveform(d["audio_path"])
+    duration = waveform.shape[-1] / sr
+    clip_duration = 40
+
+    for start in range(0, int(duration), clip_duration - 5):
+        end = start + clip_duration
+        if end > duration:
+            end = duration
+            start = end - clip_duration
+
+        vl = get_vad_list_subset(vad_list, start, end)
+        vad_orig = vad_list_to_onehot(vl, duration=end - start, frame_hz=50)
+
+        # waveform
+        s = round(sr * start)
+        e = round(sr * end)
+        w_tmp = waveform[:, s:e].unsqueeze(0)
+
+        # Model VAD
+        vad2 = model.vad(
+            w_tmp.to("cuda"),
+            max_fill_silence_time=0.1,
+            max_omit_spike_time=0.04,
+            vad_cutoff=0.5,
+        )
+        vad2_list = vad_onehot_to_vad_list(vad2, frame_hz=model.frame_hz)
+        plt.close("all")
+        plot_compare_vad(w_tmp[0], vad_orig, vad2[0], plot=False)
+        plt.show()

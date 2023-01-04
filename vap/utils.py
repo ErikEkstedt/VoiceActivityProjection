@@ -2,48 +2,16 @@ import torch
 from torch import Tensor
 import json
 from os.path import dirname
-
 from typing import List, Optional, Tuple
 
 from vap.audio import time_to_frames, load_waveform
 
-
-def load_sample(
-    path: str,
-    vad_list_path: Optional[str] = None,
-    sample_rate: int = 16000,
-    frame_hz=50,
-    noise_scale: float = 0.0,
-    force_stereo: bool = True,
-    device: Optional[str] = None,
-):
-    waveform, _ = load_waveform(path, sample_rate=sample_rate)
-
-    # Add channel with minimal noise as second channel
-    if force_stereo and waveform.ndim == 2 and waveform.shape[0] == 1:
-        z = torch.randn_like(waveform) * noise_scale
-        # waveform = torch.stack((waveform, z), dim=1)
-        waveform = torch.stack((waveform, z), dim=1)
-
-    if waveform.ndim == 2:
-        waveform = waveform.unsqueeze(0)
-
-    vad = None
-    if vad_list_path is not None:
-        vad_list = read_json(vad_list_path)
-        duration = waveform.shape[-1] / sample_rate
-        vad = vad_list_to_onehot(
-            vad_list, hop_time=int(1 / frame_hz), duration=duration, channel_last=True
-        )
-
-    if device is not None:
-        waveform = waveform.to(device)
-        if vad is not None:
-            vad = vad.to(device)
-
-    return waveform, vad
+VAD_LIST = List[List[List[float]]]
 
 
+################################################
+# Tensor Helpers
+################################################
 def add_zero_channel(w: Tensor) -> Tensor:
     """Add silent channel as speaker 'B'"""
     z = torch.zeros_like(w)
@@ -79,92 +47,6 @@ def find_island_idx_len(
         :-1
     ]  # positions
     return idx, dur, x[i]
-
-
-def get_dialog_states(vad) -> torch.Tensor:
-    """Vad to the full state of a 2 person vad dialog
-    0: only speaker 0
-    1: none
-    2: both
-    3: only speaker 1
-    """
-    assert vad.ndim >= 1
-    return (2 * vad[..., 1] - vad[..., 0]).long() + 1
-
-
-def vad_list_to_onehot(vad_list, hop_time, duration, channel_last=False):
-    n_frames = time2frames(duration, hop_time) + 1
-
-    if isinstance(vad_list[0][0], list):
-        vad_tensor = torch.zeros((len(vad_list), n_frames))
-        for ch, ch_vad in enumerate(vad_list):
-            for v in ch_vad:
-                s = time2frames(v[0], hop_time)
-                e = time2frames(v[1], hop_time)
-                vad_tensor[ch, s:e] = 1.0
-    else:
-        vad_tensor = torch.zeros((1, n_frames))
-        for v in vad_list:
-            s = time2frames(v[0], hop_time)
-            e = time2frames(v[1], hop_time)
-            vad_tensor[:, s:e] = 1.0
-
-    if channel_last:
-        vad_tensor = vad_tensor.permute(1, 0)
-
-    return vad_tensor
-
-
-def vad_output_to_vad_list(
-    vad: Tensor,
-    frame_hz: int,
-    vad_thresh: float = 0.5,
-    ipu_thresh_time: float = 0.1,
-):
-    assert (
-        vad.ndim == 3
-    ), f"Expects vad with batch-dim of shape (B, n_frames, 2) but got {vad.shape}"
-
-    # Threshold if probabilities (sigmoided logits)
-    v = (vad >= vad_thresh).float()
-
-    batch_vad_list = []
-    for b in range(vad.shape[0]):
-        vad_list = []
-        for ch in range(2):
-            idx, dur, val = find_island_idx_len(v[b, :, ch])
-            active = idx[val == 1]
-            active_dur = dur[val == 1]
-            start_times = active / frame_hz
-            dur_times = active_dur / frame_hz
-            end_times = start_times + dur_times
-            start_times = start_times.tolist()
-            end_times = end_times.tolist()
-            ch_vad_list = []
-            if len(start_times) == 0:
-                vad_list.append(ch_vad_list)
-                continue
-            s, last_end = round(start_times[0], 2), round(end_times[0], 2)
-            ch_vad_list.append([s, last_end])
-            for s, e in zip(start_times[1:], end_times[1:]):
-                s, e = round(s, 2), round(e, 2)
-                if s - last_end < ipu_thresh_time:
-                    ch_vad_list[-1][-1] = e
-                else:
-                    ch_vad_list.append([s, e])
-                last_end = e
-            vad_list.append(ch_vad_list)
-        batch_vad_list.append(vad_list)
-    return batch_vad_list
-
-
-def repo_root():
-    """
-    Returns the absolute path to the git repository
-    """
-    root = dirname(__file__)
-    root = dirname(root)
-    return root
 
 
 def everything_deterministic():
@@ -221,6 +103,187 @@ def everything_deterministic():
     torch.use_deterministic_algorithms(mode=True)
 
 
+def batch_to_device(batch, device="cuda"):
+    new_batch = {}
+    for k, v in batch.items():
+        if isinstance(v, Tensor):
+            new_batch[k] = v.to(device)
+        else:
+            new_batch[k] = v
+    return new_batch
+
+
+def tensor_dict_to_json(d):
+    new_d = {}
+    for k, v in d.items():
+        if isinstance(v, Tensor):
+            v = v.tolist()
+        elif isinstance(v, dict):
+            v = tensor_dict_to_json(v)
+        new_d[k] = v
+    return new_d
+
+
+################################################
+# Voice Activity
+################################################
+def get_dialog_states(vad) -> torch.Tensor:
+    """Vad to the full state of a 2 person vad dialog
+    0: only speaker 0
+    1: none
+    2: both
+    3: only speaker 1
+    """
+    assert vad.ndim >= 1
+    return (2 * vad[..., 1] - vad[..., 0]).long() + 1
+
+
+def get_vad_list_subset(
+    vad_list: VAD_LIST, start_time: float, end_time: float
+) -> List[List[List[float]]]:
+    duration = end_time - start_time
+
+    subset = [[], []]
+    for ch, vv in enumerate(vad_list):
+        for s, e in vv:
+            if e < start_time:
+                continue
+            if s > end_time:
+                break
+            rel_start = round(s - start_time, 2)
+            rel_end = round(e - start_time, 2)
+            if start_time <= s and e <= end_time:
+                subset[ch].append([rel_start, rel_end])
+            elif s <= start_time and e < end_time:
+                # start before region but end included
+                subset[ch].append([0, rel_end])
+            elif s <= start_time and e >= end_time:
+                # Start before and ends after
+                subset[ch].append([0, duration])
+            elif s < end_time and e >= end_time:
+                # start in region but end after
+                subset[ch].append([rel_start, duration])
+
+    return subset
+
+
+def vad_list_to_onehot(
+    vad_list: VAD_LIST,
+    duration: float,
+    hop_time: float = 0,
+    frame_hz: float = 0,
+    channel_first: bool = False,
+) -> Tensor:
+    assert (
+        hop_time > 0 or frame_hz > 0
+    ), "vad_list_to_onehot requires `frame_hz` or `hop_time`"
+
+    if frame_hz > 0:
+        hop_time = 1 / frame_hz
+
+    n_frames = time_to_frames(duration, hop_time)
+    vad_tensor = torch.zeros((n_frames, 2))
+    for ch, ch_vad in enumerate(vad_list):
+        for v in ch_vad:
+            s = time_to_frames(v[0], hop_time)
+            e = time_to_frames(v[1], hop_time)
+            vad_tensor[s:e, ch] = 1.0
+
+    if channel_first:
+        vad_tensor = vad_tensor.permute(1, 0)
+
+    return vad_tensor
+
+
+def vad_onehot_to_vad_list(
+    vad: Tensor,
+    frame_hz: int = 50,
+    ipu_thresh_time: float = 0.1,
+) -> List[VAD_LIST]:
+    assert (
+        vad.ndim == 3
+    ), f"Expects vad with batch-dim of shape (B, n_frames, 2) but got {vad.shape}"
+
+    batch_vad_list = []
+    for b in range(vad.shape[0]):
+        vad_list = []
+        for ch in range(2):
+            idx, dur, val = find_island_idx_len(vad[b, :, ch])
+            active = idx[val == 1]
+            start_times = active / frame_hz
+            ch_vad_list = []
+            if len(start_times) == 0:
+                vad_list.append(ch_vad_list)
+                continue
+
+            active_dur = dur[val == 1]
+            dur_times = active_dur / frame_hz
+            end_times = start_times + dur_times
+            start_times = start_times.tolist()
+            end_times = end_times.tolist()
+
+            s, last_end = round(start_times[0], 2), round(end_times[0], 2)
+            ch_vad_list.append([s, last_end])
+            for s, e in zip(start_times[1:], end_times[1:]):
+                s, e = round(s, 2), round(e, 2)
+                if s - last_end < ipu_thresh_time:
+                    ch_vad_list[-1][-1] = e
+                else:
+                    ch_vad_list.append([s, e])
+                last_end = e
+            vad_list.append(ch_vad_list)
+        batch_vad_list.append(vad_list)
+    return batch_vad_list
+
+
+def vad_fill_silences(
+    vad: Tensor, max_fill_time: float = 0.02, frame_hz: float = 50
+) -> Tensor:
+    assert vad.ndim == 2, f"Expects (N_FRAMES, 2) got {vad.shape}"
+    assert vad.shape[-1] == 2, f"Expects (N_FRAMES, 2) got {vad.shape}"
+    max_fill_frame = round(max_fill_time * frame_hz)
+    for ch in range(2):
+        starts, dur, on_off = find_island_idx_len(vad[:, ch])
+        sil_starts = starts[on_off == 0]
+        sil_durs = dur[on_off == 0]
+        w = torch.where(sil_durs <= max_fill_frame)[0]
+        fill_starts = sil_starts[w]
+        fill_durs = sil_durs[w]
+        for s, d in zip(fill_starts, fill_durs):
+            vad[s : s + d, ch] = 1.0
+    return vad
+
+
+def vad_omit_spikes(
+    vad: Tensor, max_omit_time: float = 0.02, frame_hz: float = 50
+) -> Tensor:
+    assert vad.ndim == 2, f"Expects (N_FRAMES, 2) got {vad.shape}"
+    assert vad.shape[-1] == 2, f"Expects (N_FRAMES, 2) got {vad.shape}"
+    max_omit_frame = round(max_omit_time * frame_hz)
+    for ch in range(2):
+        starts, dur, on_off = find_island_idx_len(vad[:, ch])
+        sil_starts = starts[on_off == 1]
+        sil_durs = dur[on_off == 1]
+        w = torch.where(sil_durs <= max_omit_frame)[0]
+        fill_starts = sil_starts[w]
+        fill_durs = sil_durs[w]
+        for s, d in zip(fill_starts, fill_durs):
+            vad[s : s + d, ch] = 0.0
+    return vad
+
+
+################################################
+# File system
+################################################
+def repo_root():
+    """
+    Returns the absolute path to the git repository
+    """
+    root = dirname(__file__)
+    root = dirname(root)
+    return root
+
+
 def write_json(data, filename):
     with open(filename, "w", encoding="utf-8") as jsonfile:
         json.dump(data, jsonfile, ensure_ascii=False)
@@ -248,93 +311,3 @@ def read_txt(path, encoding="utf-8"):
         for line in f.readlines():
             data.append(line.strip())
     return data
-
-
-def vad_list_to_onehot(
-    vad_list: List[Tuple[float, float]],
-    hop_time: float,
-    duration: float,
-    channel_last: bool = False,
-) -> Tensor:
-    n_frames = time_to_frames(duration, hop_time) + 1
-
-    if isinstance(vad_list[0][0], list):
-        vad_tensor = torch.zeros((len(vad_list), n_frames))
-        for ch, ch_vad in enumerate(vad_list):
-            for v in ch_vad:
-                s = time_to_frames(v[0], hop_time)
-                e = time_to_frames(v[1], hop_time)
-                vad_tensor[ch, s:e] = 1.0
-    else:
-        vad_tensor = torch.zeros((1, n_frames))
-        for v in vad_list:
-            try:
-                s = time_to_frames(v[0], hop_time)
-            except:
-                print(v.shape, v.type)
-            e = time_to_frames(v[1], hop_time)
-            vad_tensor[:, s:e] = 1.0
-
-    if channel_last:
-        vad_tensor = vad_tensor.permute(1, 0)
-
-    return vad_tensor
-
-
-def load_vad_list(
-    path: str, frame_hz: int = 50, duration: Optional[float] = None
-) -> Tensor:
-    vad_hop_time = 1.0 / frame_hz
-    vad_list = read_json(path)
-
-    last_vad = -1
-    for vad_channel in vad_list:
-        if len(vad_channel) > 0:
-            if vad_channel[-1][-1] > last_vad:
-                last_vad = vad_channel[-1][-1]
-
-    ##############################################
-    # VAD-frame of relevant part
-    ##############################################
-    all_vad_frames = vad_list_to_onehot(
-        vad_list,
-        hop_time=vad_hop_time,
-        duration=duration if duration is not None else last_vad,
-        channel_last=True,
-    )
-
-    return all_vad_frames
-
-
-def batch_to_device(batch, device="cuda"):
-    new_batch = {}
-    for k, v in batch.items():
-        if isinstance(v, Tensor):
-            new_batch[k] = v.to(device)
-        else:
-            new_batch[k] = v
-    return new_batch
-
-
-def tensor_dict_to_json(d):
-    new_d = {}
-    for k, v in d.items():
-        if isinstance(v, Tensor):
-            v = v.tolist()
-        elif isinstance(v, dict):
-            v = tensor_dict_to_json(v)
-        new_d[k] = v
-    return new_d
-
-
-def load_hydra_conf(config_path="conf", config_name="config"):
-    """https://stackoverflow.com/a/61169706"""
-    from hydra import compose, initialize
-
-    try:
-        initialize(version_base=None, config_path=config_path)
-    except:
-        pass
-
-    cfg = compose(config_name=config_name)
-    return cfg
