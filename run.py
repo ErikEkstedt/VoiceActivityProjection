@@ -1,113 +1,165 @@
 from argparse import ArgumentParser
-
-# import matplotlib as mpl
+from os.path import basename
 import matplotlib.pyplot as plt
 import torch
+import torchaudio
 
-# mpl.use("tkagg")
 
-from vap.model import VAPModel
-from vap.utils import everything_deterministic, read_json, write_json
-from vap.plot_utils import plot_phrases_sample
+from vap.model import VapGPT, VapConfig, load_older_state_dict
+from vap.audio import load_waveform
+from vap.utils import (
+    batch_to_device,
+    everything_deterministic,
+    tensor_dict_to_json,
+    write_json,
+)
+from vap.plot_utils import plot_stereo
+
 
 everything_deterministic()
+torch.manual_seed(0)
 
 
 def get_args():
     parser = ArgumentParser()
     parser.add_argument(
-        "-c",
-        "--checkpoint",
+        "-a",
+        "--audio",
         type=str,
-        default="example/50hz_48_10s-epoch20-val_1.85.ckpt",
-        help="Path to trained model",
-    )
-    parser.add_argument(
-        "-w",
-        "--wav",
-        type=str,
-        default="example/student_long_female_en-US-Wavenet-G.wav",
         help="Path to waveform",
     )
     parser.add_argument(
-        "-v",
-        "--vad_list",
+        "-f",
+        "--filename",
         type=str,
-        default="example/student_long_female_en-US-Wavenet-G_vad_list.json",
-        help="The voice activity see `example/student_long_female_en-US-Wavenet-G_vad_list.json` for format",
+        default=None,
+        help="Path to waveform",
     )
     parser.add_argument(
-        "-o",
-        "--savepath",
+        "-sd",
+        "--state_dict",
         type=str,
-        default="vap_output.json",
-        help="The path of the output file: `PATH/TO/filename.json",
+        default="example/VAP_3mmz3t0u_50Hz_ad20s_134-epoch9-val_2.56.pt",
+        help="Path to state_dict",
+    )
+    parser.add_argument(
+        "-c",
+        "--checkpoint",
+        type=str,
+        default=None,
+        help="Path to trained model",
+    )
+    parser, _ = VapConfig.add_argparse_args(parser)
+    parser.add_argument(
+        "--chunk",
+        action="store_true",
+        help="Process the audio in chunks (longer > 164s on 24Gb GPU audio)",
+    )
+    parser.add_argument(
+        "--chunk_time",
+        type=float,
+        default=30,
+        help="Duration of each chunk processed by model",
+    )
+    parser.add_argument(
+        "--step_time",
+        type=float,
+        default=5,
+        help="Increment to process in a step",
     )
     parser.add_argument(
         "--plot", action="store_true", help="Visualize output (matplotlib)"
     )
-    parser.add_argument("--full", action="store_true", help="Save all information")
     args = parser.parse_args()
-    return args
 
-
-def serialize_sample(sample):
-    return {"vad": sample["vad"].tolist(), "waveform": sample["waveform"].tolist()}
-
-
-def save_model_output(loss, out, probs, savepath, full=False):
-    data = {
-        "loss": loss["loss"].item(),
-        "labels": out["va_labels"].tolist(),
-        "p": probs["p"].tolist(),
-        "p_bc": probs["bc_prediction"].tolist(),
-        "model": {
-            "sample_rate": model.sample_rate,
-            "frame_hz": model.frame_hz,
-            "checkpoint": args.checkpoint,
-        },
-        "va": vad_list,
-    }
-
-    if full:
-        print("Adding full information i.e. loss-frames and all state probabilitities")
-        data["loss_frames"] = loss["loss_frames"].tolist()
-        data["probs"] = out["logits"].softmax(-1).tolist()
-
-    write_json(data, savepath)
-    print("Wrote output -> ", savepath)
+    conf = VapConfig.args_to_conf(args)
+    return args, conf
 
 
 if __name__ == "__main__":
+    args, conf = get_args()
 
-    args = get_args()
-    print("-" * 40)
-    print("Arguments")
-    for k, v in vars(args).items():
-        print(f"{k}: {v}")
-    print("-" * 40)
-    print()
-
+    ###########################################################
+    # Load the model
+    ###########################################################
     print("Load Model...")
-    model = VAPModel.load_from_checkpoint(args.checkpoint)
-    model = model.eval()
+    if args.checkpoint is None:
+        print("From state-dict: ", args.state_dict)
+        model = VapGPT(conf)
+        sd = torch.load(args.state_dict)
+        model.load_state_dict(sd)
+    else:
+        from vap.train import VAPModel
+
+        print("From Lightning checkpoint: ", args.checkpoint)
+        raise NotImplementedError("Not implemeted from checkpoint...")
+        # model = VAPModel.load_from_checkpoint(args.checkpoint)
     if torch.cuda.is_available():
         model = model.to("cuda")
+    model = model.eval()
 
-    # get sample and process
-    vad_list = read_json(args.vad_list)
-    sample = model.load_sample(args.wav, vad_list)
-    loss, out, probs, sample = model.output(sample)
+    ###########################################################
+    # Load the Audio
+    ###########################################################
+    waveform, _ = load_waveform(args.audio, sample_rate=model.sample_rate)
+    duration = round(waveform.shape[-1] / model.sample_rate, 2)
+    if waveform.shape[0] == 1:
+        waveform = torch.cat((waveform, torch.zeros_like(waveform)))
+    waveform = waveform.unsqueeze(0)
 
-    save_model_output(loss, out, probs, savepath=args.savepath, full=args.full)
-
-    print("loss: ", loss.keys())
-    if args.plot:
-        fig, _ = plot_phrases_sample(
-            sample, probs, frame_hz=model.frame_hz, sample_rate=model.sample_rate
+    # Maximum known duration with a 24Gb 'NVIDIA GeForce RTX 3090' is 164s
+    if duration > 160:
+        print(
+            f"WARNING: Can't fit {duration} > 160s on 24Gb 'NVIDIA GeForce RTX 3090' GPU"
         )
-        plt.pause(0.01)
-        ans = input("Save figure? (y/n) ")
-        if ans.lower() == "y":
-            fig.savefig(args.savepath.replace(".json", ".png"))
-        plt.close("all")
+        print("WARNING: Change code if this is not what you want.")
+        args.chunk = True
+
+    ###########################################################
+    # Model Forward
+    ###########################################################
+    if args.chunk:
+        raise NotImplementedError("step extraction not implemented")
+        # out = step_extraction(waveform, model)
+    else:
+        if torch.cuda.is_available():
+            waveform = waveform.to("cuda")
+        out = model.probs(waveform)
+        out = batch_to_device(out, "cpu")  # to cpu for plot/save
+
+    ###########################################################
+    # Print shapes
+    ###########################################################
+    for k, v in out.items():
+        if isinstance(v, torch.Tensor):
+            print(f"{k}: ", tuple(v.shape))
+
+    ###########################################################
+    # Save Output
+    ###########################################################
+    if args.filename is None:
+        args.filename = basename(args.audio).replace(".wav", ".json")
+
+    if not args.filename.endswith(".json"):
+        args.filename += ".json"
+
+    data = tensor_dict_to_json(out)
+    write_json(data, args.filename)
+    print("wavefile: ", args.audio)
+    print("Saved output -> ", args.filename)
+
+    ###########################################################
+    # Plot
+    ###########################################################
+    if args.plot:
+        print(out.keys())
+        vad = out["vad"][0].cpu()
+        p_ns = out["p_now"][0, :, 0].cpu()
+        # p_bc = out["p_bc"][0].cpu()
+        fig, ax = plot_stereo(waveform[0].cpu(), p_ns, vad, plot=False)
+        # Save figure
+        figpath = args.filename.replace(".json", ".png")
+        fig.savefig(figpath)
+        print(f"Saved figure as {figpath}.png")
+        print("Close figure to continue")
+        plt.show()
