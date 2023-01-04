@@ -3,7 +3,7 @@ import torch.nn as nn
 import torch.nn.functional as F
 from torch import Tensor
 
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from typing import Dict, Tuple, List, Optional
 
 from vap.encoder import EncoderCPC
@@ -41,7 +41,7 @@ def load_older_state_dict(
 class VapConfig:
     sample_rate: int = 16_000
     frame_hz: int = 50
-    bin_times = [0.2, 0.4, 0.6, 0.8]
+    bin_times: List[float] = field(default_factory=lambda: [0.2, 0.4, 0.6, 0.8])
 
     # Encoder
     freeze_encoder: bool = True
@@ -56,7 +56,12 @@ class VapConfig:
     @staticmethod
     def add_argparse_args(parser, fields_added=[]):
         for k, v in VapConfig.__dataclass_fields__.items():
-            parser.add_argument(f"--vap_{k}", type=v.type, default=v.default)
+            if k == "bin_times":
+                parser.add_argument(
+                    f"--vap_{k}", nargs="+", type=float, default=v.default_factory()
+                )
+            else:
+                parser.add_argument(f"--vap_{k}", type=v.type, default=v.default)
             fields_added.append(k)
         return parser, fields_added
 
@@ -231,8 +236,13 @@ if __name__ == "__main__":
 
     conf = VapConfig()
     model = VapGPT(conf)
-    sd = load_older_state_dict()
-    model.load_state_dict(sd, strict=False)
+    std = load_older_state_dict(
+        "example/VAP_3mmz3t0u_50Hz_ad20s_134-epoch9-val_2.56.ckpt"
+    )
+    model.load_state_dict(std, strict=False)
+
+    sd = model.state_dict()
+
     model.eval()
     if torch.cuda.is_available():
         model = model.to("cuda")
