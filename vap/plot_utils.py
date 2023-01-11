@@ -51,6 +51,49 @@ def plot_vad(x, vad, ax, ypad=0, color="w", label=None):
     ax.plot(x, ymin + vad.cpu() * scale, color=color, label=label)
 
 
+def plot_probs(
+    x: torch.Tensor,
+    p: torch.Tensor,
+    ax: mpl.axes.Axes,
+    color: List[str] = ["b", "orange"],
+    alpha_ns: float = 0.6,
+    fontsize: int = 12,
+) -> mpl.axes.Axes:
+    assert p.ndim == 1, f"Expected p shape (N_FRAMES) got {p.shape}"
+    assert x.ndim == 1, f"Expected p shape (N_FRAMES) got {x.shape}"
+
+    p = p.cpu()
+    x = x.cpu()
+
+    ax.fill_between(
+        x,
+        y1=0.5,
+        y2=p,
+        where=p > 0.5,
+        alpha=alpha_ns,
+        color=color[0],
+        label="A",
+    )
+    ax.fill_between(
+        x,
+        y1=p,
+        y2=0.5,
+        where=p < 0.5,
+        alpha=alpha_ns,
+        color=color[1],
+        label="B",
+    )
+    ax.plot(x, p, color="k", linewidth=1)
+    ax.set_xlim([0, x[-1]])
+    ax.set_xticks([])
+    ax.set_yticks([0.25, 0.75], ["SHIFT", "HOLD"], fontsize=fontsize)
+    ax.set_ylim([0, 1])
+
+    ax.legend(loc="lower left")
+    ax.axhline(y=0.5, linestyle="dashed", linewidth=2, color="k")
+    return ax
+
+
 def plot_event(ev, ax, color="r", frame_hz=50):
     for e in ev:
         start, end, ch = e
