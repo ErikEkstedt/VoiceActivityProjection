@@ -66,6 +66,68 @@ def plot_event(ev, ax, color="r", frame_hz=50):
         )
 
 
+def plot_vap(
+    waveform: torch.Tensor,
+    p_now: torch.Tensor,
+    p_fut: Optional[torch.Tensor] = None,
+    vad: Optional[torch.Tensor] = None,
+    plot: bool = True,
+    future_colors=["red", "green"],
+    figsize=(16, 9),
+):
+    assert (
+        waveform.ndim == 2
+    ), f"Expected waveform of shape (2, n_samples) got {waveform.shape}"
+
+    assert (
+        waveform.shape[0] == 2
+    ), f"Expected waveform of shape (2, n_samples) got {waveform.shape}"
+
+    assert p_now.ndim == 1, f"Expected `p_now` of shape (n_frames,) got {p_now.shape}"
+
+    if p_fut is not None:
+        assert (
+            p_fut.ndim == 1
+        ), f"Expected `p_fut` of shape (n_frames,) got {p_fut.shape}"
+
+    if vad is not None:
+        assert vad.ndim == 2, f"Expected vad of shape (n_frames, 2) got {vad.shape}"
+        assert (
+            vad.shape[-1] == 2
+        ), f"Expected vad of shape (n_frames, 2) got {vad.shape}"
+
+    n = 4
+
+    if p_fut is not None:
+        n = 5
+
+    fig, ax = plt.subplots(n, 1, figsize=figsize)
+    _ = plot_waveform(waveform=waveform[0], ax=ax[0], label="A")
+    _ = plot_waveform(waveform=waveform[1], ax=ax[0], color="orange", label="B")
+    ax[0].set_xticks([])
+    ax[0].legend(loc="upper right", fontsize=16)
+
+    plot_stereo_mel_spec(waveform, ax=[ax[1], ax[2]], vad=vad)
+    plot_next_speaker_probs(p_ns=p_now, ax=ax[3], label=["A now", "B now"])
+    ax[3].legend(loc="lower left", fontsize=16)
+
+    if p_fut is not None:
+        plot_next_speaker_probs(
+            p_ns=p_fut,
+            ax=ax[-1],
+            color=future_colors,
+            label=["A future", "B Future"],
+        )
+        ax[4].legend(loc="lower left", fontsize=16)
+
+    plt.subplots_adjust(
+        left=0.08, bottom=None, right=None, top=None, wspace=None, hspace=0.04
+    )
+    if plot:
+        plt.pause(0.1)
+    return fig, ax
+
+
 ##################################################################
 def to_mono(waveform: torch.Tensor) -> torch.Tensor:
     if waveform.ndim == 3:
@@ -116,6 +178,7 @@ def plot_waveform(
     ax: mpl.axes.Axes,
     color: str = "lightblue",
     alpha: float = 0.6,
+    label: Optional[str] = None,
     downsample: int = 10,
     sample_rate: int = 16000,
 ) -> mpl.axes.Axes:
@@ -123,7 +186,7 @@ def plot_waveform(
         waveform.ndim == 1
     ), f"Expects a single channel waveform (n_samples, ) got {waveform.shape}"
     x = waveform[..., ::downsample]
-    ax.plot(x, color=color, zorder=0, alpha=alpha)  # , alpha=0.2)
+    ax.plot(x, color=color, zorder=0, alpha=alpha, label=label)  # , alpha=0.2)
     ax.set_xlim([0, len(x)])
     # ax.set_xticks(ax.get_xticks()/sample_rate/downsample)
     ax.set_ylim([-1, 1])
@@ -220,6 +283,7 @@ def plot_next_speaker_probs(
     alpha_ns: float = 0.6,
     alpha_bc: float = 0.3,
     legend: bool = False,
+    label: List[str] = ["A", "B"],
     fontsize: int = 12,
 ) -> mpl.axes.Axes:
     if isinstance(p_ns, np.ndarray):
@@ -237,7 +301,7 @@ def plot_next_speaker_probs(
         where=p_ns > 0.5,
         alpha=alpha_ns,
         color=color[0],
-        label="A",
+        label=label[0],
     )
     ax.fill_between(
         x,
@@ -246,7 +310,7 @@ def plot_next_speaker_probs(
         where=p_ns < 0.5,
         alpha=alpha_ns,
         color=color[1],
-        label="B",
+        label=label[1],
     )
     ax.plot(p_ns, color="k", linewidth=0.8)
     ax.set_xlim([0, len(p_ns)])
