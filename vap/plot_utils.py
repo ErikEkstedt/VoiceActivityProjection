@@ -44,11 +44,11 @@ def plot_mel_spectrogram(
         ax[1].set_yticks([])
 
 
-def plot_vad(x, vad, ax, ypad=0, color="w", label=None):
+def plot_vad(x, vad, ax, ypad=0, color="w", label=None, **kwargs):
     assert vad.ndim == 1, f"Expects (N_FRAMES, ) got {vad.shape}"
     ymin, ymax = ax.get_ylim()
     scale = ymax - ymin - ypad
-    ax.plot(x, ymin + vad.cpu() * scale, color=color, label=label)
+    ax.plot(x, ymin + vad.cpu() * scale, color=color, label=label, **kwargs)
 
 
 def plot_probs(
@@ -56,8 +56,10 @@ def plot_probs(
     p: torch.Tensor,
     ax: mpl.axes.Axes,
     color: List[str] = ["b", "orange"],
+    label: List[str] = ["A", "B"],
     alpha_ns: float = 0.6,
     fontsize: int = 12,
+    no_xticks: bool = True,
 ) -> mpl.axes.Axes:
     assert p.ndim == 1, f"Expected p shape (N_FRAMES) got {p.shape}"
     assert x.ndim == 1, f"Expected p shape (N_FRAMES) got {x.shape}"
@@ -72,7 +74,7 @@ def plot_probs(
         where=p > 0.5,
         alpha=alpha_ns,
         color=color[0],
-        label="A",
+        label=label[0],
     )
     ax.fill_between(
         x,
@@ -81,16 +83,19 @@ def plot_probs(
         where=p < 0.5,
         alpha=alpha_ns,
         color=color[1],
-        label="B",
+        label=label[1],
     )
     ax.plot(x, p, color="k", linewidth=1)
-    ax.set_xlim([0, x[-1]])
-    ax.set_xticks([])
     ax.set_yticks([0.25, 0.75], ["SHIFT", "HOLD"], fontsize=fontsize)
     ax.set_ylim([0, 1])
+    ax.set_xlim([0, x[-1]])
 
     ax.legend(loc="lower left")
     ax.axhline(y=0.5, linestyle="dashed", linewidth=2, color="k")
+
+    if no_xticks:
+        ax.set_xticks([])
+
     return ax
 
 
@@ -115,7 +120,8 @@ def plot_vap(
     p_fut: Optional[torch.Tensor] = None,
     vad: Optional[torch.Tensor] = None,
     plot: bool = True,
-    future_colors=["red", "green"],
+    frame_hz: int = 50,
+    future_colors=["blue", "green"],
     figsize=(16, 9),
 ):
     assert (
@@ -144,22 +150,37 @@ def plot_vap(
     if p_fut is not None:
         n = 5
 
+    xx = torch.arange(len(p_now)) / frame_hz
+
     fig, ax = plt.subplots(n, 1, figsize=figsize)
     _ = plot_waveform(waveform=waveform[0], ax=ax[0], label="A")
     _ = plot_waveform(waveform=waveform[1], ax=ax[0], color="orange", label="B")
     ax[0].set_xticks([])
     ax[0].legend(loc="upper right", fontsize=16)
 
-    plot_stereo_mel_spec(waveform, ax=[ax[1], ax[2]], vad=vad)
-    plot_next_speaker_probs(p_ns=p_now, ax=ax[3], label=["A now", "B now"])
+    # plot_stereo_mel_spec(waveform, ax=[ax[1], ax[2]], vad=vad)
+    plot_mel_spectrogram(
+        y=waveform, ax=[ax[1], ax[2]], sample_rate=16000, hop_time=0.01
+    )
+    if vad is not None:
+        plot_vad(xx, vad[:, 0], ax=ax[1], color="b", linewidth=3)
+        plot_vad(xx, vad[:, 1], ax=ax[2], color="orange", linewidth=3)
+
+    no_xticks = False
+    if p_fut is not None:
+        no_xticks = True
+
+    plot_probs(x=xx, p=p_now, ax=ax[3], label=["A now", "B now"], no_xticks=no_xticks)
     ax[3].legend(loc="lower left", fontsize=16)
 
     if p_fut is not None:
-        plot_next_speaker_probs(
-            p_ns=p_fut,
+        plot_probs(
+            x=xx,
+            p=p_fut,
             ax=ax[-1],
+            label=["A future", "B future"],
             color=future_colors,
-            label=["A future", "B Future"],
+            no_xticks=False,
         )
         ax[4].legend(loc="lower left", fontsize=16)
 
