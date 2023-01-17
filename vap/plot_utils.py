@@ -114,6 +114,68 @@ def plot_event(ev, ax, color="r", frame_hz=50):
         )
 
 
+def plot_words_time(
+    words,
+    ax: mpl.axes.Axes,
+    starts: List[float],
+    ends: Optional[List[Union[float, None]]] = None,
+    rows: int = 4,
+    fontsize: int = 14,
+    color: str = "w",
+    linewidth: int = 1,
+    linealpha: float = 0.6,
+):
+    if ends is None:
+        ends = [None for _ in starts]
+
+    y_min, y_max = ax.get_ylim()
+    diff = y_max - y_min
+    pad = diff * 0.05
+
+    # Plot text on top of waveform
+    for ii, (word, start_time, end_time) in enumerate(zip(words, starts, ends)):
+        yy = pad + y_min + diff * (ii % rows) / rows
+
+        alignment = "left"
+        if end_time is not None:
+            alignment = "center"
+            x_text = start_time + 0.5 * (end_time - start_time)
+        else:
+            x_text = start_time
+
+        ax.vlines(
+            start_time,
+            ymin=y_min + pad,
+            ymax=y_max - pad,
+            linestyle="dashed",
+            linewidth=linewidth,
+            color=color,
+            alpha=linealpha,
+        )
+        ax.text(
+            x=x_text,
+            y=yy,
+            s=word,
+            fontsize=fontsize,
+            fontweight="bold",
+            horizontalalignment=alignment,
+            color=color,
+        )
+
+        if end_time is not None:
+            ax.vlines(
+                end_time,
+                ymin=y_min + pad,
+                ymax=y_max - pad,
+                linestyle="dashed",
+                linewidth=linewidth,
+                color=color,
+                alpha=linealpha,
+            )
+
+    return ax
+
+
 def plot_vap(
     waveform: torch.Tensor,
     p_now: torch.Tensor,
