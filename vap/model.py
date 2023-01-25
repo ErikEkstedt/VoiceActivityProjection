@@ -76,6 +76,48 @@ class VapConfig:
         )
 
 
+@dataclass
+class VapMonoConfig:
+    sample_rate: int = 16_000
+    frame_hz: int = 50
+    bin_times: List[float] = field(default_factory=lambda: [0.2, 0.4, 0.6, 0.8])
+    mono: bool = True  # INFO: only used in mono model
+    va_history: bool = False  # INFO: only used in mono model
+    va_history_bins: int = 5  # INFO: only used in mono model
+
+    # Encoder
+    freeze_encoder: bool = True
+
+    # GPT
+    dim: int = 256
+    channel_layers: int = 1
+    cross_layers: int = 3
+    num_heads: int = 4
+    dropout: float = 0.1
+
+    @staticmethod
+    def add_argparse_args(parser, fields_added=[]):
+        for k, v in VapConfig.__dataclass_fields__.items():
+            if k == "bin_times":
+                parser.add_argument(
+                    f"--vap_{k}", nargs="+", type=float, default=v.default_factory()
+                )
+            else:
+                parser.add_argument(f"--vap_{k}", type=v.type, default=v.default)
+            fields_added.append(k)
+        return parser, fields_added
+
+    @staticmethod
+    def args_to_conf(args):
+        return VapConfig(
+            **{
+                k.replace("vap_", ""): v
+                for k, v in vars(args).items()
+                if k.startswith("vap_")
+            }
+        )
+
+
 class VapGPT(nn.Module):
     def __init__(self, conf: Optional[VapConfig] = None):
         super().__init__()
@@ -207,16 +249,17 @@ class VapGPT(nn.Module):
 
 
 class VapGPTMono(nn.Module):
-    def __init__(self, conf: Optional[VapConfig] = None):
+    def __init__(self, conf: Optional[VapMonoConfig] = None):
         super().__init__()
         if conf is None:
-            conf = VapConfig()
+            conf = VapMonoConfig()
         self.conf = conf
         self.sample_rate = conf.sample_rate
         self.frame_hz = conf.frame_hz
 
         # Audio Encoder
         self.encoder = EncoderCPC(freeze=conf.freeze_encoder)
+        self.init_va_conditioning()
 
         # Single channel
         self.ar_channel = GPT(
@@ -239,20 +282,16 @@ class VapGPTMono(nn.Module):
         self.objective = ObjectiveVAP(bin_times=conf.bin_times, frame_hz=conf.frame_hz)
 
         # Outputs
-        # Voice activity objective -> x1, x2 -> logits ->  BCE
-        self.va_classifier = nn.Linear(conf.dim, 1)
+        # Voice activity objective -> z -> logits ->  BCE
         self.vap_head = nn.Linear(conf.dim, self.objective.n_classes)
 
-    def init_vad_conditioning(self) -> None:
+    def init_va_conditioning(self) -> None:
         self.va_condition = nn.Linear(2, self.conf.dim)
         self.va_cond_ln = nn.LayerNorm(self.conf.dim)
         nn.init.orthogonal_(self.va_condition.weight.data)
 
-        # if va_history:
-        #     self.va_cond_history = nn.Linear(va_history_bins, dim)
-
-    def vad_loss(self, vad_output, vad):
-        return F.binary_cross_entropy_with_logits(vad_output, vad)
+        if self.conf.va_history:
+            self.va_cond_history = nn.Linear(self.conf.va_history_bins, self.conf.dim)
 
     @torch.no_grad()
     def probs(
@@ -292,11 +331,11 @@ class VapGPTMono(nn.Module):
             "H": H,
         }
 
-    def encode_vad(self, vad: Tensor) -> Tensor:
-        v_cond = self.va_condition(vad)
+    def encode_va(self, va: Tensor, va_history: Optional[Tensor] = None) -> Tensor:
+        v_cond = self.va_condition(va)
         # Add vad-history information
-        # if va_history is not None:
-        #     v_cond += self.va_history(va_history)
+        if self.conf.va_history and va_history is not None:
+            v_cond += self.va_cond_history(va_history)
         return self.va_cond_ln(v_cond)
 
     def encode_audio(self, audio: Tensor) -> Tuple[Tensor, Tensor]:
@@ -306,7 +345,11 @@ class VapGPTMono(nn.Module):
         return self.encoder(audio)  # speaker 1
 
     def forward(
-        self, waveform: Tensor, vad: Tensor, attention: bool = False
+        self,
+        waveform: Tensor,
+        va: Tensor,
+        va_history: Optional[Tensor] = None,
+        attention: bool = False,
     ) -> Dict[str, Tensor]:
         assert not attention, "Attention Mono model is not implemented"
         x = self.encode_audio(waveform)
@@ -314,7 +357,7 @@ class VapGPTMono(nn.Module):
         # Ugly: sometimes you may get an extra frame from waveform encoding
         # x = x[:, : vad.shape[1]]
         # Add Vad conditioning
-        x = x + self.encode_vad(vad)
+        x = x + self.encode_va(va, va_history)
 
         # Autoregressive
         x = self.ar_channel(x)["x"]
@@ -322,12 +365,27 @@ class VapGPTMono(nn.Module):
 
         # Outputs
         logits = self.vap_head(x)
-        ret = {"logits": logits, "vad": vad}
+        ret = {"logits": logits, "vad": va}
         # if attention:
         #     ret["self_attn"] = torch.stack([o1["attn"], o2["attn"]], dim=1)
         #     ret["cross_attn"] = out["cross_attn"]
         #     ret["cross_self_attn"] = out["self_attn"]
         return ret
+
+
+def debug_mono():
+
+    from torch.utils.data import DataLoader
+    from vap_dataset.dataset import VapDataset
+
+    conf = VapMonoConfig(mono=True, va_history=True)
+    model = VapGPTMono(conf)
+
+    dset = VapDataset(path="data/sliding_val.csv", mono=True)
+    dloader = DataLoader(dset, batch_size=4, num_workers=1, shuffle=False)
+    batch = next(iter(dloader))
+
+    out = model(batch["waveform"], batch["vad"][:, :-100])
 
 
 if __name__ == "__main__":
