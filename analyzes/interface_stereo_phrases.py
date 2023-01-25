@@ -44,11 +44,13 @@ def get_figure(experiment, longshort, gender, idx):
 
     # Zero pad
     # zpad = torch.randn_like(batch["waveform"]) * 0.01
-    zpad = torch.zeros_like(batch["waveform"])
-    waveform = torch.stack((batch["waveform"], zpad), dim=1)
+    # zpad = torch.zeros_like(batch["waveform"])
+    # waveform = torch.stack((batch["waveform"], zpad), dim=1)
+    waveform = batch["waveform"]
     out = model.output(waveform=waveform)  # , max_time=30)
+    print("waveform: ", tuple(waveform.shape))
     fig, _ = plot_stereo(
-        waveform=waveform[0].cpu(),
+        waveform=torch.cat([waveform[0]] * 2).cpu(),
         p_ns=out["p"][0, :, 0].cpu(),
         vad=out["vad"][0].cpu(),
         plot=False,
@@ -65,7 +67,8 @@ if __name__ == "__main__":
 
     if "dset" not in st.session_state:
         st.session_state.dset = PhraseDataset(
-            phrase_path="dataset_phrases/phrases.json"
+            phrase_path="dataset_phrases/phrases.json",
+            audio_mono=not st.session_state.model.stereo,
         )
 
     st.title("VAP Phrases")
