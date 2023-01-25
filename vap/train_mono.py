@@ -1,5 +1,3 @@
-# from omegaconf import DictConfig, OmegaConf
-# import hydra
 from argparse import ArgumentParser
 from os import environ
 from typing import Dict
@@ -22,7 +20,7 @@ from vap_dataset.datamodule import VapDataModule
 from vap.phrases.dataset import PhrasesCallback
 from vap.events import TurnTakingEvents, EventConfig
 from vap.zero_shot import ZeroShot
-from vap.model import VapGPT, VapConfig  # , load_older_state_dict
+from vap.train import VAPModel
 
 
 @dataclass
@@ -62,7 +60,6 @@ class OptConfig:
 
 @dataclass
 class DataConfig:
-
     train_path: str = "../vap_dataset/data/sliding_train.csv"
     val_path: str = "../vap_dataset/data/sliding_val.csv"
     test_path: str = "../vap_dataset/data/sliding_test.csv"
@@ -72,6 +69,7 @@ class DataConfig:
     mask_vad_probability: float = 0.5
     batch_size: int = 16
     num_workers: int = 24
+    mono: bool = True
 
     # not used for datamodule
     audio_duration: float = 20
@@ -132,7 +130,7 @@ def get_args():
 
 
 def get_run_name(configs) -> str:
-    s = "VapGPT"
+    s = "VapGPTMono"
     s += f"_{configs['model'].frame_hz}Hz"
     s += f"_ad{configs['data'].audio_duration}s"
     s += f"_{configs['model'].channel_layers}"
@@ -161,6 +159,7 @@ def train() -> None:
         horizon=2,
         batch_size=dconf.batch_size,
         num_workers=dconf.num_workers,
+        mono=True,
     )
     dm.prepare_data()
     print(dm)
@@ -233,123 +232,7 @@ def train() -> None:
         trainer.fit(model, datamodule=dm)
 
 
-# Used in training (LightningModule) but not required for inference
-class VAPModel(VapGPT, pl.LightningModule):
-    def __init__(self, conf, opt_conf=None, event_conf=None):
-        super().__init__(conf)
-
-        self.opt_conf = opt_conf
-        self.event_conf = event_conf
-
-        # Training params
-        self.save_hyperparameters()
-
-        # Metrics
-        self.event_extractor = None
-        if event_conf is not None:
-            self.zero_shot = ZeroShot(bin_times=conf.bin_times, frame_hz=conf.frame_hz)
-            self.event_extractor = TurnTakingEvents(event_conf)
-
-    def get_metrics(self):
-        metrics = {"acc": {}, "f1": {}}
-
-        metrics["acc"]["hs"] = Accuracy(
-            task="multiclass", num_classes=2, multiclass=True, average="none"
-        ).to(self.device)
-        metrics["acc"]["ls"] = Accuracy(
-            task="multiclass", num_classes=2, multiclass=True, average="none"
-        ).to(self.device)
-        metrics["acc"]["sp"] = Accuracy(
-            task="multiclass", num_classes=2, multiclass=True, average="none"
-        ).to(self.device)
-        metrics["acc"]["bp"] = Accuracy(
-            task="multiclass", num_classes=2, multiclass=True, average="none"
-        ).to(self.device)
-
-        metrics["f1"]["hs"] = F1Score(
-            task="multiclass",
-            num_classes=2,
-            multiclass=True,
-            average="weighted",
-        ).to(self.device)
-        metrics["f1"]["ls"] = F1Score(
-            task="multiclass",
-            num_classes=2,
-            multiclass=True,
-            average="weighted",
-        ).to(self.device)
-        metrics["f1"]["sp"] = F1Score(
-            task="multiclass",
-            num_classes=2,
-            multiclass=True,
-            average="weighted",
-        ).to(self.device)
-        metrics["f1"]["bp"] = F1Score(
-            task="multiclass",
-            num_classes=2,
-            multiclass=True,
-            average="weighted",
-        ).to(self.device)
-
-        return metrics
-
-    def metrics_step(self, preds, targets, split="val"):
-        m = self.val_metrics if split == "val" else self.test_metrics
-
-        # The metrics don't work if the predictions are not rounded
-        # I don't know why...
-        if preds["hs"] is not None:
-            m["f1"]["hs"].update(preds=preds["hs"].round(), target=targets["hs"])
-            m["acc"]["hs"].update(preds=preds["hs"].round(), target=targets["hs"])
-
-        if preds["ls"] is not None:
-            m["f1"]["ls"].update(preds=preds["ls"].round(), target=targets["ls"])
-            m["acc"]["ls"].update(preds=preds["ls"].round(), target=targets["ls"])
-
-        if preds["pred_shift"] is not None:
-            m["f1"]["sp"].update(
-                preds=preds["pred_shift"].round(), target=targets["pred_shift"]
-            )
-            m["acc"]["sp"].update(
-                preds=preds["pred_shift"].round(), target=targets["pred_shift"]
-            )
-
-        if preds["pred_backchannel"] is not None:
-            m["f1"]["bp"].update(
-                preds=preds["pred_backchannel"], target=targets["pred_backchannel"]
-            )
-            m["acc"]["bp"].update(
-                preds=preds["pred_backchannel"], target=targets["pred_backchannel"]
-            )
-
-    def metrics_epoch(self, split="val"):
-        if split == "val":
-            m = self.val_metrics
-        else:
-            m = self.test_metrics
-
-        f1 = {}
-        for name, metric in m["f1"].items():
-            f1[name] = metric.compute()
-            metric.reset()
-
-        # Accuracy
-        acc = {}
-        for name, metric in m["acc"].items():
-            a, b = metric.compute()
-            acc[name] = [a, b]
-            metric.reset()
-
-        self.log(
-            f"{split}_hs",
-            {"shift_acc": acc["hs"][1], "f1w": f1["hs"]},
-            prog_bar=True,
-            sync_dist=True,
-        )
-        self.log(f"{split}_pred_sh", {"shift": acc["sp"][1]}, sync_dist=True)
-        self.log(f"{split}_ls", {"short": acc["ls"][1]}, sync_dist=True)
-        self.log(f"{split}_pred_bc", {"bc_pred": acc["bp"][1]}, sync_dist=True)
-
+class VAPMonoModel(VAPModel):
     def shared_step(
         self, batch: Dict, reduction: str = "mean"
     ) -> Dict[str, torch.Tensor]:
@@ -365,35 +248,13 @@ class VAPModel(VapGPT, pl.LightningModule):
         out["vap_loss"] = self.objective.loss_vap(
             out["logits"], labels, reduction=reduction
         )
-        out["vad_loss"] = self.objective.loss_vad(out["vad"], batch["vad"])
         return out
-
-    def configure_optimizers(self) -> Dict:
-        assert self.opt_conf is not None, "configure_optimizers: No Opt conf!"
-        opt = torch.optim.AdamW(
-            self.parameters(),
-            lr=self.opt_conf.learning_rate,
-            betas=self.opt_conf.betas,
-            weight_decay=self.opt_conf.weight_decay,
-        )
-        lr_scheduler = {
-            "scheduler": torch.optim.lr_scheduler.ReduceLROnPlateau(
-                opt,
-                mode="min",
-                factor=self.opt_conf.lr_scheduler_factor,
-                patience=self.opt_conf.lr_scheduler_patience,
-            ),
-            "monitor": "val_loss",
-        }
-        return {"optimizer": opt, "lr_scheduler": lr_scheduler}
 
     def training_step(self, batch, batch_idx, **kwargs):
         out = self.shared_step(batch)
         batch_size = batch["waveform"].shape[0]
         self.log("loss", out["vap_loss"], batch_size=batch_size, sync_dist=True)
-        self.log("loss_va", out["vad_loss"], batch_size=batch_size, sync_dist=True)
-        loss = out["vap_loss"] + out["vad_loss"]
-        return {"loss": loss}
+        return {"loss": out["vap_loss"]}
 
     def validation_step(self, batch, batch_idx, **kwargs):
         """validation step"""
@@ -402,25 +263,17 @@ class VAPModel(VapGPT, pl.LightningModule):
 
         out = self.shared_step(batch)
         batch_size = batch["waveform"].shape[0]
+
         self.log("val_loss", out["vap_loss"], batch_size=batch_size, sync_dist=True)
-        self.log("val_loss_va", out["vad_loss"], batch_size=batch_size, sync_dist=True)
 
         # Event Metrics
         if self.event_extractor is not None:
             events = self.event_extractor(batch["vad"])
-            # probs = self.zero_shot.get_probs(out["logits"], batch["vad"])
-            # preds, targets = self.zero_shot.extract_prediction_and_targets(
-            #     p=probs["p"], p_bc=probs["p_bc"], events=events
-            # )
             probs = self.objective.get_probs(out["logits"])
             preds, targets = self.objective.extract_prediction_and_targets(
                 p_now=probs["p_now"], p_fut=probs["p_future"], events=events
             )
             self.metrics_step(preds, targets, split="val")
-
-    def validation_epoch_end(self, *_):
-        if hasattr(self, "val_metrics"):
-            self.metrics_epoch("val")
 
     def test_step(self, batch, batch_idx, **kwargs):
         """validation step"""
@@ -435,24 +288,15 @@ class VAPModel(VapGPT, pl.LightningModule):
         out = self.shared_step(batch)
         batch_size = batch["waveform"].shape[0]
         self.log("test_loss", out["vap_loss"], batch_size=batch_size, sync_dist=True)
-        self.log("test_loss_va", out["vad_loss"], batch_size=batch_size, sync_dist=True)
 
         # Event Metrics
         if self.event_extractor is not None:
             events = self.event_extractor(batch["vad"])
-            # probs = self.zero_shot.get_probs(out["logits"], batch["vad"])
-            # preds, targets = self.zero_shot.extract_prediction_and_targets(
-            #     p=probs["p"], p_bc=probs["p_bc"], events=events
-            # )
             probs = self.objective.get_probs(out["logits"])
             preds, targets = self.objective.extract_prediction_and_targets(
                 p_now=probs["p_now"], p_fut=probs["p_future"], events=events
             )
             self.metrics_step(preds, targets, split="test")
-
-    def test_epoch_end(self, *_):
-        if hasattr(self, "test_metrics"):
-            self.metrics_epoch("test")
 
 
 if __name__ == "__main__":
