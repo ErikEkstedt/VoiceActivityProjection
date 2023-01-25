@@ -206,6 +206,130 @@ class VapGPT(nn.Module):
         return ret
 
 
+class VapGPTMono(nn.Module):
+    def __init__(self, conf: Optional[VapConfig] = None):
+        super().__init__()
+        if conf is None:
+            conf = VapConfig()
+        self.conf = conf
+        self.sample_rate = conf.sample_rate
+        self.frame_hz = conf.frame_hz
+
+        # Audio Encoder
+        self.encoder = EncoderCPC(freeze=conf.freeze_encoder)
+
+        # Single channel
+        self.ar_channel = GPT(
+            dim=conf.dim,
+            dff_k=3,
+            num_layers=conf.channel_layers,
+            num_heads=conf.num_heads,
+            dropout=conf.dropout,
+        )
+
+        # Cross channel
+        self.ar = GPT(
+            dim=conf.dim,
+            dff_k=3,
+            num_layers=conf.cross_layers,
+            num_heads=conf.num_heads,
+            dropout=conf.dropout,
+        )
+
+        self.objective = ObjectiveVAP(bin_times=conf.bin_times, frame_hz=conf.frame_hz)
+
+        # Outputs
+        # Voice activity objective -> x1, x2 -> logits ->  BCE
+        self.va_classifier = nn.Linear(conf.dim, 1)
+        self.vap_head = nn.Linear(conf.dim, self.objective.n_classes)
+
+    def init_vad_conditioning(self) -> None:
+        self.va_condition = nn.Linear(2, self.conf.dim)
+        self.va_cond_ln = nn.LayerNorm(self.conf.dim)
+        nn.init.orthogonal_(self.va_condition.weight.data)
+
+        # if va_history:
+        #     self.va_cond_history = nn.Linear(va_history_bins, dim)
+
+    def vad_loss(self, vad_output, vad):
+        return F.binary_cross_entropy_with_logits(vad_output, vad)
+
+    @torch.no_grad()
+    def probs(
+        self,
+        waveform: Tensor,
+        vad: Tensor,
+        now_lims: List[int] = [0, 1],
+        future_lims: List[int] = [2, 3],
+    ) -> Dict[str, Tensor]:
+        out = self(waveform, vad)
+        probs = out["logits"].softmax(dim=-1)
+
+        # Calculate entropy over each projection-window prediction (i.e. over
+        # frames/time) If we have C=256 possible states the maximum bit entropy
+        # is 8 (2^8 = 256) this means that the model have a one in 256 chance
+        # to randomly be right. The model can't do better than to uniformly
+        # guess each state, it has learned (less than) nothing. We want the
+        # model to have low entropy over the course of a dialog, "thinks it
+        # understands how the dialog is going", it's a measure of how close the
+        # information in the unseen data is to the knowledge encoded in the
+        # training data.
+        h = -probs * probs.log2()  # Entropy
+        H = h.sum(dim=-1)  # average entropy per frame
+
+        # first two bins
+        p_now = self.objective.probs_next_speaker_aggregate(
+            probs, from_bin=now_lims[0], to_bin=now_lims[-1]
+        )
+        p_future = self.objective.probs_next_speaker_aggregate(
+            probs, from_bin=future_lims[0], to_bin=future_lims[1]
+        )
+        return {
+            "probs": probs,
+            "vad": vad,
+            "p_now": p_now,
+            "p_future": p_future,
+            "H": H,
+        }
+
+    def encode_vad(self, vad: Tensor) -> Tensor:
+        v_cond = self.va_condition(vad)
+        # Add vad-history information
+        # if va_history is not None:
+        #     v_cond += self.va_history(va_history)
+        return self.va_cond_ln(v_cond)
+
+    def encode_audio(self, audio: Tensor) -> Tuple[Tensor, Tensor]:
+        assert (
+            audio.shape[1] == 1
+        ), f"audio VAP ENCODER: {audio.shape} != (B, 1, n_samples)"
+        return self.encoder(audio)  # speaker 1
+
+    def forward(
+        self, waveform: Tensor, vad: Tensor, attention: bool = False
+    ) -> Dict[str, Tensor]:
+        assert not attention, "Attention Mono model is not implemented"
+        x = self.encode_audio(waveform)
+
+        # Ugly: sometimes you may get an extra frame from waveform encoding
+        # x = x[:, : vad.shape[1]]
+        # Add Vad conditioning
+        x = x + self.encode_vad(vad)
+
+        # Autoregressive
+        x = self.ar_channel(x)["x"]
+        x = self.ar(x)["x"]
+
+        # Outputs
+        logits = self.vap_head(x)
+        ret = {"logits": logits, "vad": vad}
+        # if attention:
+        #     ret["self_attn"] = torch.stack([o1["attn"], o2["attn"]], dim=1)
+        #     ret["cross_attn"] = out["cross_attn"]
+        #     ret["cross_self_attn"] = out["self_attn"]
+        return ret
+
+
 if __name__ == "__main__":
 
     from vap.audio import load_waveform
