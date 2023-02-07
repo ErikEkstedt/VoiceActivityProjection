@@ -176,7 +176,7 @@ class CPCModel(nn.Module):
         return cFeature, encodedData, label
 
 
-def load_CPC():
+def load_CPC(load_state_dict=True):
     """
     Contrast predictive learning model for audio data
     pretrained: if True, load a model trained on libri-light 60k
@@ -393,7 +393,11 @@ def load_CPC():
     model = CPCModel(encoderNet, arNet)
 
     # always load pretrained
-    model.load_state_dict(checkpoint["weights"], strict=False)
+    if load_state_dict:
+        print("#" * 40)
+        print("Load pretrained CPC")
+        print("#" * 40)
+        model.load_state_dict(checkpoint["weights"], strict=False)
     model.name = "cpc"
     return model
 

@@ -62,7 +62,6 @@ class OptConfig:
 
 @dataclass
 class DataConfig:
-
     train_path: str = "../vap_dataset/data/sliding_train.csv"
     val_path: str = "../vap_dataset/data/sliding_val.csv"
     test_path: str = "../vap_dataset/data/sliding_test.csv"
@@ -171,6 +170,8 @@ def train() -> None:
 
     if cfg_dict["fast_dev_run"]:
         print("NAME: " + name)
+        for n in ["logger", "strategy", "debug", "seed", "wandb_project"]:
+            cfg_dict.pop(n)
         trainer = pl.Trainer(**cfg_dict)
         trainer.fit(model, datamodule=dm)
     else:
@@ -222,7 +223,7 @@ def train() -> None:
         if torch.cuda.is_available():
             cfg_dict["accelerator"] = "gpu"
 
-        for n in ["logger", "strategy", "debug", "seed", "wandb_project"]:
+        for n in ["logger", "strategy", "debug", "seed", "wandb_project", "debug"]:
             cfg_dict.pop(n)
         trainer = pl.Trainer(
             logger=logger,

@@ -45,6 +45,7 @@ class VapConfig:
 
     # Encoder
     freeze_encoder: bool = True
+    load_pretrained: int = 1  # stupid but works
 
     # GPT
     dim: int = 256
@@ -87,6 +88,7 @@ class VapMonoConfig:
 
     # Encoder
     freeze_encoder: bool = True
+    load_pretrained: bool = True
 
     # GPT
     dim: int = 256
@@ -128,7 +130,10 @@ class VapGPT(nn.Module):
         self.frame_hz = conf.frame_hz
 
         # Audio Encoder
-        self.encoder = EncoderCPC(freeze=conf.freeze_encoder)
+        self.encoder = EncoderCPC(
+            load_pretrained=True if conf.load_pretrained == 1 else False,
+            freeze=conf.freeze_encoder,
+        )
 
         # Single channel
         self.ar_channel = GPT(

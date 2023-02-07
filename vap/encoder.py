@@ -13,10 +13,10 @@ class EncoderCPC(nn.Module):
     check paper (branch) version to see other encoders...
     """
 
-    def __init__(self, freeze=True):
+    def __init__(self, load_pretrained=True, freeze=True):
         super().__init__()
         self.sample_rate = 16000
-        self.encoder = load_CPC()
+        self.encoder = load_CPC(load_pretrained)
         self.output_dim = self.encoder.gEncoder.conv4.out_channels
         self.dim = self.output_dim
 
