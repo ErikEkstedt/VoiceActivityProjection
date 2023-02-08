@@ -43,9 +43,9 @@ class VapConfig:
     frame_hz: int = 50
     bin_times: List[float] = field(default_factory=lambda: [0.2, 0.4, 0.6, 0.8])
 
-    # Encoder
-    freeze_encoder: bool = True
-    load_pretrained: int = 1  # stupid but works
+    # Encoder (training flag)
+    freeze_encoder: int = 1  # stupid but works (--vap_freeze_encoder 1)
+    load_pretrained: int = 1  # stupid but works (--vap_load_pretrained 1)
 
     # GPT
     dim: int = 256

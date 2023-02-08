@@ -223,7 +223,7 @@ def train() -> None:
         if torch.cuda.is_available():
             cfg_dict["accelerator"] = "gpu"
 
-        for n in ["logger", "strategy", "debug", "seed", "wandb_project", "debug"]:
+        for n in ["logger", "strategy", "debug", "seed", "wandb_project"]:
             cfg_dict.pop(n)
         trainer = pl.Trainer(
             logger=logger,
