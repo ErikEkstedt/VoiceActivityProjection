@@ -28,9 +28,11 @@ python run.py \
   --filename my_output.json # saves the output to this file. Omitting this flag saves output to ./{AUDIO_FILENAME}.json
 ```
 
-### Train
+### Train (not yet publically available b/c of non open-source data)
 
-Training the model requires the [vap_dataset](https://github.com/ErikEkstedt/vap_dataset) repo. The repo creates dataset splits (.csv-files) which are provided as arguments to the training script. See repo for further details. However, it is not strictly required and you could write your own `pl.DataModule` which provides a batch with: 
+WIP: working on making the training repo availble (however will not be useful if you don't have access to Switchboard/Fisher/Candor audio and annotation files). Please contact me if you have access and we can work something out :)
+
+Training the model requires the private [vap_dataset](https://github.com/ErikEkstedt/vap_dataset) repo (for now) i.e. the relevant `pl.DataModule`. The repo creates dataset splits (.csv-files) which are provided as arguments to the training script. However, it is not strictly required and you could write your own `pl.DataModule` which provides a batch with chunks of audio and corresponding Voice Activity (VAD).
 
 ```python
 batch['vad']  # (B, n_frames+horizon_frames, 2)
