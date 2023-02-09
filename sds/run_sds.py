@@ -234,13 +234,15 @@ class TurnTakingSDS:
 
                 # update tensor X
                 self.add_audio_bytes_to_tensor(audio_bytes)
-                a = (self.x[0, 0, -4000:].abs().mean() * 100).long().item()
-                b = (self.x[0, 1, -4000:].abs().mean() * 100).long().item()
-                print("Audio ->   A: ", a, "B: ", b)
+                a = (self.x[0, 0, -4000:].pow(2).sqrt().max() * 100).long().item()
+                b = (self.x[0, 1, -4000:].pow(2).sqrt().max() * 100).long().item()
 
                 # feed through model
                 out = self.model.probs(self.x)
                 p = out["p_now"][0, -self.tt_frames :, 0].mean().item()
+                # p = out["p_future"][0, -self.tt_frames :, 0].mean().item()
+                print(f"FURHAT: {round(100*p)} | Audio   A: ", a, "B: ", b)
+                # print(f"FURHAT: {round(100*p)}")
                 # d = {"now": p}
 
                 # send through zmk
