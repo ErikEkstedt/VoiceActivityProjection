@@ -1,6 +1,13 @@
 # VoiceActivityProjection
 
-Voice Activity Projection is a Self-supervised objective for Turn-taking Events.
+Voice Activity Projection is a Self-supervised objective for Turn-taking Events. This is an extended version which trains a stereo model (mono is still possible) that does not require any VAD information as input BUT do require separate channels for both speakers. Overbleed between the channels is fine as long as you have access to the VAD information (used as label during training). The stereo model greatly simplifies inference where the only input is a stereo waveform. The model is trained on a multitask loss defined by the original VAP-objective and a VAD-objective (predict the current voice activity over each frame for the two separate channels).
+
+The model is a GPT-like transformer model, using [AliBI attention](https://ofir.io/train_short_test_long.pdf), which operates on pretrained speech representation (extract by submodule defined/trained/provided by [CPC facebookresearch](https://github.com/facebookresearch/CPC_audio)).
+
+A state-dict tensor is included in the `examples/` folder:
+* `example/VAP_3mmz3t0u_50Hz_ad20s_134-epoch9-val_2.56.pt`
+
+## Information
 
 1. [DEMO page](https://erikekstedt.github.io/VAP/)
 2. [Voice Activity Projection: Self-supervised Learning of Turn-taking Events](https://arxiv.org/abs/2205.09812)
@@ -10,19 +17,9 @@ Voice Activity Projection is a Self-supervised objective for Turn-taking Events.
     * Analysis inspired by Psycholinguistics Prosodic analysis
     * Winner of **Best Paper Award** at **SIGDIAL2022**
 
-Content
-* [Usage](#usage)
-  * [Train](#train)
-  * [Evaluation](#evaluation)
-* [Installation](#installation)
-* [Citation](#citation)
+## Use
 
-
-The model is a GPT-like transformer model, using [AliBI attention](https://ofir.io/train_short_test_long.pdf), which operates on pretrained speech representation (extract by submodule defined/trained/provided by [CPC facebookresearch](https://github.com/facebookresearch/CPC_audio)).
-
-## Usage
-
-The `run.py` script loads a pretrained model and evaluates on a sample (`waveform` + `text_grid_name.TextGrid` or `vad_list_name.json`).
+The `run.py` script loads a pretrained model and extracts the turn-shift probabilities over a single waveform (stereo). If a mono-waveform is given it is assumed that it contains a single speaker and we automatically add a silent channel as speaker 2.
 
 * Using defaults: `python run.py`
 * Custom run requires a audio file `sample.wav` and **either** a `vad_list_name.json` or `text_grid_name.TextGrid`
@@ -30,132 +27,73 @@ The `run.py` script loads a pretrained model and evaluates on a sample (`wavefor
 
 ```bash
 python run.py \
-  -c example/cpc_48_50hz_15gqq5s5.ckpt \
-  -w example/student_long_female_en-US-Wavenet-G.wav \ # waveform
-  -v example/vad_list.json \ # Required if model.mono=True else Optional
-  -o VAP_OUTPUT.json  # output file
-
-  # -tg example/student_long_female_en-US-Wavenet-G.TextGrid \ # OPTIONAL
+  --audio example/student_long_female_en-US-Wavenet-G.wav \ # waveform
+  --sd example/VAP_3mmz3t0u_50Hz_ad20s_134-epoch9-val_2.56.pt \  # default state dict
+  --filename my_output.json # saves the output to this file. Omitting this flag saves output to ./{AUDIO_FILENAME}.json
 ```
+
 
 ### Train
 
+Training the model requires the [vap_dataset](https://github.com/ErikEkstedt/vap_dataset) repo. The repo creates dataset splits (.csv-files) which are provided as arguments to the training script. See repo for further details. However, it is not strictly required and you could write your own `pl.DataModule` which provides a batch with: 
 
-**WARNING: Requires access to `Fisher` and/or `Switchboard` datasets.**
-(DataModules, Datasets, etc are implemented in [datasets_turntaking](https://github.com/ErikEkstedt/datasets_turntaking))
-```bash
-python vap/train.py data.datasets=['switchboard','fisher']
+```python
+batch['vad']  # (B, n_frames+horizon_frames, 2)
+batch['waveform'] # (B, 2, n_samples) 
 ```
 
-### Evaluation
+For training on 20s chunks (default) with a framerate of 50Hz and a 2s projection window -> `n_frames=(20+2)s * 50 = 1100 frames` and `n_samples=16_000Hz*20s = 320k samples`.
 
-Evaluation over test-set.
 
-**WARNING: Requires access to `Fisher` and/or `Switchboard` datasets.**
-(DataModules, Datasets, etc are implemented in [datasets_turntaking](https://github.com/ErikEkstedt/datasets_turntaking))
+See `vap/train.py` for further details.
 
-** WARNING: Using hydra (notice the '+' flag or the absence of a flag).**
 ```bash
-python vap/evaluation.py \
-  +checkpoint_path=/full/path/checkpoint.ckpt \
-  data.num_workers=4 \
-  data.batch_size=16
+python vap/train.py --data_train_path TRAIN/PATH.csv --data_val_path VAL/PATH.csv
 ```
-
-----------------------------
 
 ## Installation
 
-* Create conda env: `conda create -n voice_activity_projection python=3.9`
+* Create conda env: `conda create -n voice_activity_projection python=3`
   - source env: `conda source voice_activity_projection`
-* PyTorch: `conda install pytorch torchvision torchaudio cudatoolkit=11.3 -c pytorch`
-* Dependencies:
-  * **VAP**: Voice Activity Projection multi-purpose "head".
-    * Install [`vap_turn_taking`](https://github.com/ErikEkstedt/vap_turn_taking)
-      * `git clone https://github.com/ErikEkstedt/vap_turn_taking.git`
-      * cd to repo, and install dependencies: `pip install -r requirements.txt`
-      * Install: `pip install -e .`
-  * **DATASET**
-    * Install [datasets_turntaking](https://github.com/ErikEkstedt/datasets_turntaking)
-      * `git clone https://github.com/ErikEkstedt/datasets_turntaking.git`
-      * cd to repo, and install dependencies: `pip install -r requirements.txt`
-      * Install repo: `pip install -e .`
-    * **WARNING:** Requires [Switchboard](https://catalog.ldc.upenn.edu/LDC97S62) and/or [Fisher](https://catalog.ldc.upenn.edu/LDC2004S13) data!
-* Install **`voice_activity_projection`** (this repo):
+  - Working with `python 3.9` but I don't think it matters too much...
+* PyTorch: `conda install pytorch torchvision torchaudio cudatoolkit=11.6 -c pytorch`
+    - Have not tested all versions but should work from `torch 1.12.1` as of time of writing...
+* Install **`VoiceActivityProjection`** (this repo):
   * cd to root directory and run:
     * `pip install -r requirements.txt`
     * `pip install -e .`
-
--------------------------
-
-### Paper
-
-Event settings used in [Voice Activity Projection: Self-supervised Learning of Turn-taking Events](https://arxiv.org/abs/2205.09812).
-* The event settings used in the paper are included in `vap/conf/events/events.json`.
-  - See paper Section 3
-* Events are extracted using [`vap_turn_taking`](https://github.com/ErikEkstedt/vap_turn_taking)
-
-```python
-from vap.utils import read_json
-
-event_settings = read_json("vap/conf/events/events.json")
-hs_kwargs = event_settings['hs']
-bc_kwargs = event_settings['bc']
-metric_kwargs = event_settings['metric']
-```
-
-```json
-{
-  "hs": {
-    "post_onset_shift": 1,
-    "pre_offset_shift": 1,
-    "post_onset_hold": 1,
-    "pre_offset_hold": 1,
-    "non_shift_horizon": 2,
-    "metric_pad": 0.05,
-    "metric_dur": 0.1,
-    "metric_pre_label_dur": 0.5,
-    "metric_onset_dur": 0.2
-  },
-  "bc": {
-    "max_duration_frames": 1.0,
-    "pre_silence_frames": 1.0,
-    "post_silence_frames": 2.0,
-    "min_duration_frames": 0.2,
-    "metric_dur_frames": 0.2,
-    "metric_pre_label_dur": 0.5
-  },
-  "metric": {
-    "pad": 0.05,
-    "dur": 0.1,
-    "pre_label_dur": 0.5,
-    "onset_dur": 0.2,
-    "min_context": 3.0
-  }
-}
-```
+* [OPTIONAL] Dependencies for training:
+  * **DATASET**
+    * Install [vap_dataset](https://github.com/ErikEkstedt/vap_dataset)
+      * `git clone https://github.com/ErikEkstedt/vap_dataset.git`
+      * cd to repo, and install dependencies: `pip install -r requirements.txt`
+      * Install repo: `pip install -e .`
 
 
 ## Citation
 
-**TBD: citation from actual proceedings (not yet availabe)**
-
 ```latex
-@article{ekstedtVapModel2022,
-  title = {Voice Activity Projection: Self-supervised Learning of Turn-taking Events},
-  url = {https://arxiv.org/abs/2205.09812},
-  author = {Ekstedt, Erik and Skantze, Gabriel},
-  journal = {arXiv},
-  year = {2022},
+@inproceedings{ekstedt22_interspeech,
+  author={Erik Ekstedt and Gabriel Skantze},
+  title={{Voice Activity Projection: Self-supervised Learning of Turn-taking Events}},
+  year=2022,
+  booktitle={Proc. Interspeech 2022},
+  pages={5190--5194},
+  doi={10.21437/Interspeech.2022-10955}
 }
 ```
 
 ```latex
-@article{ekstedtVapProsody2022,
-  title = {How Much Does Prosody Help Turn-taking? Investigations using Voice Activity Projection Models},
-  url = {https://arxiv.org/abs/2209.05161},
-  author = {Ekstedt, Erik and Skantze, Gabriel},
-  journal = {arXiv},
-  year = {2022},
+@inproceedings{ekstedt-skantze-2022-much,
+    title = "How Much Does Prosody Help Turn-taking? Investigations using Voice Activity Projection Models",
+    author = "Ekstedt, Erik  and
+      Skantze, Gabriel",
+    booktitle = "Proceedings of the 23rd Annual Meeting of the Special Interest Group on Discourse and Dialogue",
+    month = sep,
+    year = "2022",
+    address = "Edinburgh, UK",
+    publisher = "Association for Computational Linguistics",
+    url = "https://aclanthology.org/2022.sigdial-1.51",
+    pages = "541--551",
 }
 ```
