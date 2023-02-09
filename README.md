@@ -21,17 +21,12 @@ A state-dict tensor is included in the `examples/` folder:
 
 The `run.py` script loads a pretrained model and extracts the turn-shift probabilities over a single waveform (stereo). If a mono-waveform is given it is assumed that it contains a single speaker and we automatically add a silent channel as speaker 2.
 
-* Using defaults: `python run.py`
-* Custom run requires a audio file `sample.wav` and **either** a `vad_list_name.json` or `text_grid_name.TextGrid`
-* See `examples/` folder for model-checkpoint, input data format etc.
-
 ```bash
 python run.py \
   --audio example/student_long_female_en-US-Wavenet-G.wav \ # waveform
   --sd example/VAP_3mmz3t0u_50Hz_ad20s_134-epoch9-val_2.56.pt \  # default state dict
   --filename my_output.json # saves the output to this file. Omitting this flag saves output to ./{AUDIO_FILENAME}.json
 ```
-
 
 ### Train
 
