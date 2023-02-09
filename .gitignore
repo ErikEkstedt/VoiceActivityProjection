@@ -2,6 +2,7 @@
 pyrightconfig.json
 runs/
 runs_*/
+.DS_Store
 
 # Byte-compiled / optimized / DLL files
 __pycache__/
