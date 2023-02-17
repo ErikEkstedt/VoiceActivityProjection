@@ -312,8 +312,13 @@ def plot_waveform(
         waveform.ndim == 1
     ), f"Expects a single channel waveform (n_samples, ) got {waveform.shape}"
     x = waveform[..., ::downsample]
-    ax.plot(x, color=color, zorder=0, alpha=alpha, label=label)  # , alpha=0.2)
-    ax.set_xlim([0, len(x)])
+
+    new_rate = sample_rate / downsample
+    x_time = torch.arange(x.shape[-1]) / new_rate
+
+    ax.plot(x_time, x, color=color, zorder=0, alpha=alpha, label=label)  # , alpha=0.2)
+    ax.set_xlim([0, x_time[-1]])
+
     # ax.set_xticks(ax.get_xticks()/sample_rate/downsample)
     ax.set_ylim([-1, 1])
     ax.set_yticks([])

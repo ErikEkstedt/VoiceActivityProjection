@@ -4,10 +4,11 @@ from pathlib import Path
 import pandas as pd
 
 import torch
+from torch.utils.data import DataLoader
 import pytorch_lightning as pl
 from pytorch_lightning.strategies.ddp import DDPStrategy
 
-from datasets_turntaking import DialogAudioDM
+from vap_dataset.datamodule import VapDataModule
 
 from vap.callbacks import SymmetricSpeakersCallback
 from vap.train import VAPModel, DataConfig, OptConfig
@@ -15,7 +16,7 @@ from vap.phrases.dataset import PhrasesCallback
 from vap.utils import everything_deterministic, write_json
 
 # Delete later prolly
-from vap.model import VapGPT, VapConfig, load_older_state_dict
+from vap.model import VapGPT, VapConfig
 from vap.events import TurnTakingEvents, EventConfig
 from vap.zero_shot import ZeroShot
 
@@ -35,14 +36,19 @@ def get_args():
         default="example/VAP_3mmz3t0u_50Hz_ad20s_134-epoch9-val_2.56.ckpt",
     )
     parser = pl.Trainer.add_argparse_args(parser)
+    # parser = OptConfig.add_argparse_args(parser)
     parser = DataConfig.add_argparse_args(parser)
     parser, fields_added = VapConfig.add_argparse_args(parser)
     parser, fields_added = EventConfig.add_argparse_args(parser, fields_added)
     args = parser.parse_args()
 
-    cfg_dict = vars(args)
+    model_conf = VapConfig.args_to_conf(args)
+    # opt_conf = OptConfig.args_to_conf(args)
+    data_conf = DataConfig.args_to_conf(args)
+    event_conf = EventConfig.args_to_conf(args)
 
     # Remove all non trainer args
+    cfg_dict = vars(args)
     for k, _ in list(cfg_dict.items()):
         if (
             k.startswith("data_")
@@ -55,9 +61,10 @@ def get_args():
     return {
         "args": args,
         "cfg_dict": cfg_dict,
-        "model": VapConfig.args_to_conf(args),
-        "event": EventConfig.args_to_conf(args),
-        "data": DataConfig.args_to_conf(args),
+        "model": model_conf,
+        "event": event_conf,
+        # "opt": opt_conf,
+        "data": data_conf,
     }
 
 
@@ -72,7 +79,7 @@ def get_curves(preds, target, pos_label=1, thresholds=None, EPS=1e-6):
         thresholds = torch.linspace(0, 1, steps=101)
 
     if pos_label == 0:
-        raise NotImplemented("Have not done this")
+        raise NotImplementedError("Have not done this")
 
     ba, f1 = [], []
     auc0, auc1 = [], []
@@ -137,7 +144,7 @@ def get_curves(preds, target, pos_label=1, thresholds=None, EPS=1e-6):
 
 def find_threshold(
     model: VAPModel,
-    dloader: torch.utils.data.DataLoader,
+    dloader: DataLoader,
     savepath: str,
     min_thresh: float = 0.01,
 ):
@@ -165,7 +172,7 @@ def find_threshold(
     )
 
     # Find Thresholds
-    _trainer = Trainer(
+    _trainer = pl.Trainer(
         gpus=-1,
         deterministic=True,
         callbacks=[SymmetricSpeakersCallback()],
@@ -227,7 +234,7 @@ def find_threshold(
 
 def get_savepath(args, configs):
     name = basename(args.checkpoint).replace(".ckpt", "")
-    name += "_" + "_".join(configs["data"].datasets)
+    # name += "_" + "_".join(configs["data"].datasets)
     savepath = join(ROOT, name)
     Path(savepath).mkdir(exist_ok=True, parents=True)
     print("SAVEPATH: ", savepath)
@@ -248,50 +255,35 @@ def evaluate() -> None:
     # Load model
     #########################################################
     model = VAPModel.load_from_checkpoint(args.checkpoint)
-    # print("#####################################")
-    # print("#####################################")
-    # print("WARNING LOAD HARDCODED CHECKPOINT")
-    # print("#####################################")
-    # print("#####################################")
-    # model = VAPModel(configs["model"], event_conf=configs["event"])
-    # sd = load_older_state_dict()
-    # model.load_state_dict(sd, strict=False)
-    # model = model.eval()
-    # if torch.cuda.is_available():
-    #     model = model.to("cuda")
 
     #########################################################
     # Load data
     #########################################################
     dconf = configs["data"]
-    dm = DialogAudioDM(
-        datasets=dconf.datasets,
-        type=dconf.type,
-        audio_duration=dconf.audio_duration,
-        audio_normalize=dconf.audio_normalize,
-        audio_overlap=dconf.audio_overlap,
-        flip_channels=dconf.flip_channels,
-        flip_probability=dconf.flip_probability,
-        mask_vad=dconf.mask_vad,
-        mask_vad_probability=dconf.mask_vad_probability,
+    dm = VapDataModule(
+        train_path=dconf.train_path,
+        val_path=dconf.val_path,
+        test_path=dconf.test_path,
+        horizon=2,
         batch_size=dconf.batch_size,
         num_workers=dconf.num_workers,
     )
     dm.prepare_data()
-    dm.setup()
+    dm.setup("test")
 
-    # #########################################################
-    # # Threshold
-    # #########################################################
-    # # Find the best thresholds (S-pred, BC-pred, S/L) on the validation set
-    # # threshold_path = cfg.get("thresholds", None)
-    # # if threshold_path is None:
-    # #     thresholds = find_threshold(
-    # #         model, dm.val_dataloader(), savepath=savepath, min_thresh=MIN_THRESH
-    # #     )
-    # # else:
-    # #     print("Loading thresholds: ", threshold_path)
-    # #     thresholds = read_json(threshold_path)
+    # TODO: Do we still want to use zero-shot + threshold?
+    #########################################################
+    # Threshold
+    #########################################################
+    # Find the best thresholds (S-pred, BC-pred, S/L) on the validation set
+    # threshold_path = cfg.get("thresholds", None)
+    # if threshold_path is None:
+    #     thresholds = find_threshold(
+    #         model, dm.val_dataloader(), savepath=savepath, min_thresh=MIN_THRESH
+    #     )
+    # else:
+    #     print("Loading thresholds: ", threshold_path)
+    #     thresholds = read_json(threshold_path)
 
     #########################################################
     # Score
@@ -305,7 +297,7 @@ def evaluate() -> None:
     trainer = pl.Trainer(
         callbacks=[SymmetricSpeakersCallback(), PhrasesCallback()], **cfg_dict
     )
-    result = trainer.test(model, dataloaders=dm.val_dataloader())[0]
+    result = trainer.test(model, dataloaders=dm.test_dataloader())[0]
 
     # fixup results
     flat = {}
@@ -328,24 +320,6 @@ def evaluate() -> None:
     filepath = join(savepath, name + ".csv")
     df.to_csv(filepath, index=False)
     print("Saved to -> ", filepath)
-
-    # df = pd.read_csv(
-    #     "runs_evaluation/VAP_3mmz3t0u_50Hz_ad20s_134-epoch9-val_2.56_switchboard_fisher/score.csv"
-    # )
-
-    # # result = test(model, dm.test_dataloader(), online=False)[0]
-    # metrics = model.test_metric.compute()
-    # metrics["loss"] = result["test_loss"]
-    # metrics["threshold_pred_shift"] = thresholds["pred_shift"]
-    # metrics["threshold_pred_bc"] = thresholds["pred_bc"]
-    # metrics["threshold_short_long"] = thresholds["short_long"]
-    #
-    # #########################################################
-    # # Save
-    # #########################################################
-    # metric_json = tensor_dict_to_json(metrics)
-    # write_json(metric_json, join(savepath, "metric.json"))
-    # print("Saved metrics -> ", join(savepath, "metric.json"))
 
 
 if __name__ == "__main__":

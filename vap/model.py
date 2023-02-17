@@ -16,6 +16,8 @@ from vap.utils import (
 )
 
 
+BIN_TIMES: list = [0.2, 0.4, 0.6, 0.8]
+
 everything_deterministic()
 
 # TODO: @dataclass and CLI arguments or is hydra the way to go?
@@ -41,7 +43,7 @@ def load_older_state_dict(
 class VapConfig:
     sample_rate: int = 16_000
     frame_hz: int = 50
-    bin_times: List[float] = field(default_factory=lambda: [0.2, 0.4, 0.6, 0.8])
+    bin_times: List[float] = field(default_factory=lambda: BIN_TIMES)
 
     # Encoder (training flag)
     freeze_encoder: int = 1  # stupid but works (--vap_freeze_encoder 1)
@@ -81,7 +83,7 @@ class VapConfig:
 class VapMonoConfig:
     sample_rate: int = 16_000
     frame_hz: int = 50
-    bin_times: List[float] = field(default_factory=lambda: [0.2, 0.4, 0.6, 0.8])
+    bin_times: List[float] = field(default_factory=lambda: BIN_TIMES)
     mono: bool = True  # INFO: only used in mono model
     va_history: bool = False  # INFO: only used in mono model
     va_history_bins: int = 5  # INFO: only used in mono model
@@ -382,18 +384,29 @@ class VapGPTMono(nn.Module):
         return ret
 
 
-def debug_mono():
+def debug():
+    from torch.utils.data import DataLoader
+    from vap_dataset.dataset import VapDataset
 
+    conf = VapConfig()
+
+    model = VapGPT(conf)
+
+    dset = VapDataset(path="data/sliding_val.csv", mono=True)
+    dloader = DataLoader(dset, batch_size=4, num_workers=1, shuffle=False)
+    batch = next(iter(dloader))
+    out = model(batch["waveform"], batch["vad"][:, :-100])
+
+
+def debug_mono():
     from torch.utils.data import DataLoader
     from vap_dataset.dataset import VapDataset
 
     conf = VapMonoConfig(mono=True, va_history=True)
     model = VapGPTMono(conf)
-
     dset = VapDataset(path="data/sliding_val.csv", mono=True)
     dloader = DataLoader(dset, batch_size=4, num_workers=1, shuffle=False)
     batch = next(iter(dloader))
-
     out = model(batch["waveform"], batch["vad"][:, :-100])
 
 
