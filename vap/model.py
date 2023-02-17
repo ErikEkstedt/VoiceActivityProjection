@@ -160,6 +160,10 @@ class VapGPT(nn.Module):
         self.va_classifier = nn.Linear(conf.dim, 1)
         self.vap_head = nn.Linear(conf.dim, self.objective.n_classes)
 
+    @property
+    def horizon_time(self):
+        return self.objective.horizon_time
+
     def encode_audio(self, audio: torch.Tensor) -> Tuple[Tensor, Tensor]:
         assert (
             audio.shape[1] == 2
