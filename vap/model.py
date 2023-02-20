@@ -181,6 +181,7 @@ class VapGPT(nn.Module):
     def probs(
         self,
         waveform: Tensor,
+        vad: Optional[Tensor] = None,
         now_lims: List[int] = [0, 1],
         future_lims: List[int] = [2, 3],
     ) -> Dict[str, Tensor]:
@@ -207,13 +208,21 @@ class VapGPT(nn.Module):
         p_future = self.objective.probs_next_speaker_aggregate(
             probs, from_bin=future_lims[0], to_bin=future_lims[1]
         )
-        return {
+
+        ret = {
             "probs": probs,
             "vad": vad,
             "p_now": p_now,
             "p_future": p_future,
             "H": H,
         }
+
+        if vad is not None:
+            labels = self.objective.get_labels(vad)
+            ret["loss"] = self.objective.loss_vap(
+                out["logits"], labels, reduction="none"
+            )
+        return ret
 
     @torch.no_grad()
     def vad(
