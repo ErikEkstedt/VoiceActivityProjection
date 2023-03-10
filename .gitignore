@@ -7,6 +7,7 @@ checkpoints/
 runs_*/
 data/
 .DS_Store
+candor/
 
 # Byte-compiled / optimized / DLL files
 __pycache__/

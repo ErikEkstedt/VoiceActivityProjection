@@ -20,9 +20,13 @@ from torchmetrics.classification import Accuracy, F1Score
 # from datasets_turntaking import DialogAudioDM
 from vap_dataset.datamodule import VapDataModule
 from vap.phrases.dataset import PhrasesCallback
+from vap.callbacks import SymmetricSpeakersCallback, AudioAugmentationCallback
 from vap.events import TurnTakingEvents, EventConfig
 from vap.zero_shot import ZeroShot
 from vap.model import VapGPT, VapConfig  # , load_older_state_dict
+
+
+torch.set_float32_matmul_precision("medium")
 
 
 @dataclass
@@ -193,6 +197,8 @@ def train() -> None:
                 strict=True,  # crash if "monitor" is not found in val metrics
                 verbose=False,
             ),
+            SymmetricSpeakersCallback(),
+            AudioAugmentationCallback(device="cuda"),
             PhrasesCallback(),
         ]
 
