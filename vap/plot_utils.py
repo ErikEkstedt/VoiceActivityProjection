@@ -57,6 +57,8 @@ def plot_probs(
     ax: mpl.axes.Axes,
     color: List[str] = ["b", "orange"],
     label: List[str] = ["A", "B"],
+    prob_label: str = "P now",
+    yticks: list[str] = ["SHIFT", "HOLD"],
     alpha_ns: float = 0.6,
     fontsize: int = 12,
     no_xticks: bool = True,
@@ -67,6 +69,7 @@ def plot_probs(
     p = p.cpu()
     x = x.cpu()
 
+    ax.plot(x, p, color="k", linewidth=1, label=prob_label, zorder=100)
     ax.fill_between(
         x,
         y1=0.5,
@@ -85,8 +88,7 @@ def plot_probs(
         color=color[1],
         label=label[1],
     )
-    ax.plot(x, p, color="k", linewidth=1)
-    ax.set_yticks([0.25, 0.75], ["SHIFT", "HOLD"], fontsize=fontsize)
+    ax.set_yticks([0.25, 0.75], yticks, fontsize=fontsize)
     ax.set_ylim([0, 1])
     ax.set_xlim([0, x[-1]])
 
