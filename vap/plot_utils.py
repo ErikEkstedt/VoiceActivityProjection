@@ -328,6 +328,38 @@ def plot_waveform(
     return ax
 
 
+def plot_f0(
+    waveform,
+    ax: mpl.axes.Axes,
+    sample_rate: int = 16000,
+    color: str = "b",
+    markersize: int = 3,
+) -> mpl.axes.Axes:
+    assert (
+        waveform.ndim == 1
+    ), f"Expects a single channel waveform (n_samples, ) got {waveform.shape}"
+    f0 = VF.pitch_praat(waveform.cpu(), hop_time=0.1, sample_rate=sample_rate)
+    f0[f0 == 0] = torch.nan
+    x_time = torch.arange(f0.shape[-1]) * 0.1  # hop_time
+    ax.plot(x_time, f0, "o", markersize=markersize, color=color)
+    ymin, ymax = ax.get_ylim()
+    diff = ymax - ymin
+    if diff < 10:
+        ymin -= 5
+        ymax += 5
+        ax.set_ylim([ymin, ymax])
+    ax.set_xlim([0, x_time[-1]])
+    ax.set_ylabel("F0 (Hz)", fontsize=14)
+    ax.yaxis.tick_right()
+    return ax
+
+
+def plot_spectrogram(spec, ax: mpl.axes.Axes):
+    assert spec.ndim == 2, f"Expected spec of shape (Frequency, Time) got {spec.shape}"
+    ax.imshow(spec, aspect="auto", origin="lower", vmin=-1.5, vmax=1.5)
+    return ax
+
+
 def plot_stereo_mel_spec(
     waveform: torch.Tensor,
     ax: List[mpl.axes.Axes],
@@ -678,19 +710,23 @@ def plot_sample_mel_spec(
 
 
 def plot_sample_f0(
-    waveform, ax: mpl.axes.Axes, sample_rate: int = 16000
+    waveform,
+    ax: mpl.axes.Axes,
+    sample_rate: int = 16000,
+    color: str = "b",
+    markersize: int = 3,
 ) -> mpl.axes.Axes:
     f0 = VF.pitch_praat(waveform.cpu(), sample_rate=sample_rate)
     f0[f0 == 0] = torch.nan
-    ax.plot(f0, "o", markersize=3, color="b")
+    x_time = torch.arange(f0.shape[-1]) / sample_rate
+    ax.plot(x_time, f0, "o", markersize=markersize, color=color)
     ymin, ymax = ax.get_ylim()
     diff = ymax - ymin
     if diff < 10:
         ymin -= 5
         ymax += 5
         ax.set_ylim([ymin, ymax])
-    ax.set_xlim([0, len(f0)])
-    ax.set_xticks([])
+    ax.set_xlim([0, x_time[-1]])
     ax.set_ylabel("F0 (Hz)", fontsize=14)
     ax.yaxis.tick_right()
     return ax
