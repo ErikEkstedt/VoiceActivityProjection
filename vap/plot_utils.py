@@ -214,7 +214,7 @@ def plot_vap(
 
     xx = torch.arange(len(p_now)) / frame_hz
 
-    fig, ax = plt.subplots(n, 1, figsize=figsize)
+    fig, ax = plt.subplots(n, 1, figsize=figsize, sharex=True)
     _ = plot_waveform(waveform=waveform[0], ax=ax[0], label="A")
     _ = plot_waveform(waveform=waveform[1], ax=ax[0], color="orange", label="B")
     ax[0].set_xticks([])
@@ -225,8 +225,9 @@ def plot_vap(
         y=waveform, ax=[ax[1], ax[2]], sample_rate=16000, hop_time=0.01
     )
     if vad is not None:
-        plot_vad(xx, vad[:, 0], ax=ax[1], color="b", linewidth=3)
-        plot_vad(xx, vad[:, 1], ax=ax[2], color="orange", linewidth=3)
+        xvad = xx[: vad.shape[0]]
+        plot_vad(xvad, vad[:, 0], ax=ax[1], color="b", linewidth=3)
+        plot_vad(xvad, vad[:, 1], ax=ax[2], color="orange", linewidth=3)
 
     no_xticks = False
     if p_fut is not None:
@@ -246,9 +247,8 @@ def plot_vap(
         )
         ax[4].legend(loc="lower left", fontsize=16)
 
-    plt.subplots_adjust(
-        left=0.08, bottom=None, right=None, top=None, wspace=None, hspace=0.04
-    )
+    plt.tight_layout()
+    plt.subplots_adjust(left=0.08, hspace=0.04)
     if plot:
         plt.pause(0.1)
     return fig, ax
