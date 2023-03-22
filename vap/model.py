@@ -246,6 +246,9 @@ class VapGPT(nn.Module):
             )
         return vad
 
+    def extract_labels(self, vad: Tensor) -> Tensor:
+        return self.objective.get_labels(vad)
+
     def forward(self, waveform: Tensor, attention: bool = False) -> Dict[str, Tensor]:
         x1, x2 = self.encode_audio(waveform)
 

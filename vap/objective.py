@@ -4,17 +4,15 @@ import torch.nn.functional as F
 from torch import Tensor
 from einops import rearrange
 
-from typing import Dict, List, Tuple, Union
 
-
-def bin_times_to_frames(bin_times: List[float], frame_hz: int) -> List[int]:
+def bin_times_to_frames(bin_times: list[float], frame_hz: int) -> list[int]:
     return (torch.tensor(bin_times) * frame_hz).long().tolist()
 
 
 class ProjectionWindow:
     def __init__(
         self,
-        bin_times: List = [0.2, 0.4, 0.6, 0.8],
+        bin_times: list = [0.2, 0.4, 0.6, 0.8],
         frame_hz: int = 50,
         threshold_ratio: float = 0.5,
     ):
@@ -82,7 +80,7 @@ class Codebook(nn.Module):
         self.bin_frames = bin_frames
         self.n_bins: int = len(self.bin_frames)
         self.total_bins: int = self.n_bins * 2
-        self.n_classes: int = 2 ** self.total_bins
+        self.n_classes: int = 2**self.total_bins
 
         self.emb = nn.Embedding(
             num_embeddings=self.n_classes, embedding_dim=self.total_bins
@@ -91,7 +89,7 @@ class Codebook(nn.Module):
         self.emb.weight.requires_grad_(False)
 
     def single_idx_to_onehot(self, idx: int, d: int = 8) -> Tensor:
-        assert idx < 2 ** d, "must be possible with {d} binary digits"
+        assert idx < 2**d, "must be possible with {d} binary digits"
         z = torch.zeros(d)
         b = bin(idx).replace("0b", "")
         for i, v in enumerate(b[::-1]):
@@ -103,9 +101,9 @@ class Codebook(nn.Module):
         Create a matrix of all one-hot encodings representing a binary sequence of `self.total_bins` places
         Useful for usage in `nn.Embedding` like module.
         """
-        n_codes = 2 ** n_bins
+        n_codes = 2**n_bins
         embs = torch.zeros((n_codes, n_bins))
-        for i in range(2 ** n_bins):
+        for i in range(2**n_bins):
             embs[i] = self.single_idx_to_onehot(i, d=n_bins)
         return embs
 
@@ -149,14 +147,14 @@ class Codebook(nn.Module):
 class ObjectiveVAP(nn.Module):
     def __init__(
         self,
-        bin_times: List[float] = [0.2, 0.4, 0.6, 0.8],
+        bin_times: list[float] = [0.2, 0.4, 0.6, 0.8],
         frame_hz: int = 50,
         threshold_ratio: float = 0.5,
     ):
         super().__init__()
         self.frame_hz = frame_hz
         self.bin_times = bin_times
-        self.bin_frames: List[int] = bin_times_to_frames(bin_times, frame_hz)
+        self.bin_frames: list[int] = bin_times_to_frames(bin_times, frame_hz)
         self.horizon = sum(self.bin_frames)
         self.horizon_time = sum(bin_times)
 
@@ -211,7 +209,7 @@ class ObjectiveVAP(nn.Module):
         idx = self.codebook(projection_windows)
         return idx
 
-    def get_da_labels(self, va: Tensor) -> Tuple[Tensor, Tensor]:
+    def get_da_labels(self, va: Tensor) -> tuple[Tensor, Tensor]:
         projection_windows = self.projection_window_extractor(va).type(va.dtype)
         idx = self.codebook(projection_windows)
         ds = self.window_to_win_dialog_states(projection_windows)
@@ -246,7 +244,7 @@ class ObjectiveVAP(nn.Module):
         n = vad_output.shape[-2]
         return F.binary_cross_entropy_with_logits(vad_output, vad[:, :n])
 
-    def get_probs(self, logits: Tensor) -> Dict[str, Tensor]:
+    def get_probs(self, logits: Tensor) -> dict[str, Tensor]:
         """
         Extracts labels from the voice-activity, va.
         The labels are based on projections of the future and so the valid
@@ -259,7 +257,7 @@ class ObjectiveVAP(nn.Module):
 
         Return:
         -----------
-            Dict[probs, p, p_bc, labels]  which are all torch.Tensors
+            dict[probs, p, p_bc, labels]  which are all torch.Tensors
         """
 
         assert (
@@ -285,9 +283,9 @@ class ObjectiveVAP(nn.Module):
         self,
         p_now: Tensor,
         p_fut: Tensor,
-        events: Dict[str, List[List[Tuple[int, int, int]]]],
+        events: dict[str, list[list[tuple[int, int, int]]]],
         device=None,
-    ) -> Tuple[Dict[str, Tensor], Dict[str, Tensor]]:
+    ) -> tuple[dict[str, Tensor], dict[str, Tensor]]:
         batch_size = len(events["hold"])
 
         preds = {"hs": [], "pred_shift": [], "ls": [], "pred_backchannel": []}
