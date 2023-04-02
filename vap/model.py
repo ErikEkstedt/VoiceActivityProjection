@@ -187,7 +187,7 @@ class VapGPT(nn.Module):
     ) -> Dict[str, Tensor]:
         out = self(waveform)
         probs = out["logits"].softmax(dim=-1)
-        vad = out["vad"].sigmoid()
+        vap_vad = out["vad"].sigmoid()
 
         # Calculate entropy over each projection-window prediction (i.e. over
         # frames/time) If we have C=256 possible states the maximum bit entropy
@@ -211,7 +211,7 @@ class VapGPT(nn.Module):
 
         ret = {
             "probs": probs,
-            "vad": vad,
+            "vad": vap_vad,
             "p_now": p_now,
             "p_future": p_future,
             "H": H,
