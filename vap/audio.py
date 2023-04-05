@@ -5,10 +5,10 @@ import torchaudio.transforms as AT
 from typing import Any, Dict, Optional, Tuple
 
 
-SAMPLE_RATE = 16_000
-N_MELS = 80
-N_FFT = 400
-HOP_LENGTH = 320
+SAMPLE_RATE: int = 16_000
+N_MELS: int = 80
+N_FFT: int = 400
+HOP_LENGTH: int = 320
 
 
 def time_to_samples(t: float, sample_rate: int) -> int:

@@ -9,9 +9,147 @@ from vap.utils import read_json
 import vap.phrases.functional as VF
 
 
+##################################################################
+################ Updated plot ####################################
+##################################################################
+def plot_melspectrogram(
+    waveform: torch.Tensor,
+    ax: Union[mpl.axes.Axes, List[mpl.axes.Axes]],
+    sample_rate: int = 16_000,
+    hop_time: float = 0.02,
+    frame_time: float = 0.05,
+    n_mels: int = 80,
+    fontsize: int = 12,
+    plot: bool = False,
+) -> List[mpl.axes.Axes]:
+    assert waveform.ndim == 2, f"Expected (N_CHANNELS, N_SAMPLES) got {waveform.shape}"
+
+    if not isinstance(ax, list) and not isinstance(ax, np.ndarray):
+        print("make list")
+        ax = [ax]
+
+    duration = waveform.shape[-1] / sample_rate
+    xmin, xmax = 0, duration
+    ymin, ymax = 0, 80
+
+    hop_length = round(sample_rate * hop_time)
+    frame_length = round(sample_rate * frame_time)
+    mel_spec = log_mel_spectrogram(
+        waveform,
+        n_mels=n_mels,
+        n_fft=frame_length,
+        hop_length=hop_length,
+        sample_rate=sample_rate,
+    )
+
+    ax[0].imshow(
+        mel_spec[0],
+        interpolation="none",
+        aspect="auto",
+        origin="lower",
+        extent=[xmin, xmax, ymin, ymax],
+    )
+    ax[0].set_yticks([])
+
+    if mel_spec.shape[0] > 1 and len(ax) > 1:
+        ax[1].imshow(
+            mel_spec[1],
+            interpolation="none",
+            aspect="auto",
+            origin="lower",
+            extent=[xmin, xmax, ymin, ymax],
+        )
+        ax[1].set_yticks([])
+
+    ax[0].set_yticks([])
+    ax[1].set_yticks([])
+    ax[0].set_ylabel("A", fontsize=fontsize)
+    ax[1].set_ylabel("B", fontsize=fontsize)
+    if plot:
+        plt.pause(0.01)
+    return ax
+
+
+def plot_waveform(
+    waveform,
+    ax: mpl.axes.Axes,
+    color: str = "lightblue",
+    alpha: float = 0.6,
+    label: Optional[str] = None,
+    downsample: int = 10,
+    sample_rate: int = 16000,
+) -> mpl.axes.Axes:
+    assert (
+        waveform.ndim == 1
+    ), f"Expects a single channel waveform (n_samples, ) got {waveform.shape}"
+    x = waveform[..., ::downsample]
+
+    new_rate = sample_rate / downsample
+    x_time = torch.arange(x.shape[-1]) / new_rate
+
+    ax.plot(x_time, x, color=color, zorder=0, alpha=alpha, label=label)  # , alpha=0.2)
+    ax.set_xlim([0, x_time[-1]])
+
+    # ax.set_xticks(ax.get_xticks()/sample_rate/downsample)
+    ax.set_ylim([-1, 1])
+    ax.set_yticks([])
+    return ax
+
+
+def plot_vap_probs(
+    p: torch.Tensor,
+    ax: mpl.axes.Axes,
+    color: List[str] = ["b", "orange"],
+    label: List[str] = ["A", "B"],
+    prob_label: str = "P now",
+    yticks: list[str] = ["SHIFT", "HOLD"],
+    alpha_ns: float = 0.6,
+    fontsize: int = 12,
+    no_xticks: bool = True,
+    frame_hz: int = 50,
+) -> mpl.axes.Axes:
+    assert p.ndim == 1, f"Expected p shape (N_FRAMES) got {p.shape}"
+    p = p.cpu()
+    x = torch.arange(len(p)) / frame_hz
+    ax.fill_between(
+        x,
+        y1=0.5,
+        y2=p,
+        where=p > 0.5,
+        alpha=alpha_ns,
+        color=color[0],
+        label=label[0],
+    )
+    ax.fill_between(
+        x,
+        y1=p,
+        y2=0.5,
+        where=p < 0.5,
+        alpha=alpha_ns,
+        color=color[1],
+        label=label[1],
+    )
+    ax.plot(x, p, color="k", linewidth=1, label=prob_label, zorder=4)
+    ax.set_yticks([0.25, 0.75], yticks, fontsize=fontsize)
+    ax.set_ylim([0, 1])
+    ax.set_xlim([0, x[-1]])
+
+    ax.legend(loc="lower left")
+    ax.axhline(y=0.5, linestyle="dashed", linewidth=2, color="k")
+
+    if no_xticks:
+        ax.set_xticks([])
+
+    return ax
+
+
+# TODO: older functions which should be removed
+# and references changed to the new ones
+##################################################################
 def plot_mel_spectrogram(
     y, ax, sample_rate=16_000, hop_time=0.02, frame_time=0.05, n_mels=80
 ):
+    raise DeprecationWarning("Use `plot_melspectrogram` instead")
     duration = y.shape[-1] / sample_rate
     xmin, xmax = 0, duration
     ymin, ymax = 0, 80
@@ -301,33 +439,6 @@ def plot_stereo(
     return fig, ax
 
 
-def plot_waveform(
-    waveform,
-    ax: mpl.axes.Axes,
-    color: str = "lightblue",
-    alpha: float = 0.6,
-    label: Optional[str] = None,
-    downsample: int = 10,
-    sample_rate: int = 16000,
-) -> mpl.axes.Axes:
-    assert (
-        waveform.ndim == 1
-    ), f"Expects a single channel waveform (n_samples, ) got {waveform.shape}"
-    x = waveform[..., ::downsample]
-
-    new_rate = sample_rate / downsample
-    x_time = torch.arange(x.shape[-1]) / new_rate
-
-    ax.plot(x_time, x, color=color, zorder=0, alpha=alpha, label=label)  # , alpha=0.2)
-    ax.set_xlim([0, x_time[-1]])
-
-    # ax.set_xticks(ax.get_xticks()/sample_rate/downsample)
-    ax.set_ylim([-1, 1])
-    ax.set_yticks([])
-    ax.set_ylabel("waveform", fontsize=14)
-    return ax
-
-
 def plot_f0(
     waveform,
     ax: mpl.axes.Axes,
@@ -351,12 +462,6 @@ def plot_f0(
     ax.set_xlim([0, x_time[-1]])
     ax.set_ylabel("F0 (Hz)", fontsize=14)
     ax.yaxis.tick_right()
-    return ax
-
-
-def plot_spectrogram(spec, ax: mpl.axes.Axes):
-    assert spec.ndim == 2, f"Expected spec of shape (Frequency, Time) got {spec.shape}"
-    ax.imshow(spec, aspect="auto", origin="lower", vmin=-1.5, vmax=1.5)
     return ax
 
 
@@ -594,6 +699,8 @@ def plot_evaluation_scores(
 
 
 ###################################################################
+# Phrases
+###################################################################
 def plot_words(
     words,
     word_starts: List[float],
@@ -755,54 +862,37 @@ def plot_phrases_sample(sample, probs, frame_hz: int = 50, sample_rate: int = 16
 
 if __name__ == "__main__":
 
-    from datasets_turntaking import DialogAudioDM
-    from vap.model import VAPModel
-    import matplotlib.pyplot as plt
+    from vap_dataset.dataset import VapDataset
+    from vap.model import VapGPT, VapConfig
 
-    dm = DialogAudioDM(
-        datasets=["fisher"],
-        audio_mono=False,
-        audio_duration=10,
-        audio_overlap=5,
-        flip_channels=False,
-        vad_hz=50,
-        vad_history=True,
-    )
-    dm.prepare_data()
-    dm.setup()
+    dset = VapDataset(path="../vap_dataset/data/sliding_val.csv")
 
-    # Load Model
-    checkpoint = "example/50hz_48_10s-epoch20-val_1.85.ckpt"
-    model = VAPModel.load_from_checkpoint(checkpoint)
+    conf = VapConfig()
+    model = VapGPT(conf)
+    std = torch.load("example/VAP_3mmz3t0u_50Hz_ad20s_134-epoch9-val_2.56.pt")
+    model.load_state_dict(std, strict=False)
 
-    # d = dm.train_dset[10]
-    d = dm.train_dset[10]
-    waveform = d["waveform"][0]  # (1, 2, n_samples) -> (n_samples,)
-    vad = d["vad"][0]  # (1, n_frames, 2) -> (n_frames, 2)
-    mel_spec = log_mel_spectrogram(waveform, hop_length=320)
+    d = dset[0]
+    waveform = d["waveform"]
+    vad = d["vad"]
 
     # Forward (stereo->mono)
-    d["waveform"] = d["waveform"].mean(-2, keepdim=True)
-    loss, out, probs, batch = model.output(d)
+    out = model.probs(waveform.unsqueeze(0))  # add batch-dim
+    print("out: ", list(out.keys()))
+    print("out['logits']: ", tuple(out["logits"].shape))
+    print("out['vad']: ", tuple(out["vad"].shape))
 
-    ###################################################
-    # Figure
-    ###################################################
-    fig, ax = plt.subplots(3, 1, figsize=(12, 8))
-    _, ax_mels = plot_stereo_mel_spec(
-        waveform, mel_spec=mel_spec, vad=vad, ax=[ax[0], ax[2]], plot=False
+    # plot spectrogram
+    fig, ax = plt.subplots(5, 1, sharex=True, figsize=(12, 6))
+    plot_melspectrogram(waveform, ax=ax[:2])
+    plot_waveform(waveform[0], ax=ax[2])
+    plot_waveform(waveform[1], ax=ax[2], color="orange")
+    plot_vap_probs(out["p_now"][0, :, 0], ax=ax[3])
+    plot_vap_probs(
+        out["p_future"][0, :, 0],
+        ax=ax[4],
+        color=["darkblue", "darkorange"],
+        prob_label="P fut",
     )
-    ax[1] = plot_next_speaker_probs(
-        p_ns=probs["p"][0],
-        ax=ax[1],
-        p_bc=probs["bc_prediction"][0],
-        vad=d["vad"][0],
-        alpha_ns=0.8,
-        legend=True,
-    )
+    plt.tight_layout()
     plt.show()
-
-    fig, ax, score = plot_evaluation_scores(
-        "runs/runs_evaluation/50hz_48_10s-epoch20-val_1.85_switchboard_fisher/metric.json",
-        plot=True,
-    )
