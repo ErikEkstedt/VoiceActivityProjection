@@ -102,10 +102,11 @@ def plot_vap_probs(
     color: List[str] = ["b", "orange"],
     label: List[str] = ["A", "B"],
     prob_label: str = "P now",
-    yticks: list[str] = ["SHIFT", "HOLD"],
+    yticks: list[str] = ["B", "A"],
     alpha_ns: float = 0.6,
     fontsize: int = 12,
     no_xticks: bool = True,
+    legend: bool = True,
     frame_hz: int = 50,
 ) -> mpl.axes.Axes:
     assert p.ndim == 1, f"Expected p shape (N_FRAMES) got {p.shape}"
@@ -134,7 +135,8 @@ def plot_vap_probs(
     ax.set_ylim([0, 1])
     ax.set_xlim([0, x[-1]])
 
-    ax.legend(loc="lower left")
+    if legend:
+        ax.legend(loc="lower left")
     ax.axhline(y=0.5, linestyle="dashed", linewidth=2, color="k")
 
     if no_xticks:
@@ -182,7 +184,7 @@ def plot_mel_spectrogram(
         ax[1].set_yticks([])
 
 
-def plot_vad(x, vad, ax, ypad=0, color="w", label=None, **kwargs):
+def plot_vad(x, vad, ax, ypad: float = 0, color="w", label=None, **kwargs):
     assert vad.ndim == 1, f"Expects (N_FRAMES, ) got {vad.shape}"
     ymin, ymax = ax.get_ylim()
     scale = ymax - ymin - ypad
