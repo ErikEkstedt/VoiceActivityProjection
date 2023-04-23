@@ -7,7 +7,7 @@ from torchmetrics.classification import Accuracy, F1Score
 
 from vap.zero_shot import ZeroShot
 from vap.events import TurnTakingEvents, EventConfig
-from vap.model import VapGPT, VapConfig
+from vap.model import VapGPT, VapConfig, VapGPTMono, VapMonoConfig
 
 
 @dataclass
@@ -288,6 +288,139 @@ class VAPModel(VapGPT, pl.LightningModule, VapMetrics):
             self.log("test_pred_sh", {"shift": acc["sp"][1]}, sync_dist=True)
             self.log("test_ls", {"short": acc["ls"][1]}, sync_dist=True)
             self.log("test_pred_bc", {"bc_pred": acc["bp"][1]}, sync_dist=True)
+
+
+class VAPMonoModel(VapGPTMono, pl.LightningModule, VapMetrics):
+    def __init__(
+        self,
+        conf: VapMonoConfig,
+        opt_conf: Optional[OptConfig] = None,
+        event_conf: Optional[EventConfig] = None,
+    ):
+        super().__init__(conf)
+
+        self.opt_conf = opt_conf
+        self.event_conf = event_conf
+
+        # Training params
+        self.save_hyperparameters()
+
+        # Metrics
+        self.event_extractor = None
+        if event_conf is not None:
+            self.zero_shot = ZeroShot(bin_times=conf.bin_times, frame_hz=conf.frame_hz)
+            self.event_extractor = TurnTakingEvents(event_conf)
+
+    def configure_optimizers(self) -> dict:
+        assert self.opt_conf is not None, "configure_optimizers: No Opt conf!"
+        opt = torch.optim.AdamW(
+            self.parameters(),
+            lr=self.opt_conf.learning_rate,
+            betas=tuple(self.opt_conf.betas),
+            weight_decay=self.opt_conf.weight_decay,
+        )
+        lr_scheduler = {
+            "scheduler": torch.optim.lr_scheduler.ReduceLROnPlateau(
+                opt,
+                mode="min",
+                factor=self.opt_conf.lr_scheduler_factor,
+                patience=self.opt_conf.lr_scheduler_patience,
+            ),
+            "monitor": "val_loss",
+        }
+        return {"optimizer": opt, "lr_scheduler": lr_scheduler}
+
+    def validation_epoch_end(self, *_):
+        if hasattr(self, "val_metrics"):
+            self.val_metrics, f1, acc = self.calc_metrics_epoch(self.val_metrics)
+            self.log(
+                "val_hs",
+                {"shift_acc": acc["hs"][1], "f1w": f1["hs"]},
+                prog_bar=True,
+                sync_dist=True,
+            )
+            self.log("val_pred_sh", {"shift": acc["sp"][1]}, sync_dist=True)
+            self.log("val_ls", {"short": acc["ls"][1]}, sync_dist=True)
+            self.log("val_pred_bc", {"bc_pred": acc["bp"][1]}, sync_dist=True)
+
+    def test_epoch_end(self, *_):
+        if hasattr(self, "test_metrics"):
+            # self.metrics_epoch("test")
+            self.test_metrics, f1, acc = self.calc_metrics_epoch(self.test_metrics)
+            self.log(
+                "test_hs",
+                {"shift_acc": acc["hs"][1], "f1w": f1["hs"]},
+                prog_bar=True,
+                sync_dist=True,
+            )
+            self.log("test_pred_sh", {"shift": acc["sp"][1]}, sync_dist=True)
+            self.log("test_ls", {"short": acc["ls"][1]}, sync_dist=True)
+            self.log("test_pred_bc", {"bc_pred": acc["bp"][1]}, sync_dist=True)
+
+    def shared_step(
+        self, batch: dict, reduction: str = "mean"
+    ) -> dict[str, torch.Tensor]:
+        """
+        Arguments:
+            batch:      dict, containing 'waveform', va, va_history
+
+        Returns:
+            out:        dict, ['logits', 'vad', 'vap_loss', 'vad_loss']
+        """
+        labels = self.objective.get_labels(batch["vad"])
+        out = self(waveform=batch["waveform"])
+        out["vap_loss"] = self.objective.loss_vap(
+            out["logits"], labels, reduction=reduction
+        )
+        return out
+
+    def training_step(self, batch, batch_idx, **kwargs):
+        out = self.shared_step(batch)
+        batch_size = batch["waveform"].shape[0]
+        self.log("loss", out["vap_loss"], batch_size=batch_size, sync_dist=True)
+        return {"loss": out["vap_loss"]}
+
+    def validation_step(self, batch, batch_idx, **kwargs):
+        """validation step"""
+        if not hasattr(self, "val_metrics"):
+            self.val_metrics = self.get_metrics()
+
+        out = self.shared_step(batch)
+        batch_size = batch["waveform"].shape[0]
+
+        self.log("val_loss", out["vap_loss"], batch_size=batch_size, sync_dist=True)
+
+        # Event Metrics
+        if self.event_extractor is not None:
+            events = self.event_extractor(batch["vad"])
+            probs = self.objective.get_probs(out["logits"])
+            preds, targets = self.objective.extract_prediction_and_targets(
+                p_now=probs["p_now"], p_fut=probs["p_future"], events=events
+            )
+            self.val_metrics = self.metrics_step(preds, targets, self.val_metrics)
+
+    def test_step(self, batch, batch_idx, **kwargs):
+        """validation step"""
+        if not hasattr(self, "test_metrics"):
+            self.test_metrics = self.get_metrics()
+
+            for name, events in self.test_metrics.items():
+                for event, metric in events.items():
+                    strname = f"test_{name}_{event}"
+                    self.register_module(strname, metric)
+
+        out = self.shared_step(batch)
+        batch_size = batch["waveform"].shape[0]
+        self.log("test_loss", out["vap_loss"], batch_size=batch_size, sync_dist=True)
+
+        # Event Metrics
+        if self.event_extractor is not None:
+            events = self.event_extractor(batch["vad"])
+            probs = self.objective.get_probs(out["logits"])
+            preds, targets = self.objective.extract_prediction_and_targets(
+                p_now=probs["p_now"], p_fut=probs["p_future"], events=events
+            )
+            self.test_metrics = self.metrics_step(preds, targets, self.test_metrics)
 
 
 if __name__ == "__main__":

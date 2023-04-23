@@ -1,5 +1,3 @@
-# from omegaconf import DictConfig, OmegaConf
-# import hydra
 from argparse import ArgumentParser
 from os import environ
 from dataclasses import dataclass
@@ -15,14 +13,10 @@ from pytorch_lightning.callbacks import (
 from pytorch_lightning.loggers.wandb import WandbLogger
 from pytorch_lightning.strategies.ddp import DDPStrategy
 
-# from torchmetrics.classification import Accuracy, F1Score
-
 # from datasets_turntaking import DialogAudioDM
 from vap.lightning_module import VAPModel
 from vap.model import VapConfig
 from vap.events import EventConfig
-
-# from vap.zero_shot import ZeroShot
 
 from vap_dataset.datamodule import VapDataModule
 from vap.phrases.dataset import PhrasesCallback
