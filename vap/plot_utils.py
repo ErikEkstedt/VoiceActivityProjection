@@ -50,6 +50,8 @@ def plot_melspectrogram(
         extent=[xmin, xmax, ymin, ymax],
     )
     ax[0].set_yticks([])
+    ax[0].set_yticks([])
+    ax[0].set_ylabel("A", fontsize=fontsize)
 
     if mel_spec.shape[0] > 1 and len(ax) > 1:
         ax[1].imshow(
@@ -60,11 +62,8 @@ def plot_melspectrogram(
             extent=[xmin, xmax, ymin, ymax],
         )
         ax[1].set_yticks([])
-
-    ax[0].set_yticks([])
-    ax[1].set_yticks([])
-    ax[0].set_ylabel("A", fontsize=fontsize)
-    ax[1].set_ylabel("B", fontsize=fontsize)
+        ax[1].set_yticks([])
+        ax[1].set_ylabel("B", fontsize=fontsize)
     if plot:
         plt.pause(0.01)
     return ax

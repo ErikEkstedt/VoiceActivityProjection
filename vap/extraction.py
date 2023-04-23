@@ -106,7 +106,7 @@ class VapExtractor:
         self,
         context_time: float = 20,
         step_time: float = 5,
-        state_dict_path="../VoiceActivityProjection/example/VAP_3mmz3t0u_50Hz_ad20s_134-epoch9-val_2.56.pt",
+        state_dict_path="example/VAP_3mmz3t0u_50Hz_ad20s_134-epoch9-val_2.56.pt",
     ):
         self.model = self.load_model(state_dict_path)  # sets self.device
 
@@ -155,6 +155,9 @@ class VapExtractor:
         out["vad"] = torch.cat(
             [out["vad"], tmp_out["vad"][:, -last_n_frames:].cpu()], dim=1
         )
+        out["p_all"] = torch.cat(
+            [out["p_all"], tmp_out["p_all"][:, -last_n_frames:].cpu()], dim=1
+        )
         out["p_now"] = torch.cat(
             [out["p_now"], tmp_out["p_now"][:, -last_n_frames:].cpu()], dim=1
         )
@@ -165,6 +168,9 @@ class VapExtractor:
             [out["probs"], tmp_out["probs"][:, -last_n_frames:].cpu()], dim=1
         )
         out["H"] = torch.cat([out["H"], tmp_out["H"][:, -last_n_frames:].cpu()], dim=1)
+        out["p"] = torch.cat(
+            [out["p"], tmp_out["p"][..., -last_n_frames:, :].cpu()], dim=-2
+        )
 
         if "loss" in tmp_out:
             if "loss" in out:
@@ -230,8 +236,6 @@ class VapExtractor:
         expected_frames = round(duration * self.model.frame_hz)
         processed_frames = out["p_now"].shape[1]
         if expected_frames != processed_frames:
-            print("Expected frames != processed frames")
-
             omitted_frames = expected_frames - processed_frames
             omitted_samples = (
                 self.model.sample_rate * omitted_frames / self.model.frame_hz
@@ -260,10 +264,10 @@ class VapExtractor:
         return out
 
     @torch.no_grad()
-    def extract(self, waveform, vad=None):
+    def extract(self, waveform, vad=None, pbar=True):
         duration = get_duration(waveform)
         if duration > STEP_EXTRACTION_LIMIT:
-            out = self.step_extraction(waveform, vad=vad, pbar=True, verbose=False)
+            out = self.step_extraction(waveform, vad=vad, pbar=pbar, verbose=False)
         else:
             out = self.model(waveform, vad=vad)
             out = batch_to_device(out, "cpu")
@@ -273,8 +277,8 @@ class VapExtractor:
 def test_with_dataset():
     from vap_dataset.corpus import CandorReader, SwbReader
 
-    reader = CandorReader()
-    # reader = SwbReader()
+    # reader = CandorReader()
+    reader = SwbReader()
     extractor = VapExtractor()
     print(extractor)
 

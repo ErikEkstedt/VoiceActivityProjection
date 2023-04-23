@@ -199,29 +199,39 @@ class VapGPT(nn.Module):
         # information in the unseen data is to the knowledge encoded in the
         # training data.
         h = -probs * probs.log2()  # Entropy
-        H = h.sum(dim=-1)  # average entropy per frame
+        H = h.sum(dim=-1).cpu()  # average entropy per frame
 
         # first two bins
         p_now = self.objective.probs_next_speaker_aggregate(
             probs, from_bin=now_lims[0], to_bin=now_lims[-1]
-        )
+        ).cpu()
         p_future = self.objective.probs_next_speaker_aggregate(
             probs, from_bin=future_lims[0], to_bin=future_lims[1]
-        )
+        ).cpu()
+
+        # P over all
+        max_idx = self.objective.n_bins - 1
+        pa = self.objective.probs_next_speaker_aggregate(probs, 0, max_idx).cpu()
+
+        p = []
+        for i in range(0, max_idx + 1):
+            p.append(self.objective.probs_next_speaker_aggregate(probs, i, i).cpu())
+        p = torch.stack(p)
 
         ret = {
             "probs": probs,
             "vad": vap_vad,
             "p_now": p_now,
             "p_future": p_future,
+            "p_all": pa,
+            "p": p,
             "H": H,
         }
-
         if vad is not None:
             labels = self.objective.get_labels(vad)
             ret["loss"] = self.objective.loss_vap(
                 out["logits"], labels, reduction="none"
-            )
+            ).cpu()
         return ret
 
     @torch.no_grad()
@@ -337,20 +347,32 @@ class VapGPTMono(nn.Module):
         # information in the unseen data is to the knowledge encoded in the
         # training data.
         h = -probs * probs.log2()  # Entropy
-        H = h.sum(dim=-1)  # average entropy per frame
+        H = h.sum(dim=-1).cpu()  # average entropy per frame
 
         # first two bins
         p_now = self.objective.probs_next_speaker_aggregate(
             probs, from_bin=now_lims[0], to_bin=now_lims[-1]
-        )
+        ).cpu()
         p_future = self.objective.probs_next_speaker_aggregate(
             probs, from_bin=future_lims[0], to_bin=future_lims[1]
-        )
+        ).cpu()
+
+        # P over all
+        max_idx = self.objective.n_bins - 1
+        pa = self.objective.probs_next_speaker_aggregate(probs, 0, max_idx).cpu()
+
+        p = []
+        for i in range(0, max_idx + 1):
+            p.append(self.objective.probs_next_speaker_aggregate(probs, i, i).cpu())
+        p = torch.stack(p)
+
         return {
             "probs": probs,
             "vad": vad,
             "p_now": p_now,
             "p_future": p_future,
+            "p_all": pa,
+            "p": p,
             "H": H,
         }
 
