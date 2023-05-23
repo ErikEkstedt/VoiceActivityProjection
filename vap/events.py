@@ -83,7 +83,7 @@ def fill_pauses(
     ds: Tensor,
     islands: Optional[Tuple[Tensor, Tensor, Tensor]] = None,
 ) -> Tensor:
-    assert vad.ndim == 2, "fill_pauses require ds=(n_frames, 2)"
+    assert vad.ndim == 2, "fill_pauses require vad=(n_frames, 2)"
     assert ds.ndim == 1, "fill_pauses require ds=(n_frames,)"
 
     filled_vad = vad.clone()

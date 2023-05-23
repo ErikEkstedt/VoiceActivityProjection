@@ -122,6 +122,22 @@ class VapMonoConfig:
         )
 
 
+def load_model(
+    sd_path: str = "example/VAP_3mmz3t0u_50Hz_ad20s_134-epoch9-val_2.56.pt",
+    conf: Optional[VapConfig] = None,
+) -> nn.Module:
+    if conf is None:
+        conf = VapConfig()
+
+    model = VapGPT(conf=conf)
+    sd = torch.load(sd_path)
+    model.load_state_dict(sd)
+    if torch.cuda.is_available():
+        model = model.cuda()
+        model.device = "cuda"
+    return model
+
+
 class VapGPT(nn.Module):
     def __init__(self, conf: Optional[VapConfig] = None):
         super().__init__()
@@ -130,6 +146,7 @@ class VapGPT(nn.Module):
         self.conf = conf
         self.sample_rate = conf.sample_rate
         self.frame_hz = conf.frame_hz
+        self.device = "cpu"
 
         # Audio Encoder
         self.encoder = EncoderCPC(

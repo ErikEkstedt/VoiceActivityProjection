@@ -21,11 +21,11 @@ def plot_melspectrogram(
     n_mels: int = 80,
     fontsize: int = 12,
     plot: bool = False,
+    return_spec: bool = False,
 ) -> List[mpl.axes.Axes]:
     assert waveform.ndim == 2, f"Expected (N_CHANNELS, N_SAMPLES) got {waveform.shape}"
 
     if not isinstance(ax, list) and not isinstance(ax, np.ndarray):
-        print("make list")
         ax = [ax]
 
     duration = waveform.shape[-1] / sample_rate
@@ -66,6 +66,8 @@ def plot_melspectrogram(
         ax[1].set_ylabel("B", fontsize=fontsize)
     if plot:
         plt.pause(0.01)
+    if return_spec:
+        return ax, mel_spec
     return ax
 
 
@@ -445,15 +447,26 @@ def plot_f0(
     ax: mpl.axes.Axes,
     sample_rate: int = 16000,
     color: str = "b",
+    plot_mean: bool = True,
+    hop_time: float = 0.05,
+    line: bool = True,
     markersize: int = 3,
 ) -> mpl.axes.Axes:
     assert (
         waveform.ndim == 1
     ), f"Expects a single channel waveform (n_samples, ) got {waveform.shape}"
-    f0 = VF.pitch_praat(waveform.cpu(), hop_time=0.1, sample_rate=sample_rate)
+    f0 = VF.pitch_praat(waveform.cpu(), hop_time=hop_time, sample_rate=sample_rate)
+    m = torch.ones_like(f0) * f0[f0 != 0].mean()
+    s = f0[f0 != 0].std()
     f0[f0 == 0] = torch.nan
-    x_time = torch.arange(f0.shape[-1]) * 0.1  # hop_time
+    x_time = torch.arange(f0.shape[-1]) * hop_time  # hop_time
     ax.plot(x_time, f0, "o", markersize=markersize, color=color)
+    if line:
+        ax.plot(x_time, f0, color=color)
+    if plot_mean:
+        ax.plot(x_time, m, color="k", alpha=0.7)
+        ax.plot(x_time, m + s, color="k", linestyle="dashed", linewidth=0.5, alpha=0.5)
+        ax.plot(x_time, m - s, color="k", linestyle="dashed", linewidth=0.5, alpha=0.5)
     ymin, ymax = ax.get_ylim()
     diff = ymax - ymin
     if diff < 10:

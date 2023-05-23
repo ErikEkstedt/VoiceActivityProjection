@@ -199,7 +199,7 @@ class ObjectiveVAP(nn.Module):
         p_all = torch.einsum("bid,dc->bic", probs, abp)
         # normalize
         p_all /= p_all.sum(-1, keepdim=True) + 1e-5
-        return p_all
+        return p_all[..., 0]  # only return first speaker (symmetric)
 
     def window_to_win_dialog_states(self, wins):
         return (wins.sum(-1) > 0).sum(-1)
