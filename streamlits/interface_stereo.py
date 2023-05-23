@@ -3,7 +3,7 @@ from argparse import ArgumentParser
 import os
 
 import torch
-from vap.model import VAPModel
+from vap.model import load_model
 from vap.utils import everything_deterministic, batch_to_device
 from vap.plot_utils import plot_stereo
 from datasets_turntaking import DialogAudioDM
@@ -13,7 +13,7 @@ parser.add_argument(
     "-c",
     "--checkpoint",
     type=str,
-    default="example/VAP_ges0x55b_50Hz_ad20s_134-epoch4-val_2.70.ckpt",
+    default="example/VAP_3mmz3t0u_50Hz_ad20s_134-epoch9-val_2.56.pt",
 )
 try:
     args = parser.parse_args()
@@ -29,9 +29,9 @@ everything_deterministic()
 torch.manual_seed(0)
 
 
-@st.cache
-def load_model(checkpoint):
-    model = VAPModel.load_from_checkpoint(checkpoint)
+@st.cache_resource
+def load_model_cache(checkpoint):
+    model = load_model(checkpoint)
     model = model.eval()
     return model
 
