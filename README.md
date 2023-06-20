@@ -14,7 +14,7 @@ A state-dict tensor is included in the `examples/` folder:
 
 <div style='margin-bottom: 50px; padding: 10px; background: white; border-radius: 5px'>
 
-![](VapStereo.png)
+![](assets/VapStereo.png)
 
 </div>
 
