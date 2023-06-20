@@ -7,6 +7,36 @@ The model is a GPT-like transformer model, using [AliBI attention](https://ofir.
 A state-dict tensor is included in the `examples/` folder:
 * `example/VAP_3mmz3t0u_50Hz_ad20s_134-epoch9-val_2.56.pt`
 
+
+
+### VapStereo
+
+
+<div style='margin-bottom: 50px; padding: 10px; background: white; border-radius: 5px'>
+
+![](VapStereo.png)
+
+</div>
+
+1. Audio encoder
+    - (Default) [CPC facebookresearch](https://github.com/facebookresearch/CPC_audio))
+    - Causal / incremental
+2. Self attention
+    - (Default) 1 layer
+    - Shared weights
+3. Cross attention between speakers
+    - (Default) 3 layers 
+    - Shared weights
+4. Combine the output from the two channels
+    - The model is channel agnostic and used for both channels
+5. Linear projection layer
+    - Map to VAP vocabulary/states
+6. Voice activity detection
+    - Predict the voice activity for both channels independently
+    - Good for "bleed-over", background noise, etc
+7. VAP objective
+
+
 ## Information
 
 1. [DEMO page](https://erikekstedt.github.io/VAP/)
