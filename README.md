@@ -35,7 +35,8 @@ A state-dict tensor is included in the `examples/` folder:
     - Predict the voice activity for both channels independently
     - Good for "bleed-over", background noise, etc
 7. VAP objective
-
+    - 256 states
+    - Representing the next 2s of dialog
 
 ## Information
 
