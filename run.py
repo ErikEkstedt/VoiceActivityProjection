@@ -267,7 +267,7 @@ if __name__ == "__main__":
     if args.plot:
         print(out.keys())
         vad = out["vad"][0].cpu()
-        p_ns = out["p_now"][0, :, 0].cpu()
+        p_ns = out["p_now"][0].cpu()
         fig, ax = plot_stereo(
             waveform[0].cpu(), p_ns, vad, plot=False, figsize=(100, 6)
         )

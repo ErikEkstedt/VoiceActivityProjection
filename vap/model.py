@@ -39,6 +39,18 @@ def load_older_state_dict(
     return new_sd
 
 
+def add_silence_channel(x):
+    z = torch.zeros_like(x)
+    if x.ndim == 1:  # n_samples,
+        return torch.stack((x, z), dim=0).unsqueeze(0)
+    elif x.ndim == 2:  # 1, , 1, n_samples
+        return torch.stack((x, torch.zeros_like(x)), dim=1)
+    elif x.ndim == 3:
+        return torch.cat((x, torch.zeros_like(x)), dim=1)
+    else:
+        raise ValueError(f"Invalid shape {x.shape}")
+
+
 @dataclass
 class VapConfig:
     sample_rate: int = 16_000
