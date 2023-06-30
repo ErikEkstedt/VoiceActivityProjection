@@ -1,0 +1,88 @@
+# https://github.com/facebookresearch/recipes/blob/main/torchrecipes/audio/source_separation/conf/default_config.yaml
+datamodule:
+  _target: vap_dataset.datamodule.VapDataModule
+  horizon: 2
+  train_path: ../vap_dataset/data/sliding_train.csv
+  val_path: ../vap_dataset/data/sliding_val.csv
+  test_path: ../vap_dataset/data/sliding_test.csv
+  flip_channels: true
+  flip_probability: 0.5
+  mask_vad: true
+  mask_vad_probability: 0.5
+  batch_size: 16
+  num_workers: 4 
+
+module:
+  _target: vap.lightning_module.VAPModel
+  model:
+    sample_rate: 16000
+    frame_hz: 50
+    bin_times: [0.2, 0.4, 0.6, 0.8]
+    freeze_encoder: true
+    load_pretrained: true  # pretrained encoder
+    # GPT
+    dim: 256
+    channel_layers: 1
+    cross_layers: 3
+    num_heads: 4
+    dropout: 0.1
+  opt:
+    learning_rate:  3.63e-4
+    find_learning_rate: False
+    betas: [0.9, 0.999]
+    weight_decay:  0.001
+    lr_scheduler_interval: step
+    lr_scheduler_freq: 100
+    lr_scheduler_tmax: 2500
+    lr_scheduler_patience: 2
+    lr_scheduler_factor:  0.5
+    # early stopping
+    early_stopping: True
+    patience: 10
+    monitor: "val_loss"
+    mode: "min"
+  event_conf:
+    min_context_time: 3
+    metric_time: 0.2
+    metric_pad_time: 0.05
+    max_time: 20
+    frame_hz: 50
+    equal_hold_shift: True
+    prediction_region_time: 0.5
+    # Shift/Hold
+    sh_pre_cond_time: 1.0
+    sh_post_cond_time: 1.0
+    sh_prediction_region_on_active: True
+    # Backchannel
+    bc_pre_cond_time: 1.0
+    bc_post_cond_time: 1.0
+    bc_max_duration: 1.0
+    bc_negative_pad_left_time: 1.0
+    bc_negative_pad_right_time: 2.0
+    # Long/Short
+    long_onset_region_time: 0.2
+    long_onset_condition_time: 1.0
+
+trainer:
+  _target_: pytorch_lightning.trainer.Trainer
+  strategy: ddp
+  accelerator: gpu
+  devices: 1
+  default_root_dir: null
+  max_epochs: 50
+  limit_train_batches: 1.0
+  gradient_clip_val: 5.0
+  # logger:
+  #   _target_: pytorch_lightning.loggers.wandb.WandbLogger
+  #   save_dir: /tmp/logs
+  callbacks:
+  - _target_: pytorch_lightning.callbacks.ModelCheckpoint
+    dirpath: /tmp/checkpoints
+    monitor: losses/val_loss
+    mode: min
+    save_top_k: 1
+    save_weights_only: true
+  - _target_: pytorch_lightning.callbacks.EarlyStopping
+    monitor: losses/val_loss
+    mode: min
+    patience: 5
