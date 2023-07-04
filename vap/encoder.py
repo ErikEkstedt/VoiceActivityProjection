@@ -1,6 +1,7 @@
-import torch
+from torch import Tensor
 import torch.nn as nn
 import einops
+
 from vap.encoder_components import load_CPC, get_cnn_layer
 
 
@@ -33,20 +34,17 @@ class EncoderCPC(nn.Module):
         if freeze:
             self.freeze()
 
-    def get_default_conf(self):
-        return {""}
-
-    def freeze(self):
+    def freeze(self) -> None:
         for p in self.encoder.parameters():
             p.requires_grad_(False)
         print(f"Froze {self.__class__.__name__}!")
 
-    def unfreeze(self):
+    def unfreeze(self) -> None:
         for p in self.encoder.parameters():
             p.requires_grad_(True)
         print(f"Trainable {self.__class__.__name__}!")
 
-    def forward(self, waveform):
+    def forward(self, waveform: Tensor) -> Tensor:
         if waveform.ndim < 3:
             waveform = waveform.unsqueeze(1)  # channel dim
 

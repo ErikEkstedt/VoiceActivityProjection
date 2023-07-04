@@ -2,20 +2,6 @@ einops
 hydra-core
 numpy
 omegaconf
-pytorch-lightning
+lightning
 wandb
 pytest
-praat-parselmouth
-
-# These are dependencies for the othe packages used in this repo
-# https://github.com/ErikEkstedt/vap_turn_taking
-# https://github.com/ErikEkstedt/datasets_turntaking
-datasets
-
-# Our Dependencies
-# must download and install via
-# 'pip install -r requirements.txt'
-# 'pip install -e .'
-# in the respective repos
-# git+https://github.com/ErikEkstedt/vap_turn_taking.git
-# git+https://github.com/ErikEkstedt/datasets_turntaking.git

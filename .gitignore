@@ -1,4 +1,5 @@
 # Custom
+outputs/
 wandb/
 pyrightconfig.json
 runs/
