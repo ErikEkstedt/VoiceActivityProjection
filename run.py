@@ -99,10 +99,6 @@ def load_vap_model(args):
 if __name__ == "__main__":
     args = get_args()
 
-    # TODO: delete
-    # args.audio = "../vap_sigdial22/dataset_phrases/audio/basketball_long_female_en-US-Wavenet-C.wav"
-    # args.state_dict = "example/checkpoints/VAP_state_dict.pt"
-
     for k, v in vars(args).items():
         print(f"{k}: {v}")
 

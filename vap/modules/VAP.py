@@ -80,7 +80,6 @@ def load_model_from_state_dict(path: str):
 def step_extraction(
     waveform,
     model,
-    device="cpu",
     chunk_time=20,
     step_time=5,
     pbar=True,
@@ -117,7 +116,7 @@ def step_extraction(
 
     # First chunk
     # Use all extracted data. Does not overlap with anything prior.
-    out = model.probs(folds[0].to(device))
+    out = model.probs(folds[0].to(model.device))
     # OUT:
     # {
     #   "probs": probs,
@@ -136,7 +135,7 @@ def step_extraction(
     # Iterate over all other folds
     # and add simply the new processed step
     for w in pbar:
-        o = model.probs(w.to(device))
+        o = model.probs(w.to(model.device))
         out["vad"] = torch.cat([out["vad"], o["vad"][:, -step_frames:]], dim=1)
         out["p_now"] = torch.cat([out["p_now"], o["p_now"][:, -step_frames:]], dim=1)
         out["p_future"] = torch.cat(
@@ -163,7 +162,7 @@ def step_extraction(
             print(f"chunk_samples: {chunk_samples}")
 
         w = waveform[..., -chunk_samples:]
-        o = model.probs(w.to(device))
+        o = model.probs(w.to(model.device))
         out["vad"] = torch.cat([out["vad"], o["vad"][:, -omitted_frames:]], dim=1)
         out["p_now"] = torch.cat([out["p_now"], o["p_now"][:, -omitted_frames:]], dim=1)
         out["p_future"] = torch.cat(
