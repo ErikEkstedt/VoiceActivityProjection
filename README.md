@@ -76,16 +76,20 @@ model = VAPModule.load_model("/PATH/TO/checkpoint.ckpt")
 # type(model) -> vap.modules.VAP.VAP
 
 # Load raw state dict (model)
-from vap.modules.VAP import VAP
+from vap.modules.VAP import load_model_from_state_dict
+
+# WARNING: The `load_model_from_state_dict` tries to automatically detect the dimension/layers in the model which may break (?)
+model = load_model_from_state_dict("/Path/to/state_dict.pt")
+# type(model) -> vap.modules.VAP.VAP
+
+# If you know the sizes (you should) and the above approach fails then do
 from vap.modules.encoder import EncoderCPC
 from vap.modules.modules import TransformerStereo
-
-# WARNING: The model requires `encoder` and `transformer` modules as input
-# The correct parameters sizes are required.
-encoder = EncoderCPC()
-transformer = TransformerStereo()
-model = VAP(encoder, transformer)  # the barebones model
-model.load_state_dict("/PATH/TO/state_dict.pt")
+model = VAP(
+    encoder=EncoderCPC(), 
+    transformer=TransformerStereo(**correct_shapes)
+)
+# type(model) -> vap.modules.VAP.VAP
 ```
 
 ## Barebones parameters
