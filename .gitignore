@@ -6,7 +6,7 @@ runs/
 lightning_logs/
 checkpoints/
 runs_*/
-data/
+/data
 .DS_Store
 candor/
 
