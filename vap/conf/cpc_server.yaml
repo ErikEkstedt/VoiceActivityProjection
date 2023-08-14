@@ -1,17 +1,17 @@
 # https://github.com/facebookresearch/recipes/blob/main/torchrecipes/audio/source_separation/conf/default_config.yaml
 datamodule:
   _target_: vap.data.datamodule.VAPDataModule
-  train_path: "example/data/sliding_dev.csv"
-  val_path: "example/data/sliding_dev.csv"
-  test_path: "example/data/sliding_dev.csv"
+  train_path: "/home/ubuntu/VAP/data/splits_twilio/train_sliding.csv"
+  val_path: "/home/ubuntu/VAP/data/splits_twilio/val_sliding.csv"
+  test_path: "/home/ubuntu/VAP/data/splits_twilio/test_sliding.csv"
   horizon: 2
   sample_rate: 16000
   frame_hz: 50
   mono: false
-  batch_size: 4
-  num_workers: 4
+  batch_size: 80
+  num_workers: 26
+  prefetch_factor: 8
   pin_memory: true
-  prefetch_factor: 5
 
 
 module:
@@ -21,7 +21,7 @@ module:
     bin_times: [0.2, 0.4, 0.6, 0.8]
     frame_hz: 50
     encoder:
-      _target_: vap.modules.encoder.EncoderCPC
+      _target_: vap.modules.encoder_mms.EncoderCPC
       load_pretrained: true 
       freeze: true
     transformer:
@@ -75,16 +75,18 @@ trainer:
   accelerator: gpu
   devices: 1
   default_root_dir: null
-  max_epochs: 20
+  max_epochs: 100
   limit_train_batches: 1.0
   val_check_interval: 0.5
+  num_sanity_val_steps: 0
+  log_every_n_steps: 200
   fast_dev_run: false
   gradient_clip_val: 5.0
   logger:
     _target_: lightning.pytorch.loggers.wandb.WandbLogger
     save_dir: runs_new
     project: VAP2
-    name: VAP2
+    name: VAP2_cpc
     log_model: false
   callbacks:
   - _target_: lightning.pytorch.callbacks.ModelCheckpoint
@@ -96,7 +98,7 @@ trainer:
   - _target_: lightning.pytorch.callbacks.EarlyStopping
     monitor: val_loss
     mode: min
-    patience: 5
+    patience: 10
   - _target_: vap.callbacks.VADMaskCallback
     probability: 0.5
     sample_rate: 16000

@@ -144,7 +144,7 @@ class Codebook(nn.Module):
         return self.encode(projection_windows)
 
 
-class ObjectiveVAP(nn.Module):
+class VAPObjective(nn.Module):
     def __init__(
         self,
         bin_times: list[float] = [0.2, 0.4, 0.6, 0.8],

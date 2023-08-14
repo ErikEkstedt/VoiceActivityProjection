@@ -11,7 +11,6 @@ datamodule:
   batch_size: 4
   num_workers: 4
   pin_memory: true
-  prefetch_factor: 5
 
 
 module:
@@ -21,9 +20,11 @@ module:
     bin_times: [0.2, 0.4, 0.6, 0.8]
     frame_hz: 50
     encoder:
-      _target_: vap.modules.encoder.EncoderCPC
-      load_pretrained: true 
+      _target_: vap.modules.encoder_hubert.EncoderHubert
+      pretrained_model: "facebook/hubert-base-ls960"
+      only_feature_extractor: false
       freeze: true
+      causal: true
     transformer:
       _target_: vap.modules.modules.TransformerStereo
       dim: 256
