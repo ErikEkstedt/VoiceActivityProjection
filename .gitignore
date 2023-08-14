@@ -10,6 +10,11 @@ data/
 .DS_Store
 candor/
 
+test.json
+todo.md
+vap_output.json
+vap_output.png
+
 # Byte-compiled / optimized / DLL files
 __pycache__/
 *.py[cod]

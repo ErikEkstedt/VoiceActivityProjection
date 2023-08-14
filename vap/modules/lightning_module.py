@@ -44,8 +44,8 @@ class VAPModule(L.LightningModule):
         return self.model(waveform)
 
     @staticmethod
-    def load_model(path: str) -> VAP:
-        return VAPModule.load_from_checkpoint(path).model
+    def load_model(path: str, *args, **kwargs) -> VAP:
+        return VAPModule.load_from_checkpoint(path, *args, **kwargs).model
 
     def configure_optimizers(self) -> dict:
         lr_scheduler = {

@@ -159,6 +159,26 @@ def plot_vad(
     ax.plot(x, ymin + vad.cpu() * scale, color=color, label=label, **kwargs)
 
 
+def plot_stereo(waveform, p_now, p_fut, vad=None, plot=False, figsize=(10, 6)):
+    assert waveform.ndim == 2, f"Expects (2, N_SAMPLES) got {waveform.shape}"
+    assert p_now.ndim == 1, f"Expects (N_FRAMES) got {p_now.shape}"
+    assert p_now.ndim == 1, f"Expects (N_FRAMES) got {p_now.shape}"
+
+    fig, ax = plt.subplots(4, 1, sharex=True, figsize=figsize)
+    plot_melspectrogram(waveform, ax=ax[:2])
+    if vad is not None:
+        x = torch.arange(len(p_now)) / 50
+        plot_vad(x, vad[:, 0], ax=ax[0])
+        plot_vad(x, vad[:, 1], ax=ax[1])
+    plot_vap_probs(p_now, ax=ax[2], prob_label="P now")
+    plot_vap_probs(p_fut, ax=ax[3], prob_label="P future")
+    plt.tight_layout()
+
+    if plot:
+        plt.pause(0.001)
+    return fig, ax
+
+
 if __name__ == "__main__":
 
     from vap.data.datamodule import VAPDataset

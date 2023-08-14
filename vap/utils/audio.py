@@ -63,6 +63,9 @@ def load_waveform(
     if mono and x.shape[0] > 1:
         x = x.mean(dim=0).unsqueeze(0)
 
+    if not mono and x.shape[0] == 1:
+        x = torch.cat((x, torch.zeros_like(x)))
+
     if sample_rate is not None:
         if sr != sample_rate:
             x = AF.resample(x, orig_freq=sr, new_freq=sample_rate)

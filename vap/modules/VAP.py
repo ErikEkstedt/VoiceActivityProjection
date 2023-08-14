@@ -1,6 +1,7 @@
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
+from pathlib import Path
 from torch import Tensor
 from typing import Optional
 
@@ -10,11 +11,167 @@ from vap.utils.utils import (
     vad_fill_silences,
     vad_omit_spikes,
 )
+
 from vap.modules.modules import ProjectionLayer
+
+OUT = dict[str, Tensor]
 
 everything_deterministic()
 
-OUT = dict[str, Tensor]
+
+def load_model_from_state_dict(path: str):
+    from vap.modules.encoder import EncoderCPC
+    from vap.modules.modules import TransformerStereo
+
+    def load_encoder(sd):
+        encoder = None
+        if "encoder.encoder.gEncoder.conv0.weight" in sd:
+            encoder = EncoderCPC()
+        else:
+            raise NotImplementedError("Only EncoderCPC is implemented")
+        return encoder
+
+    def load_transformer(sd):
+        def get_transformer_layers(sd, layer_type="self"):
+            layer_name = "ar_channel"
+            if layer_type == "cross":
+                layer_name = "ar"
+
+            n = 0
+            if f"transformer.{layer_name}.layers.1.ln_self_attn.weight" in sd.keys():
+                while True:
+                    m = n + 1
+                    if (
+                        f"transformer.{layer_name}.layers.{m}.ln_self_attn.weight"
+                        in sd.keys()
+                    ):
+                        n = m
+                    else:
+                        break
+            return n + 1
+
+        dim = sd["transformer.ar_channel.layers.0.ln_self_attn.weight"].shape[0]
+        dff = sd["transformer.ar_channel.layers.0.ffnetwork.0.weight"].shape[0]
+        assert dff % dim == 0, "dff must be a multiple of dim"
+        dff_k = int(dff / dim)
+        num_heads = sd["transformer.ar_channel.layers.0.mha.m"].shape[0]
+        self_layers = get_transformer_layers(sd, layer_type="self")
+        cross_layers = get_transformer_layers(sd, layer_type="cross")
+
+        return TransformerStereo(
+            dim=dim,
+            self_layers=self_layers,
+            cross_layers=cross_layers,
+            num_heads=num_heads,
+            dff_k=dff_k,
+        )
+
+    p = Path(path)
+    assert p.exists(), f"Path does not exist: {p}"
+
+    sd = torch.load(p)
+    E = load_encoder(sd)
+    T = load_transformer(sd)
+    model = VAP(E, T)
+    model.load_state_dict(sd)
+    return model
+
+
+def step_extraction(
+    waveform,
+    model,
+    device="cpu",
+    chunk_time=20,
+    step_time=5,
+    pbar=True,
+    verbose=False,
+):
+    """
+    Takes a waveform, the model, and extracts probability output in chunks with
+    a specific context and step time. Concatenates the output accordingly and returns full waveform output.
+    """
+
+    n_samples = waveform.shape[-1]
+    duration = round(n_samples / model.sample_rate, 2)
+    context_time = chunk_time - step_time
+
+    # Samples
+    # context_samples = int(context_time * model.sample_rate)
+    step_samples = int(step_time * model.sample_rate)
+    chunk_samples = int(chunk_time * model.sample_rate)
+
+    # Frames
+    # context_frames = int(context_time * model.frame_hz)
+    chunk_frames = int(chunk_time * model.frame_hz)
+    step_frames = int(step_time * model.frame_hz)
+
+    # Fold the waveform to get total chunks
+    folds = waveform.unfold(
+        dimension=-1, size=chunk_samples, step=step_samples
+    ).permute(2, 0, 1, 3)
+    print("folds: ", tuple(folds.shape))
+
+    expected_frames = round(duration * model.frame_hz)
+    n_folds = int((n_samples - chunk_samples) / step_samples + 1.0)
+    total = (n_folds - 1) * step_samples + chunk_samples
+
+    # First chunk
+    # Use all extracted data. Does not overlap with anything prior.
+    out = model.probs(folds[0].to(device))
+    # OUT:
+    # {
+    #   "probs": probs,
+    #   "vad": vad,
+    #   "p_now": p_now,
+    #   "p_future": p_future,
+    #   "H": H,
+    # }
+
+    if pbar:
+        from tqdm import tqdm
+
+        pbar = tqdm(folds[1:], desc=f"Context: {context_time}s, step: {step_time}")
+    else:
+        pbar = folds[1:]
+    # Iterate over all other folds
+    # and add simply the new processed step
+    for w in pbar:
+        o = model.probs(w.to(device))
+        out["vad"] = torch.cat([out["vad"], o["vad"][:, -step_frames:]], dim=1)
+        out["p_now"] = torch.cat([out["p_now"], o["p_now"][:, -step_frames:]], dim=1)
+        out["p_future"] = torch.cat(
+            [out["p_future"], o["p_future"][:, -step_frames:]], dim=1
+        )
+        out["probs"] = torch.cat([out["probs"], o["probs"][:, -step_frames:]], dim=1)
+        out["H"] = torch.cat([out["H"], o["H"][:, -step_frames:]], dim=1)
+        # out["p_zero_shot"] = torch.cat([out["p_zero_shot"], o["p_zero_shot"][:, -step_frames:]], dim=1)
+
+    processed_frames = out["p_now"].shape[1]
+
+    ###################################################################
+    # Handle LAST SEGMENT (not included in `unfold`)
+    ###################################################################
+    if expected_frames != processed_frames:
+        omitted_frames = expected_frames - processed_frames
+
+        omitted_samples = model.sample_rate * omitted_frames / model.frame_hz
+
+        if verbose:
+            print(f"Expected frames {expected_frames} != {processed_frames}")
+            print(f"omitted frames: {omitted_frames}")
+            print(f"omitted samples: {omitted_samples}")
+            print(f"chunk_samples: {chunk_samples}")
+
+        w = waveform[..., -chunk_samples:]
+        o = model.probs(w.to(device))
+        out["vad"] = torch.cat([out["vad"], o["vad"][:, -omitted_frames:]], dim=1)
+        out["p_now"] = torch.cat([out["p_now"], o["p_now"][:, -omitted_frames:]], dim=1)
+        out["p_future"] = torch.cat(
+            [out["p_future"], o["p_future"][:, -omitted_frames:]], dim=1
+        )
+        out["probs"] = torch.cat([out["probs"], o["probs"][:, -omitted_frames:]], dim=1)
+        out["H"] = torch.cat([out["H"], o["H"][:, -omitted_frames:]], dim=1)
+    return out
 
 
 class VAP(nn.Module):
@@ -228,14 +385,10 @@ class VAP(nn.Module):
 
 
 if __name__ == "__main__":
-
     from vap.modules.encoder import EncoderCPC
-
-    # from vap.modules.encoder_hubert import EncoderHubert
     from vap.modules.modules import TransformerStereo
 
     encoder = EncoderCPC()
-    # encoder = EncoderHubert()
     transformer = TransformerStereo(dim=512)
 
     model = VAP(encoder, transformer)
