@@ -86,7 +86,7 @@ def test_vap_mono_causality(encoder_name, dim):
     device = "cuda" if torch.cuda.is_available() else "cpu"
     model = model.to(device)
 
-    vad = torch.randint(0, 2, (1, int(DURATION * FRAME_HZ), 2)).float()
+    vad = torch.randint(0, 2, (1, int(DURATION * FRAME_HZ), 2)).float().to(device)
     is_causal, *_ = causal_test_samples_to_frames(
         model,
         DURATION,

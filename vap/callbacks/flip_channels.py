@@ -2,6 +2,18 @@ import lightning as L
 import random
 
 
+def flip_batch_channels(batch):
+    """flipped version of the batch-samples"""
+    for k, v in batch.items():
+        if k == "vad":
+            v = v.flip(-1)  # (B, N_FRAMES, 2)
+        elif k == "waveform":
+            if v.shape[1] == 2:  # stereo audio
+                v = v.flip(-2)  # (B, 2, N_SAMPLES)
+        batch[k] = v
+    return batch
+
+
 class FlipChannelCallback(L.Callback):
     """
     Randomly "flips" the speakers such that we get a fair evaluation not dependent on the
@@ -25,30 +37,17 @@ class FlipChannelCallback(L.Callback):
         self.on_val = on_val
         self.on_test = on_test
 
-    def get_flipped_batch(self, batch):
-        """Appends a flipped version of the batch-samples"""
-        for k, v in batch.items():
-            if k == "vad":
-                v = v.flip(-1)  # (B, N_FRAMES, 2)
-            elif k == "waveform":
-                if v.shape[1] == 2:  # stereo audio
-                    v = v.flip(-2)  # (B, 2, N_SAMPLES)
-                else:
-                    continue
-            batch[k] = v
-        return batch
-
     def on_train_batch_start(self, trainer, pl_module, batch, *args, **kwargs) -> None:
         if self.on_train and random.random() < self.probability:
-            batch = self.get_flipped_batch(batch)
+            batch = flip_batch_channels(batch)
 
     def on_test_batch_start(self, trainer, pl_module, batch, *args, **kwargs) -> None:
         if self.on_test:
-            batch = self.get_flipped_batch(batch)
+            batch = flip_batch_channels(batch)
 
     def on_val_batch_start(self, trainer, pl_module, batch, *args, **kwargs) -> None:
         if self.on_val:
-            batch = self.get_flipped_batch(batch)
+            batch = flip_batch_channels(batch)
 
 
 if __name__ == "__main__":
