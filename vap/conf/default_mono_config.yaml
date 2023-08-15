@@ -8,8 +8,8 @@ datamodule:
   sample_rate: 16000
   frame_hz: 50
   mono: True
-  batch_size: 48
-  num_workers: 24
+  batch_size: 40
+  num_workers: 12
   pin_memory: true
   prefetch_factor: 5
 
@@ -77,7 +77,8 @@ trainer:
   max_epochs: 20
   limit_train_batches: 1.0
   val_check_interval: 0.5
-  num_sanity_val_step: 0
+  num_sanity_val_steps: 0
+  log_every_n_steps: 500
   fast_dev_run: false
   gradient_clip_val: 5.0
   logger:
@@ -99,9 +100,9 @@ trainer:
     patience: 5
   - _target_: vap.callbacks.VADMaskCallback
     probability: 0.5
-    sample_rate: 16000
-    frame_hz: 50
     scale: 0
+    horizon_time: 2
+    frame_hz: 50
     on_train: true
     on_val: false
     on_test: false

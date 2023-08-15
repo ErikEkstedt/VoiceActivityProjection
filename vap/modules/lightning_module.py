@@ -83,9 +83,6 @@ class VAPModule(L.LightningModule):
         labels = self.model.extract_labels(batch["vad"])
         out = self(batch["waveform"])
 
-        # Hubert Model does not provide exact frames back
-        if labels.shape[1] != out["logits"].shape[1]:
-            labels = labels[:, : out["logits"].shape[1]]
         out["vap_loss"] = self.model.objective.loss_vap(
             out["logits"], labels, reduction=reduction
         )
@@ -143,10 +140,6 @@ class VAPMonoModule(VAPModule):
         """
         labels = self.model.extract_labels(batch["vad"])
         out = self(batch["waveform"], batch["vad"][:, : labels.shape[1]])
-
-        # Hubert Model does not provide exact frames back
-        if labels.shape[1] != out["logits"].shape[1]:
-            labels = labels[:, : out["logits"].shape[1]]
         out["vap_loss"] = self.model.objective.loss_vap(
             out["logits"], labels, reduction=reduction
         )
@@ -167,11 +160,9 @@ class VAPMonoModule(VAPModule):
 if __name__ == "__main__":
 
     from vap.modules.encoder import EncoderCPC
-    from vap.modules.encoder_hubert import EncoderHubert
     from vap.modules.modules import TransformerStereo
 
-    # encoder = EncoderCPC()
-    encoder = EncoderHubert()
+    encoder = EncoderCPC()
     transformer = TransformerStereo()
     model = VAP(encoder, transformer)
     module = VAPModule(model)
