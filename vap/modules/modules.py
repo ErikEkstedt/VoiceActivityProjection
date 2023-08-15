@@ -307,7 +307,7 @@ class GPT(nn.Module):
 
     def __init__(
         self,
-        dim: int,
+        dim: int = 256,
         dff_k: int = 3,
         num_layers: int = 4,
         num_heads: int = 4,
@@ -469,6 +469,64 @@ class TransformerStereo(nn.Module):
         dropout: float = 0.1,
     ) -> None:
         super().__init__()
+        assert self_layers > 0, f"Must have at least one self layer. got {self_layers}"
+        assert (
+            cross_layers > 0
+        ), f"Must have at least one cross layer. got {cross_layers}"
+        self.dim = dim
+        self.self_layers = self_layers
+        self.cross_layers = cross_layers
+        self.num_heads = num_heads
+        self.dff_k = dff_k
+        self.dropout = dropout
+
+        # Single channel
+        self.ar_channel = GPT(
+            dim=dim,
+            dff_k=dff_k,
+            num_layers=self_layers,
+            num_heads=num_heads,
+            dropout=dropout,
+        )
+
+        # Cross channel
+        self.ar = GPTStereo(
+            dim=dim,
+            dff_k=dff_k,
+            num_layers=cross_layers,
+            num_heads=num_heads,
+            dropout=dropout,
+        )
+
+    def forward(
+        self, x1: Tensor, x2: Tensor, attention: bool = False
+    ) -> Mapping[str, Tensor]:
+        o1 = self.ar_channel(x1, attention=attention)  # ["x"]
+        o2 = self.ar_channel(x2, attention=attention)  # ["x"]
+        out = self.ar(o1["x"], o2["x"], attention=attention)
+
+        if attention:
+            out["cross_self_attn"] = out["self_attn"]
+            out["self_attn"] = torch.stack([o1["attn"], o2["attn"]], dim=1)
+            out["cross_attn"] = out["cross_attn"]
+        return out
+
+
+class Transformer(nn.Module):
+    def __init__(
+        self,
+        dim: int = 256,
+        self_layers: int = 1,
+        cross_layers: int = 3,
+        num_heads: int = 4,
+        dff_k: int = 3,
+        dropout: float = 0.1,
+    ) -> None:
+        super().__init__()
+        assert self_layers > 0, f"Must have at least one self layer. got {self_layers}"
+        assert (
+            cross_layers > 0
+        ), f"Must have at least one cross layer. got {cross_layers}"
         self.dim = dim
         self.self_layers = self_layers
         self.cross_layers = cross_layers
@@ -524,6 +582,32 @@ class ProjectionLayer(nn.Module):
         x = self.layer_norm(x)
         x = self.projection(x)
         return self.dropout(x)
+
+
+class VACondition(nn.Module):
+    def __init__(
+        self, dim: int, va_history: bool = False, va_history_bins: int = 5
+    ) -> None:
+        super().__init__()
+        self.dim = dim
+        self.va_history = va_history
+        self.va_history_bins = va_history_bins
+        self.va_cond = nn.Linear(2, dim)  # va: 2 one-hot encodings -> dim
+        self.ln = nn.LayerNorm(dim)
+        if va_history:
+            # vah: (N, vah_bins) -> dim
+            self.va_hist_cond = nn.Linear(va_history_bins, dim)
+
+    def forward(
+        self, vad: torch.Tensor, va_history: Optional[torch.Tensor] = None
+    ) -> torch.Tensor:
+        v_cond = self.va_cond(vad)
+
+        # Add vad-history information
+        if self.va_history and va_history is not None:
+            v_cond += self.va_hist_cond(va_history)
+
+        return self.ln(v_cond)
 
 
 def test_gpt():

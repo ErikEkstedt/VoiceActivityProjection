@@ -6,6 +6,7 @@ from torch import Tensor
 from typing import Optional
 
 from vap.objective import VAPObjective
+from vap.modules.modules import VACondition
 from vap.utils.utils import (
     everything_deterministic,
     vad_fill_silences,
@@ -383,9 +384,56 @@ class VAP(nn.Module):
         return vad
 
 
+class VAPMono(VAP):
+    def __init__(
+        self,
+        encoder: nn.Module,
+        transformer: nn.Module,
+        bin_times: list[float] = [0.2, 0.4, 0.6, 0.8],
+        frame_hz: int = 50,
+        va_history: bool = False,
+        va_history_bins: int = 5,
+    ):
+        super().__init__(encoder, transformer, bin_times, frame_hz)
+        self.va_condition = VACondition(
+            dim=self.dim, va_history=va_history, va_history_bins=va_history_bins
+        )
+
+    def encode_audio(self, audio: torch.Tensor) -> tuple[Tensor, Tensor]:
+        assert (
+            audio.shape[1] == 1
+        ), f"audio VAP ENCODER: {audio.shape} != (B, 1, n_samples)"
+        return self.encoder(audio)
+
+    def forward(
+        self,
+        waveform: Tensor,
+        vad: Tensor,
+        va_history: Optional[Tensor] = None,
+        attention: bool = False,
+    ) -> OUT:
+        assert (
+            vad.shape[-1] == 2
+        ), f"VAD in VAP ENCODER: {vad.shape} != (B, n_frames, 2)"
+
+        # Audio encoder
+        x = self.encode_audio(waveform)
+        x = self.feature_projection(x)
+
+        # Voiec activity input conditioning
+        v = self.va_condition(vad, va_history)
+        # Add VAD-conditioning to the audio representations
+        x = x + v
+
+        # Predictor
+        out = self.transformer(x, attention=attention)
+        out["logits"] = self.vap_head(out["x"])
+        return out
+
+
 if __name__ == "__main__":
     from vap.modules.encoder import EncoderCPC
-    from vap.modules.modules import TransformerStereo
+    from vap.modules.modules import TransformerStereo, GPT
 
     encoder = EncoderCPC()
     transformer = TransformerStereo(dim=512)
@@ -395,3 +443,11 @@ if __name__ == "__main__":
 
     x = torch.randn(1, 2, 32000)
     out = model(x)
+
+    mono_model = VAPMono(encoder, GPT())
+    x = torch.randn(1, 1, int(10 * 16_000))
+    va = torch.randint(0, 2, (1, 600, 2)).float()
+    out = mono_model(x, va[:, :500])
+    y = mono_model.extract_labels(va)
+    print("y: ", tuple(y.shape))
+    print("out['logits']: ", tuple(out["logits"].shape))

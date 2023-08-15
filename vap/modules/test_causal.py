@@ -122,6 +122,7 @@ def causal_test_samples_to_frames(
     output_key: str = "logits",
     frame_hz: int = 50,
     device="cpu",
+    **model_kwargs,
 ):
     model.train()
 
@@ -132,7 +133,7 @@ def causal_test_samples_to_frames(
     x = torch.randn(2, wav_channels, n_samples, device=device, requires_grad=True)
 
     # 2. Model output
-    y = model(x)
+    y = model(x, **model_kwargs)
     if isinstance(y, dict):
         y = y[output_key]
 

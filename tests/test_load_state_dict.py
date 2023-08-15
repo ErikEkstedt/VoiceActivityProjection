@@ -12,6 +12,7 @@ MODULE_STATE_DICT = "example/checkpoints/VAPModule_state_dict.pt"
 CHECKPOINT = "example/checkpoints/checkpoint.ckpt"
 
 
+@pytest.mark.checkpoint
 def test_model_state_dict():
     model = VAP(EncoderCPC(), TransformerStereo())
     l = model.load_state_dict(torch.load(MODEL_STATE_DICT))
@@ -19,6 +20,7 @@ def test_model_state_dict():
     assert l.unexpected_keys == [], "Unexpected keys in state dict"
 
 
+@pytest.mark.checkpoint
 def test_module_state_dict():
     model = VAP(EncoderCPC(), TransformerStereo())
     module = VAPModule(model)
@@ -27,10 +29,10 @@ def test_module_state_dict():
     assert l.unexpected_keys == [], "Unexpected keys in state dict"
 
 
+@pytest.mark.checkpoint
 def test_checkpoint():
     p = Path(CHECKPOINT)
     if not p.exists():
-
         # unzip the checkpoint (replace extention with .zip)
         with zipfile.ZipFile(CHECKPOINT.replace(".ckpt", ".zip"), "r") as zip_ref:
             zip_ref.extractall(p.parent)

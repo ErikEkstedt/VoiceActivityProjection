@@ -40,8 +40,8 @@ class VAPModule(L.LightningModule):
         self.test_metric = test_metric
         self.save_hyperparameters()  # ignore=["model"])
 
-    def forward(self, waveform: Tensor) -> dict[str, Tensor]:
-        return self.model(waveform)
+    def forward(self, waveform: Tensor, *args, **kwargs) -> dict[str, Tensor]:
+        return self.model(waveform, *args, **kwargs)
 
     @staticmethod
     def load_model(path: str, *args, **kwargs) -> VAP:
@@ -124,6 +124,40 @@ class VAPModule(L.LightningModule):
 
     def on_test_epoch_end(self) -> None:
         self.metric_finalize(split="test")
+
+
+class VAPMonoModule(VAPModule):
+    @staticmethod
+    def load_model(path: str, *args, **kwargs) -> VAP:
+        return VAPMonoModule.load_from_checkpoint(path, *args, **kwargs).model
+
+    def _step(
+        self, batch: Batch, split: str = "train", reduction: str = "mean"
+    ) -> Mapping[str, torch.Tensor]:
+        """
+        Arguments:
+            batch:      dict, containing 'waveform', va, va_history
+
+        Returns:
+            out:        dict, ['logits', 'vad', 'vap_loss', 'vad_loss']
+        """
+        labels = self.model.extract_labels(batch["vad"])
+        out = self(batch["waveform"], batch["vad"][:, : labels.shape[1]])
+
+        # Hubert Model does not provide exact frames back
+        if labels.shape[1] != out["logits"].shape[1]:
+            labels = labels[:, : out["logits"].shape[1]]
+        out["vap_loss"] = self.model.objective.loss_vap(
+            out["logits"], labels, reduction=reduction
+        )
+        self.metric_update(out["logits"], batch["vad"], split=split)
+
+        # Log results
+        batch_size = batch["waveform"].shape[0]
+        self.log(
+            f"{split}_loss", out["vap_loss"], batch_size=batch_size, sync_dist=True
+        )
+        return out
 
 
 if __name__ == "__main__":
