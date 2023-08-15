@@ -25,10 +25,7 @@ def vad_mask_batch(
     nv = F.interpolate(vad_mask, size=waveform.shape[-1])  # -> B, 2, N_samples
 
     # Scale the appropriate values
-    if scale > 0:
-        waveform[torch.where(nv)] *= scale
-    else:
-        waveform[torch.where(nv)] = 0
+    waveform[torch.where(nv)] *= scale
     return waveform
 
 
@@ -36,6 +33,8 @@ class VADMaskCallback(L.Callback):
     def __init__(
         self,
         probability: float = 0.5,
+        horizon: float = 2,
+        frame_hz: float = FRAME_HZ,
         scale: float = 0,
         on_train: bool = True,
         on_val: bool = False,
@@ -43,6 +42,7 @@ class VADMaskCallback(L.Callback):
         *args,
         **kwargs
     ):
+        self.horizon_frames = int(horizon * frame_hz)
         self.probability = probability
         self.scale = scale
         self.on_train = on_train
@@ -50,8 +50,9 @@ class VADMaskCallback(L.Callback):
         self.on_test = on_test
 
     def mask(self, batch):
+        mask_vad = batch["vad"][:, -self.horizon_frames :, :]
         batch["waveform"] = vad_mask_batch(
-            batch["waveform"], batch["vad"], scale=self.scale
+            batch["waveform"], mask_vad, scale=self.scale
         )
         return batch
 
@@ -85,5 +86,4 @@ if __name__ == "__main__":
     scale = 0
     print("w: ", tuple(w.shape))
     print("vad: ", tuple(vad.shape))
-
     new_w = vad_mask_batch(w, vad, scale=scale)

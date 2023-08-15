@@ -48,8 +48,3 @@ class FlipChannelCallback(L.Callback):
     def on_val_batch_start(self, trainer, pl_module, batch, *args, **kwargs) -> None:
         if self.on_val:
             batch = flip_batch_channels(batch)
-
-
-if __name__ == "__main__":
-
-    clb = FlipChannelCallback()
