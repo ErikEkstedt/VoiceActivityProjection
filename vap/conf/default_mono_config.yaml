@@ -1,0 +1,112 @@
+# https://github.com/facebookresearch/recipes/blob/main/torchrecipes/audio/source_separation/conf/default_config.yaml
+datamodule:
+  _target_: vap.data.datamodule.VAPDataModule
+  train_path: "example/data/sliding_dev.csv"
+  val_path: "example/data/sliding_dev.csv"
+  test_path: "example/data/sliding_dev.csv"
+  horizon: 2
+  sample_rate: 16000
+  frame_hz: 50
+  mono: True
+  batch_size: 48
+  num_workers: 24
+  pin_memory: true
+  prefetch_factor: 5
+
+
+module:
+  _target_: vap.modules.lightning_module.VAPMonoModule
+  model:
+    _target_: vap.modules.VAP.VAPMono
+    bin_times: [0.2, 0.4, 0.6, 0.8]
+    frame_hz: 50
+    encoder:
+      _target_: vap.modules.encoder.EncoderCPC
+      load_pretrained: true 
+      freeze: true
+    transformer:
+      _target_: vap.modules.modules.GPT
+      dim: 256
+      num_layers: 4
+      num_heads: 4
+      dff_k: 3
+      dropout: 0.1
+  optim_fn:
+    _target_: torch.optim.AdamW
+    _partial_: true
+    lr:  3.63e-4
+    betas: [0.9, 0.999]
+    weight_decay:  0.001
+  lr_scheduler:
+    _target_: torch.optim.lr_scheduler.ReduceLROnPlateau
+    _partial_: true
+    mode: min
+    factor: 0.5
+    patience: 2
+  val_metric:
+    _target_: vap.metrics.VAPMetric
+    threshold: 0.5
+    event_config:
+      min_context_time: 3
+      metric_time: 0.2
+      metric_pad_time: 0.05
+      max_time: 20
+      frame_hz: 50
+      equal_hold_shift: True
+      prediction_region_time: 0.5
+      # Shift/Hold
+      sh_pre_cond_time: 1.0
+      sh_post_cond_time: 1.0
+      sh_prediction_region_on_active: True
+      # Backchannel
+      bc_pre_cond_time: 1.0
+      bc_post_cond_time: 1.0
+      bc_max_duration: 1.0
+      bc_negative_pad_left_time: 1.0
+      bc_negative_pad_right_time: 2.0
+      # Long/Short
+      long_onset_region_time: 0.2
+      long_onset_condition_time: 1.0
+
+trainer:
+  _target_: lightning.pytorch.Trainer
+  strategy: ddp
+  accelerator: gpu
+  devices: 1
+  default_root_dir: null
+  max_epochs: 20
+  limit_train_batches: 1.0
+  val_check_interval: 0.5
+  num_sanity_val_step: 0
+  fast_dev_run: false
+  gradient_clip_val: 5.0
+  logger:
+    _target_: lightning.pytorch.loggers.wandb.WandbLogger
+    save_dir: runs_new
+    project: VAP2
+    name: VAPMono
+    log_model: false
+  callbacks:
+  - _target_: lightning.pytorch.callbacks.ModelCheckpoint
+    # dirpath: /tmp/checkpoints
+    monitor: val_loss
+    mode: min
+    save_top_k: 1
+    # save_weights_only: true
+  - _target_: lightning.pytorch.callbacks.EarlyStopping
+    monitor: val_loss
+    mode: min
+    patience: 5
+  - _target_: vap.callbacks.VADMaskCallback
+    probability: 0.5
+    sample_rate: 16000
+    frame_hz: 50
+    scale: 0
+    on_train: true
+    on_val: false
+    on_test: false
+  - _target_: vap.callbacks.FlipChannelCallback
+    probability: 0.5
+    on_train: true
+    on_val: false
+    on_test: false

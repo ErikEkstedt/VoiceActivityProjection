@@ -159,6 +159,10 @@ class VAPMonoModule(VAPModule):
         )
         return out
 
+    def training_step(self, batch: Batch, *args, **kwargs):
+        out = self._step(batch)
+        return {"loss": out["vap_loss"]}
+
 
 if __name__ == "__main__":
 

@@ -125,7 +125,7 @@ class VAPDataset(Dataset):
 
         # Stereo Audio
         # Use the vad-list information to convert mono to stereo
-        if w.shape[0] == 1:
+        if not self.mono and w.shape[0] == 1:
             w = mono_to_stereo(w, d["vad_list"], sample_rate=self.sample_rate)
 
         vad = vad_list_to_onehot(
