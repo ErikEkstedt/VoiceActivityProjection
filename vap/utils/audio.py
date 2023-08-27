@@ -32,7 +32,7 @@ def get_audio_info(audio_path: str) -> Dict[str, Any]:
         "sample_rate": info.sample_rate,
         "num_frames": info.num_frames,
         "bits_per_sample": info.bits_per_sample,
-        "num_channels": info.bits_per_sample,
+        "num_channels": info.num_channels,
         "encoding": info.encoding,
     }
 
