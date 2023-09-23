@@ -19,6 +19,7 @@ def plot_melspectrogram(
     n_mels: int = 80,
     fontsize: int = 12,
     plot: bool = False,
+    offset: float = 0,
     return_spec: bool = False,
 ) -> Union[AX, Tuple[AX, torch.Tensor]]:
     assert waveform.ndim == 2, f"Expected (N_CHANNELS, N_SAMPLES) got {waveform.shape}"
@@ -27,7 +28,7 @@ def plot_melspectrogram(
         ax = [ax]
 
     duration = waveform.shape[-1] / sample_rate
-    xmin, xmax = 0, duration
+    xmin, xmax = 0 + offset, duration + offset
     ymin, ymax = 0, 80
 
     hop_length = round(sample_rate * hop_time)
@@ -107,10 +108,11 @@ def plot_vap_probs(
     no_xticks: bool = True,
     legend: bool = True,
     frame_hz: int = 50,
+    offset: float = 0,
 ) -> Axes:
     assert p.ndim == 1, f"Expected p shape (N_FRAMES) got {p.shape}"
     p = p.cpu()
-    x = torch.arange(len(p)) / frame_hz
+    x = torch.arange(len(p)) / frame_hz + offset
     ax.fill_between(
         x,
         y1=0.5,
@@ -132,7 +134,7 @@ def plot_vap_probs(
     ax.plot(x, p, color="k", linewidth=1, label=prob_label, zorder=4)
     ax.set_yticks([0.25, 0.75], yticks, fontsize=fontsize)
     ax.set_ylim([0, 1])
-    ax.set_xlim([0, x[-1]])
+    ax.set_xlim([x[0], x[-1]])
 
     if legend:
         ax.legend(loc="lower left")

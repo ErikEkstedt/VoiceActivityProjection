@@ -1,8 +1,13 @@
 # Events
 
-
 Automatic extraction of turn-taking events.
 
+* `streamlit run vap/events/streamlit_events.py`
+
+
+
+
+## Information
 
 The `TurnTakingEvents` module expects a VAD tensor of shape `(B, N_FRAMES, 2)` and outputs a dictionary with event frames.
 See also [vap/metrics.py](vap/metrics.py) to get a sense of how it's used during training.

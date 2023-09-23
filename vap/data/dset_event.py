@@ -244,9 +244,7 @@ class VAPClassificationDataset(Dataset):
     def __len__(self) -> int:
         return len(self.df)
 
-    def __getitem__(self, idx: int):
-        d = self.df.iloc[idx]
-
+    def to_datasample(self, d):
         start_time = 0
         if d["ipu_end"] > self.context:
             start_time = d["ipu_end"] - self.context
@@ -283,6 +281,10 @@ class VAPClassificationDataset(Dataset):
             "speaker": d["speaker"],
             "dataset": d.get("dataset", ""),
         }
+
+    def __getitem__(self, idx: int):
+        d = self.df.iloc[idx]
+        return self.to_datasample(d)
 
 
 if __name__ == "__main__":
