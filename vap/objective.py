@@ -379,6 +379,33 @@ class VAPObjective(nn.Module):
                 out_targets[k] = None
         return out_preds, out_targets
 
+    def aggregate_probs(
+        self,
+        probs: Tensor,
+        now_lims: list[int] = [0, 1],
+        future_lims: list[int] = [2, 3],
+    ) -> dict[str, Tensor]:
+        # first two bins
+        p_now = self.probs_next_speaker_aggregate(
+            probs, from_bin=now_lims[0], to_bin=now_lims[-1]
+        ).cpu()
+        p_future = self.probs_next_speaker_aggregate(
+            probs, from_bin=future_lims[0], to_bin=future_lims[1]
+        ).cpu()
+        # P over all
+        max_idx = self.n_bins - 1
+        pa = self.probs_next_speaker_aggregate(probs, 0, max_idx).cpu()
+        p = []
+        for i in range(0, max_idx + 1):
+            p.append(self.probs_next_speaker_aggregate(probs, i, i).cpu())
+        p = torch.stack(p)
+        return {
+            "p_now": p_now,
+            "p_future": p_future,
+            "p_all": pa,
+            "p": p,
+        }
+
 
 if __name__ == "__main__":
     ob = ObjectiveVAP()
