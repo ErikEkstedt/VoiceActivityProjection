@@ -9,6 +9,16 @@ from vap.utils.utils import (
     vad_onehot_to_vad_list,
 )
 
+"""
+
+event: torch.tensor: (N, 5)
+cols:
+    0. start-of-silence
+    1. duration-of-silence
+    2. duration-of-pre-state
+    3. duration-of-post-state
+    4. next-speaker
+"""
 
 # Templates
 TRIAD_SHIFT: Tensor = torch.tensor([[3, 1, 0], [0, 1, 3]])  # on Silence
@@ -164,7 +174,9 @@ class EventCandidates:
         ), f"Expected 2 channels and channels last, got {vad.shape}"
 
         def append_batch_idx(batch_idx, sh):
-            z = torch.ones((len(sh), 1), dtype=sh.dtype).fill_(batch_idx)  # (N, 1)
+            z = torch.ones((len(sh), 1), dtype=sh.dtype, device=sh.device).fill_(
+                batch_idx
+            )  # (N, 1)
             return torch.cat((sh, z), dim=1)
 
         # If we don't have a batch  input
@@ -173,10 +185,10 @@ class EventCandidates:
             start_of, duration_of, states = find_island_idx_len(ds)
             triads = states.unfold(0, size=3, step=1)
             hold = EventCandidates.triad_matches(
-                triads, start_of, duration_of, TRIADS["hold"]
+                triads, start_of, duration_of, TRIADS["hold"].to(triads.device)
             )
             shift = EventCandidates.triad_matches(
-                triads, start_of, duration_of, TRIADS["shift"]
+                triads, start_of, duration_of, TRIADS["shift"].to(triads.device)
             )
         else:  # batch input
             hold, shift = [], []
@@ -186,14 +198,14 @@ class EventCandidates:
                 triads = states.unfold(0, size=3, step=1)
 
                 h = EventCandidates.triad_matches(
-                    triads, start_of, duration_of, TRIADS["hold"]
+                    triads, start_of, duration_of, TRIADS["hold"].to(triads.device)
                 )
                 if len(h) > 0:
                     h = append_batch_idx(batch_idx, h)
                     hold.append(h)
 
                 s = EventCandidates.triad_matches(
-                    triads, start_of, duration_of, TRIADS["shift"]
+                    triads, start_of, duration_of, TRIADS["shift"].to(triads.device)
                 )
                 if len(s) > 0:
                     s = append_batch_idx(batch_idx, s)
@@ -691,8 +703,7 @@ class BackchannelEvents:
         if len(bc) == 0:
             return torch.tensor([])
 
-        bc = EventConditions.filter_min_context(bc, self.min_context_frames)
-        return bc
+        return EventConditions.filter_min_context(bc, self.min_context_frames)
 
 
 class PE:
