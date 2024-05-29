@@ -24,7 +24,7 @@ The `run.py` script loads a pretrained model and extracts the turn-shift probabi
 ```bash
 python run.py \
   --audio example/student_long_female_en-US-Wavenet-G.wav \ # waveform
-  --sd example/VAP_3mmz3t0u_50Hz_ad20s_134-epoch9-val_2.56.pt \  # default state dict
+  -sd example/VAP_3mmz3t0u_50Hz_ad20s_134-epoch9-val_2.56.pt \  # default state dict
   --filename my_output.json # saves the output to this file. Omitting this flag saves output to ./{AUDIO_FILENAME}.json
 ```
 
